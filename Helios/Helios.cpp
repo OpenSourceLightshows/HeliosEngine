@@ -269,20 +269,8 @@ void Helios::handle_state()
     case STATE_TOGGLE_CONJURE:
       handle_state_toggle_flag(FLAG_CONJURE);
       break;
-    case STATE_TOGGLE_LOCK:
-      handle_state_toggle_flag(FLAG_LOCKED);
-      break;
     case STATE_SET_DEFAULTS:
       handle_state_set_defaults();
-      break;
-    case STATE_SET_GLOBAL_BRIGHTNESS:
-      handle_state_set_global_brightness();
-      break;
-    case STATE_SHIFT_MODE:
-      handle_state_shift_mode();
-      break;
-    case STATE_RANDOMIZE:
-      handle_state_randomize();
       break;
 #ifdef HELIOS_CLI
     case STATE_SLEEP:
@@ -337,8 +325,6 @@ void Helios::handle_state_modes()
         case 1: Led::set(0, 0x3c, 0x31); break;                          // Color Selection
         case 2: Led::set(0x3c, 0, 0x0e); break;                          // Pattern Selection
         case 3: Led::set(0x3c, 0x1c, 0); break;                          // Conjure Mode
-        case 4: Led::set(0x3c, 0x3c, 0x3c); break;                       // Shift Mode
-        case 5: Led::set(HSVColor(Time::getCurtime(), 255, 100)); break; // Randomizer
       }
     } else {
       if (has_flag(FLAG_LOCKED)) {
@@ -351,9 +337,7 @@ void Helios::handle_state_modes()
         switch (magnitude) {
           default:
           case 0: Led::clear(); break;         // nothing
-          case 1: Led::set(0x3c, 0, 0); break; // Enter Glow Lock
-          case 2: Led::set(0, 0x3c, 0); break; // Global Brightness
-          case 3: Led::set(0, 0, 0x3c); break; // Master Reset
+          case 1: Led::set(0, 0, 0x3c); break; // Master Reset
         }
       }
     }
@@ -391,13 +375,6 @@ void Helios::handle_off_menu(uint8_t mag, bool past)
   // otherwise if not locked handle the off menu
   switch (mag) {
     case 1:  // red lock
-      cur_state = STATE_TOGGLE_LOCK;
-      Led::clear();
-      return; // RETURN HERE
-    case 2:  // green global brightness
-      cur_state = STATE_SET_GLOBAL_BRIGHTNESS;
-      return; // RETURN HERE
-    case 3:  // blue reset defaults
       cur_state = STATE_SET_DEFAULTS;
       return; //RETURN HERE
     default:
@@ -436,12 +413,6 @@ void Helios::handle_on_menu(uint8_t mag, bool past)
     case 3:  // conjure mode
       cur_state = STATE_TOGGLE_CONJURE;
       Led::clear();
-      break;
-    case 4:  // shift mode down
-      cur_state = STATE_SHIFT_MODE;
-      break;
-    case 5:  // randomizer
-      cur_state = STATE_RANDOMIZE;
       break;
     default:  // hold past
       break;
@@ -754,73 +725,6 @@ void Helios::factory_reset()
   save_global_flags();
   // re-load current mode
   load_cur_mode();
-}
-
-void Helios::handle_state_set_global_brightness()
-{
-  if (Button::onShortClick()) {
-    menu_selection = (menu_selection + 1) % NUM_BRIGHTNESS_OPTIONS;
-  }
-  // show different levels of green for each selection
-  uint8_t col = 0;
-  uint8_t brightness = 0;
-  switch (menu_selection) {
-    case 0:
-      col = 0xFF;
-      brightness = BRIGHTNESS_HIGH;
-      break;
-    case 1:
-      col = 0x78;
-      brightness = BRIGHTNESS_MEDIUM;
-      break;
-    case 2:
-      col = 0x3c;
-      brightness = BRIGHTNESS_LOW;
-      break;
-    case 3:
-      col = 0x28;
-      brightness = BRIGHTNESS_LOWEST;
-      break;
-  }
-  Led::set(0, col, 0);
-  // when the user long clicks a selection
-  if (Button::onLongClick()) {
-    // set the brightness based on the selection
-    Led::setBrightness(brightness);
-    Storage::write_brightness(brightness);
-    cur_state = STATE_MODES;
-  }
-  show_selection(RGB_WHITE_BRI_LOW);
-}
-
-void Helios::handle_state_shift_mode()
-{
-  uint8_t new_mode = (cur_mode > 0) ? (uint8_t)(cur_mode - 1) : (uint8_t)(NUM_MODE_SLOTS - 1);
-  // copy the storage from the new position into our current position
-  Storage::copy_slot(new_mode, cur_mode);
-  // point at the new position
-  cur_mode = new_mode;
-  // write out the current mode to the newly updated position
-  save_cur_mode();
-  cur_state = STATE_MODES;
-}
-
-void Helios::handle_state_randomize()
-{
-  if (Button::onShortClick()) {
-    Colorset &cur_set = pat.colorset();
-    Random ctx(pat.crc32());
-    uint8_t randVal = ctx.next8();
-    cur_set.randomizeColors(ctx, (randVal + 1) % NUM_COLOR_SLOTS, Colorset::COLOR_MODE_RANDOMLY_PICK);
-    Patterns::make_pattern((PatternID)(randVal % PATTERN_COUNT), pat);
-    pat.init();
-  }
-  if (Button::onLongClick()) {
-    save_cur_mode();
-    cur_state = STATE_MODES;
-  }
-  pat.play();
-  show_selection(RGB_WHITE_BRI_LOW);
 }
 
 void Helios::show_selection(RGBColor color)
