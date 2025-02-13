@@ -6,9 +6,9 @@
 // define arrays of colors, you can reuse these if you have multiple
 // modes that use the same colorset -- these demonstrate the max amount
 // of colors in each set but you can absolutely list a lesser amount
-static const uint32_t color_codes0[] = {RGB_RED, RGB_ORANGE, RGB_YELLOW, RGB_TURQUOISE, RGB_BLUE, RGB_PINK};
-static const uint32_t color_codes1[] = {RGB_RED, RGB_CORAL_ORANGE_SAT_MEDIUM, RGB_ORANGE, RGB_YELLOW_SAT_LOW};
-static const uint32_t color_codes2[] = {RGB_PURPLE_BRI_LOWEST, RGB_MAGENTA, RGB_HOT_PINK_SAT_MEDIUM, RGB_PINK_SAT_LOWEST};
+static const uint32_t color_codes0[] = {RGB_RED, RGB_ORANGE, RGB_WHITE};
+static const uint32_t color_codes1[] = {RGB_TURQUOISE, RGB_WHITE, RGB_BLUE};
+static const uint32_t color_codes2[] = {RGB_MAGENTA, RGB_ICE_BLUE, RGB_YELLOW};
 
 // Define Colorset configurations for each slot
 struct default_colorset {
@@ -19,9 +19,9 @@ struct default_colorset {
 // the array of colorset entries, make sure the number on the left reflects
 // the number of colors in the array on the right
 static const default_colorset default_colorsets[] = {
-  { 6, color_codes0 },  // 0 Lightside
-  { 4, color_codes1 },  // 1 Sauna
-  { 4, color_codes2 },  // 2 Butterfly
+  { 3, color_codes0 },  // 0 Fire ball
+  { 3, color_codes1 },  // 1 Chilly
+  { 3, color_codes2 },  // 2 Printer Ink
 };
 
 void Patterns::make_default(uint8_t index, Pattern &pat)
@@ -31,19 +31,17 @@ void Patterns::make_default(uint8_t index, Pattern &pat)
   }
   PatternArgs args;
   switch (index) {
-    case 0:  // Lightside
+    case 0:  // Fire ball
       args.on_dur = 2;
       args.gap_dur = 40;
       break;
-    case 1:  // Sauna
+    case 1:  // Chilly
       args.on_dur = 1;
       args.off_dur = 9;
       break;
-    case 2:  // Butterfly
-      args.on_dur = 1;
-      args.off_dur = 9;
-      args.gap_dur = 6;
-      args.dash_dur = 15;
+    case 2:  // Printer Ink
+      args.on_dur = 3;
+      args.off_dur = 23;
       break;
   }
   // assign default args
