@@ -46,35 +46,19 @@ private:
 
   static void handle_state();
   static void handle_state_modes();
-
-  // the slot selection returns this info for internal menu logic
-  enum ColorSelectOption {
-    OPTION_NONE = 0,
-
-    SELECTED_ADD,
-    SELECTED_EXIT,
-    SELECTED_SLOT
-  };
-
-  static void handle_off_menu(uint8_t mag, bool past);
-  static void handle_on_menu(uint8_t mag, bool past);
-  static void handle_state_col_select();
-  static void handle_state_col_select_slot(ColorSelectOption &out_option);
-  static void handle_state_col_select_quadrant();
-  static void handle_state_col_select_hue_sat_val();
+  static void handle_state_color_select();
   static void handle_state_pat_select();
   static void handle_state_toggle_flag(Flags flag);
   static void handle_state_set_defaults();
   static void show_selection(RGBColor color);
   static void factory_reset();
 
+  static void handle_off_menu(uint8_t mag, bool past);
+  static void handle_on_menu(uint8_t mag, bool past);
+
   enum State : uint8_t {
     STATE_MODES,
-    STATE_COLOR_SELECT_SLOT,
-    STATE_COLOR_SELECT_QUADRANT,
-    STATE_COLOR_SELECT_HUE,
-    STATE_COLOR_SELECT_SAT,
-    STATE_COLOR_SELECT_VAL,
+    STATE_COLOR_SELECT,
     STATE_PATTERN_SELECT,
     STATE_TOGGLE_CONJURE,
     STATE_SET_DEFAULTS,
@@ -82,6 +66,9 @@ private:
     STATE_SLEEP,
 #endif
   };
+
+  // Number of colors in the simplified color menu
+  static const uint8_t NUM_COLORS = 20;
 
   // the current state of the system
   static State cur_state;
