@@ -452,9 +452,8 @@ void Helios::handle_state_color_select()
     menu_selection = 0;
 
     if (selected_slot >= NUM_COLOR_SLOTS) {
-      for (uint8_t i = 0; i < NUM_COLOR_SLOTS; i++) {
-        pat.colorset().set(i, current_color_set[i]);
-      }
+      // Set all colors at once using the new method
+      pat.colorset().setAll(current_color_set, NUM_COLOR_SLOTS);
       save_cur_mode();
       cur_state = STATE_MODES;
       selected_slot = 0;
@@ -477,12 +476,8 @@ void Helios::handle_state_color_select()
   if (Button::onHoldClick()) {
     // If they're on the blank option and have at least one color selected, save with current colors
     if (menu_selection == 0 && selected_slot > 0) {
-      // First clear any existing colors in the pattern
-      pat.colorset().clear();
-      // Then add only the colors that have been selected
-      for (uint8_t i = 0; i < selected_slot; i++) {
-        pat.colorset().set(i, current_color_set[i]);
-      }
+      // Set all selected colors at once
+      pat.colorset().setAll(current_color_set, selected_slot);
       save_cur_mode();
       cur_state = STATE_MODES;
       selected_slot = 0;
