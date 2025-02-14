@@ -449,11 +449,6 @@ void Helios::handle_state_color_select()
     }
     // Increment the selected slot for next color
     selected_slot++;
-    RGBColor cur = Led::get();
-    cur.red /= 2;
-    cur.green /= 2;
-    cur.blue /= 2;
-    show_selection(cur);
     menu_selection = 0;
 
     if (selected_slot >= NUM_COLOR_SLOTS) {
@@ -464,8 +459,15 @@ void Helios::handle_state_color_select()
       cur_state = STATE_MODES;
       selected_slot = 0;
     }
-
   }
+
+  // Show dimmed selection indicator while button is pressed
+  RGBColor cur = Led::get();
+  cur.red /= 2;
+  cur.green /= 2;
+  cur.blue /= 2;
+  show_selection(cur);
+
   if (Button::holdPressing()) {
     // flash red
     Led::strobe(150, 150, RGB_RED_BRI_LOW, current_color);
