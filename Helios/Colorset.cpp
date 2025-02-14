@@ -255,7 +255,6 @@ void Colorset::set(uint8_t index, RGBColor col)
   m_palette[index] = col;
 }
 
-
 // skip some amount of colors
 void Colorset::skip(int32_t amount)
 {
