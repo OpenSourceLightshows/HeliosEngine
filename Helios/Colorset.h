@@ -99,6 +99,9 @@ public:
   // a slot higher than the number of colors in the colorset
   void set(uint8_t index, RGBColor col);
 
+  // set all colors from an array up to num_colors
+  void setAll(const RGBColor* colors, uint8_t num_colors);
+
   // skip some amount of colors
   void skip(int32_t amount = 1);
 

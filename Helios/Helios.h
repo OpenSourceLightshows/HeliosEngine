@@ -46,45 +46,22 @@ private:
 
   static void handle_state();
   static void handle_state_modes();
-
-  // the slot selection returns this info for internal menu logic
-  enum ColorSelectOption {
-    OPTION_NONE = 0,
-
-    SELECTED_ADD,
-    SELECTED_EXIT,
-    SELECTED_SLOT
-  };
-
-  static void handle_off_menu(uint8_t mag, bool past);
-  static void handle_on_menu(uint8_t mag, bool past);
-  static void handle_state_col_select();
-  static void handle_state_col_select_slot(ColorSelectOption &out_option);
-  static void handle_state_col_select_quadrant();
-  static void handle_state_col_select_hue_sat_val();
+  static void handle_state_color_select();
   static void handle_state_pat_select();
   static void handle_state_toggle_flag(Flags flag);
   static void handle_state_set_defaults();
-  static void handle_state_set_global_brightness();
-  static void handle_state_shift_mode();
-  static void handle_state_randomize();
   static void show_selection(RGBColor color);
   static void factory_reset();
 
+  static void handle_off_menu(uint8_t mag, bool past);
+  static void handle_on_menu(uint8_t mag, bool past);
+
   enum State : uint8_t {
     STATE_MODES,
-    STATE_COLOR_SELECT_SLOT,
-    STATE_COLOR_SELECT_QUADRANT,
-    STATE_COLOR_SELECT_HUE,
-    STATE_COLOR_SELECT_SAT,
-    STATE_COLOR_SELECT_VAL,
+    STATE_COLOR_SELECT,
     STATE_PATTERN_SELECT,
     STATE_TOGGLE_CONJURE,
-    STATE_TOGGLE_LOCK,
     STATE_SET_DEFAULTS,
-    STATE_SET_GLOBAL_BRIGHTNESS,
-    STATE_SHIFT_MODE,
-    STATE_RANDOMIZE,
 #ifdef HELIOS_CLI
     STATE_SLEEP,
 #endif
@@ -102,6 +79,7 @@ private:
   static uint8_t selected_hue;
   static uint8_t selected_sat;
   static uint8_t selected_val;
+  static RGBColor current_color_set[NUM_COLOR_SLOTS];
   static PatternArgs default_args[6];
   static Colorset default_colorsets[6];
   static Pattern pat;
