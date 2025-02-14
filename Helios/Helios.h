@@ -58,9 +58,9 @@ private:
 
   static void handle_off_menu(uint8_t mag, bool past);
   static void handle_on_menu(uint8_t mag, bool past);
-  static void handle_state_col_select();
-  static void handle_state_col_select_quadrant();
-  static void handle_state_col_select_rgb();
+  static void handle_state_color_selection();
+  static void handle_state_color_group_selection();
+  static void handle_state_color_variant_selection();
   static void handle_state_pat_select();
   static void handle_state_toggle_flag(Flags flag);
   static void handle_state_set_defaults();

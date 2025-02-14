@@ -258,7 +258,7 @@ void Helios::handle_state()
       break;
     case STATE_COLOR_SELECT_QUADRANT:
     case STATE_COLOR_SELECT_HUE:
-      handle_state_col_select();
+      handle_state_color_selection();
       break;
     case STATE_PATTERN_SELECT:
       handle_state_pat_select();
@@ -427,16 +427,16 @@ void Helios::handle_on_menu(uint8_t mag, bool past)
   }
 }
 
-void Helios::handle_state_col_select()
+void Helios::handle_state_color_selection()
 {
   switch (cur_state) {
     case STATE_COLOR_SELECT_QUADRANT:
       // pick the hue quadrant
-      handle_state_col_select_quadrant();
+      handle_state_color_group_selection();
       break;
     case STATE_COLOR_SELECT_HUE:
       // pick the hue
-      handle_state_col_select_rgb();
+      handle_state_color_variant_selection();
       break;
     default:
       break;
@@ -493,7 +493,7 @@ static const ColorsMenuData color_menu_data[5] = {
   }
 };
 
-void Helios::handle_state_col_select_quadrant()
+void Helios::handle_state_color_group_selection()
 {
   if (Button::onShortClick()) {
     menu_selection = (menu_selection + 1) % NUM_MENUS_QUADRANT;
@@ -590,7 +590,7 @@ void Helios::handle_state_col_select_quadrant()
   }
 }
 
-void Helios::handle_state_col_select_rgb()
+void Helios::handle_state_color_variant_selection()
 {
   // handle iterating to the next option
   if (Button::onShortClick()) {
