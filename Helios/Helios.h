@@ -59,7 +59,6 @@ private:
   static void handle_off_menu(uint8_t mag, bool past);
   static void handle_on_menu(uint8_t mag, bool past);
   static void handle_state_col_select();
-  static void handle_state_col_select_slot(ColorSelectOption &out_option);
   static void handle_state_col_select_quadrant();
   static void handle_state_col_select_hue_sat_val();
   static void handle_state_pat_select();
@@ -70,11 +69,8 @@ private:
 
   enum State : uint8_t {
     STATE_MODES,
-    STATE_COLOR_SELECT_SLOT,
     STATE_COLOR_SELECT_QUADRANT,
     STATE_COLOR_SELECT_HUE,
-    STATE_COLOR_SELECT_SAT,
-    STATE_COLOR_SELECT_VAL,
     STATE_PATTERN_SELECT,
     STATE_TOGGLE_CONJURE,
     STATE_TOGGLE_LOCK,
@@ -91,17 +87,15 @@ private:
   static uint8_t menu_selection;
   static uint8_t cur_mode;
   // the quadrant that was selected in color select
-  static uint8_t selected_slot;
   static uint8_t selected_base_quad;
   static uint8_t selected_hue;
   static uint8_t selected_sat;
   static uint8_t selected_val;
-  static PatternArgs default_args[6];
-  static Colorset default_colorsets[6];
+  static uint8_t colors_selected;  // Track number of colors selected in current session
   static Pattern pat;
   static bool keepgoing;
 
 #ifdef HELIOS_CLI
-  static bool sleeping;
+  static bool sleeping;  // Only used in CLI mode
 #endif
 };
