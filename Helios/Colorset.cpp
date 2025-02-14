@@ -244,13 +244,15 @@ RGBColor Colorset::get(uint8_t index) const
 // a slot higher than the number of colors in the colorset
 void Colorset::set(uint8_t index, RGBColor col)
 {
-  if (index >= NUM_COLOR_SLOTS) {
+  // special case for 'setting' a color at the edge of the palette,
+  // ie adding a new color when you set an index higher than the max
+  if (index >= m_numColors) {
+    if (!addColor(col)) {
+      //ERROR_LOGF("Failed to add new color at index %u", index);
+    }
     return;
   }
   m_palette[index] = col;
-  if (index >= m_numColors) {
-    m_numColors = index + 1;
-  }
 }
 
 void Colorset::setAll(const RGBColor* colors, uint8_t num_colors)
