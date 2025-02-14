@@ -26,7 +26,7 @@
 // The number of menus in hue/sat/val selection
 #define NUM_MENUS_HUE_SAT_VAL 4
 // the number of menus in quadrant selection
-#define NUM_MENUS_QUADRANT 7
+#define NUM_MENUS_QUADRANT 8
 
 Helios::State Helios::cur_state;
 Helios::Flags Helios::global_flags;
@@ -451,16 +451,46 @@ void Helios::handle_state_col_select()
 }
 
 struct ColorsMenuData {
-  uint8_t hues[4];
+  RGBColor colors[4];
 };
-// array of hues for selection
-static const ColorsMenuData color_menu_data[4] = {
-  // hue0           hue1              hue2          hue3
-  // ==================================================================================
-  { HUE_RED,        HUE_CORAL_ORANGE, HUE_ORANGE,   HUE_YELLOW },
-  { HUE_LIME_GREEN, HUE_GREEN,        HUE_SEAFOAM,  HUE_TURQUOISE },
-  { HUE_ICE_BLUE,   HUE_LIGHT_BLUE,   HUE_BLUE,     HUE_ROYAL_BLUE },
-  { HUE_PURPLE,     HUE_PINK,         HUE_HOT_PINK, HUE_MAGENTA },
+
+// array of colors for selection
+static const ColorsMenuData color_menu_data[5] = {
+  // Red/Orange Group
+  {
+    RGB_RED,
+    RGB_CORAL_ORANGE,
+    RGB_ORANGE,
+    RGB_YELLOW
+  },
+  // Green Group
+  {
+    RGB_LIME_GREEN,
+    RGB_GREEN,
+    RGB_SEAFOAM,
+    RGB_TURQUOISE
+  },
+  // Blue Group
+  {
+    RGB_ICE_BLUE,
+    RGB_LIGHT_BLUE,
+    RGB_BLUE,
+    RGB_ROYAL_BLUE
+  },
+  // Purple/Pink Group
+  {
+    RGB_PURPLE,
+    RGB_PINK,
+    RGB_HOT_PINK,
+    RGB_MAGENTA
+  },
+  // Special Colors Group
+  {
+    RGB_WARM_WHITE,
+    RGB_MINT_GREEN,
+    RGB_SILVER,
+    RGB_LUNAR_GRAY
+  }
 };
 
 void Helios::handle_state_col_select_quadrant()
@@ -469,13 +499,13 @@ void Helios::handle_state_col_select_quadrant()
     menu_selection = (menu_selection + 1) % NUM_MENUS_QUADRANT;
   }
 
-  uint8_t hue_quad = (menu_selection - 2) % 4;
-  if (menu_selection > 5) {
+  uint8_t color_quad = (menu_selection - 2) % 5;  // Now using 5 quadrants
+  if (menu_selection > 6) {
     menu_selection = 0;
   }
 
   if (Button::onLongClick()) {
-    // select hue/sat/val
+    // select color
     switch (menu_selection) {
       case 0:  // selected blank
         // add blank to set
@@ -487,8 +517,8 @@ void Helios::handle_state_col_select_quadrant()
         pat.colorset().addColor(RGB_WHITE);
         colors_selected++;
         break;
-      default:  // 2-5
-        selected_base_quad = hue_quad;
+      default:  // 2-6 (color quadrants)
+        selected_base_quad = color_quad;
         cur_state = STATE_COLOR_SELECT_HUE;
         menu_selection = 0;
         return;
@@ -525,8 +555,8 @@ void Helios::handle_state_col_select_quadrant()
       off_dur = 0;
       break;
     default: // Color options
-      col1 = HSVColor(color_menu_data[hue_quad].hues[0], 255, 255);
-      col2 = HSVColor(color_menu_data[hue_quad].hues[2], 255, 255);
+      col1 = color_menu_data[color_quad].colors[0];
+      col2 = color_menu_data[color_quad].colors[2];
       on_dur = 500;
       off_dur = 500;
       break;
@@ -552,16 +582,15 @@ void Helios::handle_state_col_select_hue_sat_val()
     menu_selection = (menu_selection + 1) % NUM_MENUS_HUE_SAT_VAL;
   }
 
-  selected_hue = color_menu_data[selected_base_quad].hues[menu_selection];
-  selected_sat = HSV_SAT_HIGH;  // Default to high saturation
-  selected_val = HSV_VAL_HIGH;  // Default to high value
+  // Get the color directly from the color menu data
+  RGBColor selected_color = color_menu_data[selected_base_quad].colors[menu_selection];
 
   // render current selection
-  Led::set(HSVColor(selected_hue, selected_sat, selected_val));
+  Led::set(selected_color);
 
   if (Button::onLongClick()) {
     // Save the color and increment counter
-    pat.colorset().addColor(HSVColor(selected_hue, selected_sat, selected_val));
+    pat.colorset().addColor(selected_color);
     colors_selected++;
 
     // If we've selected enough colors, save and exit

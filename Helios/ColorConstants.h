@@ -49,6 +49,11 @@
 #define RGB_HOT_PINK     (uint32_t)0xFF00B4 // 255, 0, 180
 #define RGB_MAGENTA      (uint32_t)0xFF003C // 255, 0, 60
 
+#define RGB_WARM_WHITE    (uint32_t)0xFFD700 // 255, 215, 0
+#define RGB_MINT_GREEN   (uint32_t)0x00FFD7 // 0, 255, 215
+#define RGB_SILVER      (uint32_t)0xC0C0C0 // 192, 192, 192
+#define RGB_LUNAR_GRAY  (uint32_t)0x787878 // 120, 120, 120
+
 // Helios Medium Brightness Colors
 #define RGB_WHITE_BRI_MEDIUM         (uint32_t)0x787878 // 120 120 120
 #define RGB_RED_BRI_MEDIUM           (uint32_t)0x780000 // 120, 0, 0
