@@ -441,31 +441,65 @@ void Helios::handle_state_color_select()
     Led::set(current_color);
   }
 
-  if (Button::onLongClick()) {
+  bool saveAtGoToNextColor = Button::onLongClick();
+  bool saveAndFinish = Button::onHoldClick();
+  if (saveAtGoToNextColor) {
     if (menu_selection == 0) {
       pat.colorset().set(selected_slot, RGB_OFF);
     } else {
       // Add the selected color to the colorset
       pat.colorset().set(selected_slot, current_color);
     }
+    // Increment the selected slot for next color
+    selected_slot++;
 
-    // Reset menu selection to start for next color
+    // // Get updated color count after adding new color
+    // num_cols = set.numColors();
+    // if (num_cols >= NUM_COLOR_SLOTS) {
+    //   save_cur_mode();
+    //   cur_state = STATE_MODES;
+    // }
     menu_selection = 0;
 
-    // If we've selected 3 colors, save and exit
-    if (num_cols + 1 >= NUM_COLOR_SLOTS) {
+    if (selected_slot >= NUM_COLOR_SLOTS) {
       save_cur_mode();
       cur_state = STATE_MODES;
-    }
-    else {
-      // Reset menu selection to start for next color
       menu_selection = 0;
-      selected_slot = (selected_slot + 1) % NUM_COLOR_SLOTS;
+      selected_slot = 0;
     }
-  }
 
-  // Show selection indicator
-  show_selection(RGB_WHITE_BRI_LOW);
+  }
+  // if (saveAndFinish) {
+  //   save_cur_mode();
+  //   cur_state = STATE_MODES;
+  // }
+
+  //   // Increment the selected slot for next color
+  //   selected_slot = (selected_slot + 1) % NUM_COLOR_SLOTS;
+
+  //   // Get updated color count after adding new color
+  //   num_cols = set.numColors();
+
+  //   // If we've filled all slots, save and exit
+  //   if (num_cols >= NUM_COLOR_SLOTS) {
+  //     save_cur_mode();
+  //     cur_state = STATE_MODES;
+  //   }
+
+  //   // Reset menu selection to start for next color
+  //   menu_selection = 0;
+  // }
+
+  // // Show selection indicator
+  // show_selection(RGB_WHITE_BRI_LOW);
+  // if (saveAndFinish) {
+  //   cur_state = STATE_MODES;
+  //   pat.updateColor(selected_slot, current_color);
+  //   save_cur_mode();
+  //   // Return to the slot you were editing
+  //   menu_selection = selected_slot;
+  //   return;
+  // }
 }
 
 void Helios::handle_state_pat_select()
