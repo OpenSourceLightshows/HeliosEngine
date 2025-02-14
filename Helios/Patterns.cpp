@@ -8,7 +8,7 @@
 // of colors in each set but you can absolutely list a lesser amount
 static const uint32_t color_codes0[] = {RGB_RED, RGB_ORANGE, RGB_WHITE};
 static const uint32_t color_codes1[] = {RGB_TURQUOISE, RGB_WHITE, RGB_BLUE};
-static const uint32_t color_codes2[] = {RGB_MAGENTA, RGB_ICE_BLUE, RGB_YELLOW};
+static const uint32_t color_codes2[] = {RGB_MAGENTA, RGB_TURQUOISE, RGB_YELLOW};
 
 // Define Colorset configurations for each slot
 struct default_colorset {
@@ -40,8 +40,10 @@ void Patterns::make_default(uint8_t index, Pattern &pat)
       args.off_dur = 9;
       break;
     case 2:  // Printer Ink
-      args.on_dur = 3;
-      args.off_dur = 23;
+      args.on_dur = 1;
+      args.off_dur = 9;
+      args.gap_dur = 6;
+      args.dash_dur = 15;
       break;
   }
   // assign default args
@@ -66,7 +68,7 @@ void Patterns::make_pattern(PatternID id, Pattern &pat)
 
   case PATTERN_STROBE:
     args.on_dur = 5;
-    args.off_dur = 8; // 10 for flashing pattern circles
+    args.off_dur = 8;
     break;
 
   case PATTERN_HYPNOSTROBE:
@@ -76,42 +78,42 @@ void Patterns::make_pattern(PatternID id, Pattern &pat)
 
   case PATTERN_STROBIE:
     args.on_dur = 3;
-    args.off_dur = 23; // 21 for flashing pattern circles
+    args.off_dur = 23;
     break;
 
   case PATTERN_GLOW:
     args.on_dur = 2;
-    args.gap_dur = 40; // 39 for flashing pattern circles
+    args.gap_dur = 40;
     break;
 
   case PATTERN_FLICKER:
     args.on_dur = 1;
-    args.off_dur = 50; // 44 for flashing pattern circles
+    args.off_dur = 50;
     break;
 
   case PATTERN_MORPH_STROBE:
     args.on_dur = 5;
     args.off_dur = 8;
-    args.blend_speed = 10; // 19 for flashing pattern circles
+    args.blend_speed = 10;
     break;
 
   case PATTERN_MORPH_STROBIE:
     args.on_dur = 3;
     args.off_dur = 23;
-    args.blend_speed = 10; // 35 for flashing pattern circles
+    args.blend_speed = 10;
     break;
 
   case PATTERN_DASH_DOPS:
     args.on_dur = 1;
     args.off_dur = 9;
     args.gap_dur = 6;
-    args.dash_dur = 15; // 17 for flashing pattern circles
+    args.dash_dur = 15;
     break;
 
   case PATTERN_DASH_DOT:
     args.on_dur = 2;
     args.off_dur = 3;
-    args.dash_dur = 24; // 22 for flashing pattern circles
+    args.dash_dur = 24;
     break;
   }
 
