@@ -52,7 +52,7 @@
 
 #define RGB_CREAM        (uint32_t)0xFF932A // 255, 147, 42  - Warm cream with golden undertones
 #define RGB_CORAL        (uint32_t)0xFF2813 // 255, 40, 19   - Deep coral with rich red base
-#define RGB_CYAN         (uint32_t)0x00FFFF // 0, 255, 255   - Pure cyan, equal mix of green and blue
+#define RGB_CYAN         (uint32_t)0x00E5FA // 0, 255, 255   - Pure cyan, equal mix of green and blue
 
 #define RGB_MINT         (uint32_t)0x40C090 // 64, 192, 144  - More green-blue tint, less white
 #define RGB_LUNA         (uint32_t)0x4050A0 // 64, 80, 160   - Deeper blue tint, less gray

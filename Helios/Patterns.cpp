@@ -8,7 +8,7 @@
 // of colors in each set but you can absolutely list a lesser amount
 static const uint32_t color_codes0[] = {RGB_RED, RGB_ORANGE, RGB_WHITE}; // Fire ball
 static const uint32_t color_codes1[] = {RGB_LUNA, RGB_PURPLE, RGB_BLUE}; // Photo Copy
-static const uint32_t color_codes2[] = {RGB_CORAL, RGB_CREAM, RGB_TURQUOISE}; // Triple C's
+static const uint32_t color_codes2[] = {RGB_CORAL, RGB_CREAM, RGB_CYAN}; // Triple C's
 
 // Define Colorset configurations for each slot
 struct default_colorset {
