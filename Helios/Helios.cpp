@@ -468,17 +468,25 @@ void Helios::handle_state_color_select()
   cur.blue /= 2;
   show_selection(cur);
 
-  if (Button::holdPressing()) {
-    // flash red
-    Led::strobe(150, 150, RGB_RED_BRI_LOW, current_color);
-
+  // If the user is on the blank option (menu_selection == 0) and holding, flash red to indicate they can save with current colors
+  if (menu_selection == 0 && Button::holdPressing()) {
+    // flash red to indicate save action is available
+    Led::strobe(150, 150, RGB_RED_BRI_LOW, RGB_OFF);
   }
+
   if (Button::onHoldClick()) {
-    for (uint8_t i = 0; i < selected_slot + 1; i++) {
-      pat.colorset().set(i, current_color_set[i]);
+    // If they're on the blank option and have at least one color selected, save with current colors
+    if (menu_selection == 0 && selected_slot > 0) {
+      // First clear any existing colors in the pattern
+      pat.colorset().clear();
+      // Then add only the colors that have been selected
+      for (uint8_t i = 0; i < selected_slot; i++) {
+        pat.colorset().set(i, current_color_set[i]);
+      }
+      save_cur_mode();
+      cur_state = STATE_MODES;
+      selected_slot = 0;
     }
-    save_cur_mode();
-    cur_state = STATE_MODES;
   }
 }
 
