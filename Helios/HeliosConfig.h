@@ -69,6 +69,11 @@
 // The number of slots in a colorset
 #define NUM_COLOR_SLOTS 3
 
+// Max Colors
+//
+// The number of colors in a colorset
+#define NUM_COLORS 20
+
 // Mode Slots
 //
 // The number of modes on the device

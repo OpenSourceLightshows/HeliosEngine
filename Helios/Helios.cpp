@@ -37,6 +37,7 @@ uint8_t Helios::selected_base_quad;
 uint8_t Helios::selected_hue;
 uint8_t Helios::selected_sat;
 uint8_t Helios::selected_val;
+RGBColor Helios::current_color_set[NUM_COLOR_SLOTS];
 Pattern Helios::pat;
 bool Helios::keepgoing;
 
@@ -440,20 +441,25 @@ void Helios::handle_state_color_select()
 
   if (Button::onLongClick()) {
     if (menu_selection == 0) {
-      pat.colorset().set(selected_slot, RGB_OFF);
+      // Add the selected color to the colorset
+      current_color_set[selected_slot] = RGB_OFF;
     } else {
       // Add the selected color to the colorset
-      pat.colorset().set(selected_slot, current_color);
+      current_color_set[selected_slot] = current_color;
     }
     // Increment the selected slot for next color
     selected_slot++;
-    current_color.red /= 2;
-    current_color.green /= 2;
-    current_color.blue /= 2;
-    show_selection(current_color);
+    RGBColor cur = Led::get();
+    cur.red /= 2;
+    cur.green /= 2;
+    cur.blue /= 2;
+    show_selection(cur);
     menu_selection = 0;
 
     if (selected_slot >= NUM_COLOR_SLOTS) {
+      for (uint8_t i = 0; i < NUM_COLOR_SLOTS; i++) {
+        pat.colorset().set(i, current_color_set[i]);
+      }
       save_cur_mode();
       cur_state = STATE_MODES;
       selected_slot = 0;
@@ -466,7 +472,9 @@ void Helios::handle_state_color_select()
 
   }
   if (Button::onHoldClick()) {
-    pat.colorset().set(selected_slot, current_color);
+    for (uint8_t i = 0; i < selected_slot + 1; i++) {
+      pat.colorset().set(i, current_color_set[i]);
+    }
     save_cur_mode();
     cur_state = STATE_MODES;
   }

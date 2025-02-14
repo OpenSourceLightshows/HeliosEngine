@@ -67,9 +67,6 @@ private:
 #endif
   };
 
-  // Number of colors in the simplified color menu
-  static const uint8_t NUM_COLORS = 20;
-
   // the current state of the system
   static State cur_state;
   // global flags for the entire system
@@ -82,6 +79,7 @@ private:
   static uint8_t selected_hue;
   static uint8_t selected_sat;
   static uint8_t selected_val;
+  static RGBColor current_color_set[NUM_COLOR_SLOTS];
   static PatternArgs default_args[6];
   static Colorset default_colorsets[6];
   static Pattern pat;
