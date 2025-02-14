@@ -436,7 +436,7 @@ void Helios::handle_state_col_select()
       break;
     case STATE_COLOR_SELECT_HUE:
       // pick the hue
-      handle_state_col_select_hue_sat_val();
+      handle_state_col_select_rgb();
       break;
     default:
       break;
@@ -573,9 +573,24 @@ void Helios::handle_state_col_select_quadrant()
     cur.blue /= 2;
     show_selection(RGB_WHITE_BRI_LOW);
   }
+
+   // If the user is on the blank option (menu_selection == 0) and holding, flash red to indicate they can save with current colors
+  if (menu_selection == 0 && Button::holdPressing()) {
+    // flash red to indicate save action is available
+    Led::strobe(150, 150, RGB_RED_BRI_LOW, RGB_OFF);
+  }
+
+  if (Button::onHoldClick()) {
+    // If they're on the blank option and have at least one color selected, save with current colors
+    if (menu_selection == 0 && colors_selected > 0) {
+      save_cur_mode();
+      cur_state = STATE_MODES;
+      colors_selected = 0;
+    }
+  }
 }
 
-void Helios::handle_state_col_select_hue_sat_val()
+void Helios::handle_state_col_select_rgb()
 {
   // handle iterating to the next option
   if (Button::onShortClick()) {

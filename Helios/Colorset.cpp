@@ -255,16 +255,6 @@ void Colorset::set(uint8_t index, RGBColor col)
   m_palette[index] = col;
 }
 
-void Colorset::setAll(const RGBColor* colors, uint8_t num_colors)
-{
-  // First clear existing colors
-  clear();
-  // Then set new colors up to num_colors
-  for (uint8_t i = 0; i < num_colors && i < NUM_COLOR_SLOTS; i++) {
-    set(i, colors[i]);
-  }
-}
-
 
 // skip some amount of colors
 void Colorset::skip(int32_t amount)
