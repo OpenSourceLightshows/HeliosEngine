@@ -486,10 +486,10 @@ static const ColorsMenuData color_menu_data[5] = {
   },
   // Special Colors Group
   {
-    RGB_WARM_WHITE,
-    RGB_MINT_GREEN,
-    RGB_SILVER,
-    RGB_LUNAR_GRAY
+    RGB_CORAL,
+    RGB_CREAM,
+    RGB_MINT,
+    RGB_LUNA
   }
 };
 
