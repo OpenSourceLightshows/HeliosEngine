@@ -24,9 +24,9 @@
 
 // some internal macros that shouldn't change
 // The number of menus in hue/sat/val selection
-#define NUM_MENUS_HUE_SAT_VAL 4
+#define NUM_COLORS_PER_GROUP 4
 // the number of menus in quadrant selection
-#define NUM_MENUS_QUADRANT 8
+#define NUM_MENUS_GROUP 8
 
 Helios::State Helios::cur_state;
 Helios::Flags Helios::global_flags;
@@ -256,8 +256,8 @@ void Helios::handle_state()
     case STATE_MODES:
       handle_state_modes();
       break;
-    case STATE_COLOR_SELECT_QUADRANT:
-    case STATE_COLOR_SELECT_HUE:
+    case STATE_COLOR_GROUP_SELECTION:
+    case STATE_COLOR_VARIANT_SELECTION:
       handle_state_color_selection();
       break;
     case STATE_PATTERN_SELECT:
@@ -402,7 +402,7 @@ void Helios::handle_on_menu(uint8_t mag, bool past)
       }
       break;
     case 1:  // color select
-      cur_state = STATE_COLOR_SELECT_QUADRANT;
+      cur_state = STATE_COLOR_GROUP_SELECTION;
       // reset the menu selection and colors selected
       menu_selection = 0;
       colors_selected = 0;
@@ -430,11 +430,11 @@ void Helios::handle_on_menu(uint8_t mag, bool past)
 void Helios::handle_state_color_selection()
 {
   switch (cur_state) {
-    case STATE_COLOR_SELECT_QUADRANT:
+    case STATE_COLOR_GROUP_SELECTION:
       // pick the hue quadrant
       handle_state_color_group_selection();
       break;
-    case STATE_COLOR_SELECT_HUE:
+    case STATE_COLOR_VARIANT_SELECTION:
       // pick the hue
       handle_state_color_variant_selection();
       break;
@@ -496,7 +496,7 @@ static const ColorsMenuData color_menu_data[5] = {
 void Helios::handle_state_color_group_selection()
 {
   if (Button::onShortClick()) {
-    menu_selection = (menu_selection + 1) % NUM_MENUS_QUADRANT;
+    menu_selection = (menu_selection + 1) % NUM_MENUS_GROUP;
   }
 
   uint8_t color_quad = (menu_selection - 2) % 5;  // Now using 5 quadrants
@@ -519,7 +519,7 @@ void Helios::handle_state_color_group_selection()
         break;
       default:  // 2-6 (color quadrants)
         selected_base_quad = color_quad;
-        cur_state = STATE_COLOR_SELECT_HUE;
+        cur_state = STATE_COLOR_VARIANT_SELECTION;
         menu_selection = 0;
         return;
     }
@@ -594,7 +594,7 @@ void Helios::handle_state_color_variant_selection()
 {
   // handle iterating to the next option
   if (Button::onShortClick()) {
-    menu_selection = (menu_selection + 1) % NUM_MENUS_HUE_SAT_VAL;
+    menu_selection = (menu_selection + 1) % NUM_COLORS_PER_GROUP;
   }
 
   // Get the color directly from the color menu data
@@ -618,7 +618,7 @@ void Helios::handle_state_color_variant_selection()
       cur_state = STATE_MODES;
     } else {
       // Go back to quadrant selection for next color
-      cur_state = STATE_COLOR_SELECT_QUADRANT;
+      cur_state = STATE_COLOR_GROUP_SELECTION;
       menu_selection = 0;
     }
   }
