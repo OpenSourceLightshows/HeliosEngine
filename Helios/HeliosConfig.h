@@ -74,23 +74,11 @@
 // The number of modes on the device
 #define NUM_MODE_SLOTS 3
 
-// Number of Global Brightness Options
-//
-// The number of global brightness options
-#define NUM_BRIGHTNESS_OPTIONS 4
 
 // Default Brightness
 //
 // The default brightness of the led
 #define DEFAULT_BRIGHTNESS 255
-
-// Global Brightness Options
-//
-// There are three brightness options, high, medium, and low
-#define BRIGHTNESS_HIGH     255
-#define BRIGHTNESS_MEDIUM   170
-#define BRIGHTNESS_LOW      85
-#define BRIGHTNESS_LOWEST   30
 
 // Tickrate
 //
@@ -110,32 +98,11 @@
 // sleep at any location in the menus
 #define FORCE_SLEEP_TIME 7000
 
-// Delete Color Time
-//
-// How long to hold button on a color to start the delete color flash
-// begins and starts flashes. Also how long the cycling flash is for the
-// delete color selection, ie how long the user has to release to delete
-// the color before it cycles back
-#define DELETE_COLOR_TIME 1500
-
 // Alternative HSV to RGB
 //
 // This enabled the alternative HSV to RGB algorithm to be used in the
 // color selection menu and provide a slightly different range of colors
 #define ALTERNATIVE_HSV_RGB 0
-
-
-// Pre-defined saturation values
-#define HSV_SAT_HIGH      255
-#define HSV_SAT_MEDIUM    220
-#define HSV_SAT_LOW       180
-#define HSV_SAT_LOWEST    120
-
-// Pre-defined brightness values
-#define HSV_VAL_HIGH      255
-#define HSV_VAL_MEDIUM    120
-#define HSV_VAL_LOW       60
-#define HSV_VAL_LOWEST    10
 
 // ============================================================================
 //  Storage Constants
