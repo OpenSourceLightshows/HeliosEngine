@@ -87,11 +87,8 @@ private:
   static uint8_t menu_selection;
   static uint8_t cur_mode;
   // the quadrant that was selected in color select
-  static uint8_t selected_base_quad;
-  static uint8_t selected_hue;
-  static uint8_t selected_sat;
-  static uint8_t selected_val;
-  static uint8_t colors_selected;  // Track number of colors selected in current session
+  static uint8_t selected_base_group;
+  static uint8_t num_colors_selected;  // Track number of colors selected in current session
   static Pattern pat;
   static bool keepgoing;
 
