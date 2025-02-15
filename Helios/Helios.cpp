@@ -94,9 +94,8 @@ bool Helios::init_components()
 #ifdef HELIOS_CLI
   sleeping = false;
 #endif
-  // load global flags, and brightness from storage, this
-  // includes for example conjure mode and the mode index
-  // of the conjure mode if it is enabled
+  // load global flags, this includes for example conjure mode
+  // and the mode index of the conjure mode if it is enabled
   load_global_flags();
   // finally load whatever current mode index is selected
   // this might be mode 0, or for example a separate index
@@ -206,16 +205,6 @@ void Helios::load_global_flags()
   if (has_flag(FLAG_CONJURE)) {
     // if conjure is enabled then load the current mode index from storage
     cur_mode = Storage::read_current_mode();
-  }
-  // read the global brightness from index 2 config
-  uint8_t saved_brightness = Storage::read_brightness();
-  // If brightness is set in storage, use it
-  if (saved_brightness > 0) {
-    Led::setBrightness(saved_brightness);
-  } else {
-    // if the brightness was 0 then the storage was likely
-    // uninitialized or corrupt so write out the defaults
-    factory_reset();
   }
 }
 
@@ -674,9 +663,6 @@ void Helios::factory_reset()
     Patterns::make_default(i, pat);
     Storage::write_pattern(i, pat);
   }
-  // Reset global brightness to default
-  Led::setBrightness(DEFAULT_BRIGHTNESS);
-  Storage::write_brightness(DEFAULT_BRIGHTNESS);
   // reset global flags
   global_flags = FLAG_NONE;
   cur_mode = 0;
