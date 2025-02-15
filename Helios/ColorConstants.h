@@ -57,25 +57,6 @@
 #define RGB_MINT         (uint32_t)0x40C090 // 64, 192, 144  - More green-blue tint, less white
 #define RGB_LUNA         (uint32_t)0x4050A0 // 64, 80, 160   - Deeper blue tint, less gray
 
-// Helios Medium Brightness Colors
-#define RGB_WHITE_BRI_MEDIUM         (uint32_t)0x787878 // 120 120 120
-#define RGB_RED_BRI_MEDIUM           (uint32_t)0x780000 // 120, 0, 0
-#define RGB_CORAL_ORANGE_BRI_MEDIUM  (uint32_t)0x780E00 // 120, 14, 0
-#define RGB_ORANGE_BRI_MEDIUM        (uint32_t)0x781C00 // 120, 28, 0
-#define RGB_YELLOW_BRI_MEDIUM        (uint32_t)0x783800 // 120, 56, 0
-#define RGB_LIME_GREEN_BRI_MEDIUM    (uint32_t)0x297800 // 41, 120, 0
-#define RGB_GREEN_BRI_MEDIUM         (uint32_t)0x007800 // 0, 120, 0
-#define RGB_SEAFOAM_BRI_MEDIUM       (uint32_t)0x00781C // 0, 120, 28
-#define RGB_TURQUOISE_BRI_MEDIUM     (uint32_t)0x007862 // 0, 120, 98
-#define RGB_ICE_BLUE_BRI_MEDIUM      (uint32_t)0x004E78 // 0, 78, 120
-#define RGB_LIGHT_BLUE_BRI_MEDIUM    (uint32_t)0x002178 // 0, 33, 120
-#define RGB_BLUE_BRI_MEDIUM          (uint32_t)0x000078 // 0, 0, 120
-#define RGB_ROYAL_BLUE_BRI_MEDIUM    (uint32_t)0x0D0078 // 13, 0, 120
-#define RGB_PURPLE_BRI_MEDIUM        (uint32_t)0x3D0078 // 61, 0, 120
-#define RGB_PINK_BRI_MEDIUM          (uint32_t)0x620078 // 98, 0, 120
-#define RGB_HOT_PINK_BRI_MEDIUM      (uint32_t)0x780054 // 120, 0, 84
-#define RGB_MAGENTA_BRI_MEDIUM       (uint32_t)0x78001C // 120, 0, 28
-
 // Helios Low Brightness Colors
 #define RGB_WHITE_BRI_LOW            (uint32_t)0x3C3C3C // 60 60 60
 #define RGB_RED_BRI_LOW              (uint32_t)0x3C0000 // 60, 0, 0

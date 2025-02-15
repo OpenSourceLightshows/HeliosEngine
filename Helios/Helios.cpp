@@ -319,23 +319,23 @@ void Helios::handle_state_modes()
       switch (magnitude) {
         default:
         case 0: Led::clear(); break;                                     // Turn off
-        case 1: Led::set(0, 0x3c, 0x31); break;                          // Color Selection
-        case 2: Led::set(0x3c, 0, 0x0e); break;                          // Pattern Selection
-        case 3: Led::set(0x3c, 0x1c, 0); break;                          // Conjure Mode
+        case 1: Led::set(RGB_TURQUOISE_BRI_LOW); break;                 // Color Selection
+        case 2: Led::set(RGB_MAGENTA_BRI_LOW); break;                   // Pattern Selection
+        case 3: Led::set(RGB_YELLOW_BRI_LOW); break;                    // Conjure Mode
       }
     } else {
       if (has_flag(FLAG_LOCKED)) {
         switch (magnitude) {
           default:
           case 0: Led::clear(); break;
-          case TIME_TILL_GLOW_LOCK_UNLOCK: Led::set(0x3c, 0, 0); break; // Exit
+          case TIME_TILL_GLOW_LOCK_UNLOCK: Led::set(RGB_RED_BRI_LOW); break; // Exit
         }
       } else {
         switch (magnitude) {
           default:
           case 0: Led::clear(); break;         // nothing
-          case 1: Led::set(0x3c, 0, 0); break; // Enter Glow Lock
-          case 2: Led::set(0, 0, 0x3c); break; // Master Reset
+          case 1: Led::set(RGB_RED_BRI_LOW); break; // Enter Glow Lock
+          case 2: Led::set(RGB_BLUE_BRI_LOW); break; // Master Reset
         }
       }
     }
