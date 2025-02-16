@@ -337,7 +337,7 @@ void Helios::handle_state_modes()
           case 0: Led::clear(); break;         // nothing
           case 1: Led::set(RGB_RED_BRI_LOW); break; // Enter Glow Lock
           case 2: Led::set(RGB_BLUE_BRI_LOW); break; // Master Reset
-          case 3: Led::set(has_flag(FLAG_AUTOPLAY) ? RGB_PURPLE_BRI_LOW : RGB_PINK_BRI_LOW); break; // Third color
+          case 3: Led::set(has_flag(FLAG_AUTOPLAY) ? RGB_ORANGE_BRI_LOW : RGB_PINK_BRI_LOW); break; // Autoplay Toggle
         }
       }
     }
