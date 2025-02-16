@@ -36,6 +36,7 @@ uint8_t Helios::selected_base_group;
 uint8_t Helios::num_colors_selected;
 Pattern Helios::pat;
 bool Helios::keepgoing;
+uint32_t Helios::last_mode_switch_time;
 
 #ifdef HELIOS_CLI
 bool Helios::sleeping;
@@ -91,6 +92,7 @@ bool Helios::init_components()
   num_colors_selected = 0;
   selected_base_group = 0;
   keepgoing = true;
+  last_mode_switch_time = Time::getCurtime();
 #ifdef HELIOS_CLI
   sleeping = false;
 #endif
@@ -191,6 +193,8 @@ void Helios::load_cur_mode()
   }
   // then re-initialize the pattern
   pat.init();
+  // Update the last mode switch time when loading a mode
+  last_mode_switch_time = Time::getCurtime();
 }
 
 void Helios::save_cur_mode()
@@ -283,6 +287,14 @@ void Helios::handle_state_modes()
     return;
   }
 
+  // Check for autoplay mode switching
+  if (has_flag(FLAG_AUTOPLAY) && hasReleased && !Button::isPressed()) {
+    uint32_t current_time = Time::getCurtime();
+    if (current_time - last_mode_switch_time >= AUTOPLAY_DURATION) {
+      load_next_mode();
+    }
+  }
+
   // check for lock and go back to sleep
   if (has_flag(FLAG_LOCKED) && hasReleased && !Button::onRelease()) {
     enter_sleep();
@@ -325,6 +337,7 @@ void Helios::handle_state_modes()
           case 0: Led::clear(); break;         // nothing
           case 1: Led::set(RGB_RED_BRI_LOW); break; // Enter Glow Lock
           case 2: Led::set(RGB_BLUE_BRI_LOW); break; // Master Reset
+          case 3: Led::set(has_flag(FLAG_AUTOPLAY) ? RGB_PURPLE_BRI_LOW : RGB_PINK_BRI_LOW); break; // Third color
         }
       }
     }
@@ -368,6 +381,15 @@ void Helios::handle_off_menu(uint8_t mag, bool past)
     case 2:  // blue reset defaults
       cur_state = STATE_SET_DEFAULTS;
       return; //RETURN HERE
+    case 3:  // autoplay toggle
+      if (past) {
+        toggle_flag(FLAG_AUTOPLAY);
+        save_global_flags();
+        last_mode_switch_time = Time::getCurtime(); // Reset the timer when enabling autoplay
+        cur_state = STATE_MODES;
+      }
+      return; //RETURN HERE
+      break;
     default:
       // just go back to sleep in hold-past off menu
       enter_sleep();

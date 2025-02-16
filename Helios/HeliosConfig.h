@@ -98,6 +98,11 @@
 // sleep at any location in the menus
 #define FORCE_SLEEP_TIME 7000
 
+// Autoplay Duration
+//
+// The duration in ms/ticks before switching to the next mode in autoplay
+#define AUTOPLAY_DURATION 20000
+
 // Alternative HSV to RGB
 //
 // This enabled the alternative HSV to RGB algorithm to be used in the
