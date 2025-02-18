@@ -6,9 +6,12 @@
 // define arrays of colors, you can reuse these if you have multiple
 // modes that use the same colorset -- these demonstrate the max amount
 // of colors in each set but you can absolutely list a lesser amount
+// static const uint32_t color_codes0[] = {RGB_RED, RGB_ORANGE, RGB_WHITE}; // Fire ball
+// static const uint32_t color_codes1[] = {RGB_LUNA, RGB_PURPLE, RGB_BLUE}; // Photo Copy
+// static const uint32_t color_codes2[] = {RGB_CORAL, RGB_CREAM, RGB_CYAN}; // Triple C's
 static const uint32_t color_codes0[] = {RGB_RED, RGB_ORANGE, RGB_WHITE}; // Fire ball
-static const uint32_t color_codes1[] = {RGB_LUNA, RGB_PURPLE, RGB_BLUE}; // Photo Copy
-static const uint32_t color_codes2[] = {RGB_CORAL, RGB_CREAM, RGB_CYAN}; // Triple C's
+static const uint32_t color_codes1[] = {RGB_GREEN, RGB_SEAFOAM, RGB_WHITE}; // Photo Copy
+static const uint32_t color_codes2[] = {RGB_PURPLE, RGB_MAGENTA, RGB_WHITE}; // Triple C's
 
 // Define Colorset configurations for each slot
 struct default_colorset {
@@ -36,14 +39,12 @@ void Patterns::make_default(uint8_t index, Pattern &pat)
       args.gap_dur = 40;
       break;
     case 1:  // Photo Copy
-      args.on_dur = 1;
-      args.off_dur = 9;
-      args.gap_dur = 6;
-      args.dash_dur = 15;
+      args.on_dur = 2;
+      args.gap_dur = 40;
       break;
     case 2:  // Triple C's
-      args.on_dur = 5;
-      args.off_dur = 8;
+      args.on_dur = 2;
+      args.gap_dur = 40;
       break;
   }
   // assign default args
@@ -53,6 +54,35 @@ void Patterns::make_default(uint8_t index, Pattern &pat)
   // assign default colorset
   pat.setColorset(set);
 }
+// void Patterns::make_default(uint8_t index, Pattern &pat)
+// {
+//   if (index >= NUM_MODE_SLOTS) {
+//     return;
+//   }
+//   PatternArgs args;
+//   switch (index) {
+//     case 0:  // Fire ball
+//       args.on_dur = 2;
+//       args.gap_dur = 40;
+//       break;
+//     case 1:  // Photo Copy
+//       args.on_dur = 1;
+//       args.off_dur = 9;
+//       args.gap_dur = 6;
+//       args.dash_dur = 15;
+//       break;
+//     case 2:  // Triple C's
+//       args.on_dur = 5;
+//       args.off_dur = 8;
+//       break;
+//   }
+//   // assign default args
+//   pat.setArgs(args);
+//   // build the set out of the defaults
+//   Colorset set(default_colorsets[index].num_cols, default_colorsets[index].cols);
+//   // assign default colorset
+//   pat.setColorset(set);
+// }
 
 void Patterns::make_pattern(PatternID id, Pattern &pat)
 {
@@ -91,10 +121,9 @@ void Patterns::make_pattern(PatternID id, Pattern &pat)
     args.off_dur = 50;
     break;
 
-  case PATTERN_MORPH_STROBE:
-    args.on_dur = 5;
-    args.off_dur = 8;
-    args.blend_speed = 10;
+  case PATTERN_FLASH:
+    args.on_dur = 10;
+    args.off_dur = 250;
     break;
 
   case PATTERN_MORPH_STROBIE:
