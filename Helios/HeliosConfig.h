@@ -101,7 +101,7 @@
 // Autoplay Duration
 //
 // The duration in ms/ticks before switching to the next mode in autoplay
-#define AUTOPLAY_DURATION 20000
+#define AUTOPLAY_DURATION 10000
 
 // Alternative HSV to RGB
 //
