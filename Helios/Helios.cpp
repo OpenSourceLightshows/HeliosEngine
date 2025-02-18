@@ -35,7 +35,8 @@ uint8_t Helios::cur_mode;
 uint8_t Helios::selected_base_group;
 uint8_t Helios::num_colors_selected;
 Pattern Helios::pat;
-bool Helios::keepgoing;
+bool Helios::keepgoing = true;
+Colorset Helios::original_colorset;
 
 #ifdef HELIOS_CLI
 bool Helios::sleeping;
@@ -392,6 +393,8 @@ void Helios::handle_on_menu(uint8_t mag, bool past)
       // reset the menu selection and colors selected
       menu_selection = 0;
       num_colors_selected = 0;
+      // Store original colorset before clearing
+      original_colorset = pat.colorset();
       // Clear existing colors in pattern
       pat.colorset().clear();
 #if ALTERNATIVE_HSV_RGB == 1
@@ -567,8 +570,14 @@ void Helios::handle_state_color_group_selection()
   }
 
   if (Button::onHoldClick()) {
+    if (menu_selection == 0 && num_colors_selected == 0) {
+      // Restore original colorset if no colors were selected
+      pat.colorset() = original_colorset;
+      cur_state = STATE_MODES;
+      num_colors_selected = 0;
+    }
     // If they're on the blank option and have at least one color selected, save with current colors
-    if (menu_selection == 0 && num_colors_selected > 0) {
+    if (menu_selection == 0 && num_colors_selected >= 1) {
       save_cur_mode();
       cur_state = STATE_MODES;
       num_colors_selected = 0;

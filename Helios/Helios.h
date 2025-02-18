@@ -91,6 +91,7 @@ private:
   static uint8_t num_colors_selected;  // Track number of colors selected in current session
   static Pattern pat;
   static bool keepgoing;
+  static Colorset original_colorset;  // Store original colorset when entering color selection
 
 #ifdef HELIOS_CLI
   static bool sleeping;  // Only used in CLI mode
