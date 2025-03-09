@@ -32,6 +32,7 @@ public:
     FLAG_NONE = 0,
     FLAG_LOCKED = (1 << 0),
     FLAG_CONJURE = (1 << 1),
+    FLAG_AUTOPLAY = (1 << 2),
   };
 
   // get/set global flags
@@ -91,7 +92,8 @@ private:
   static uint8_t num_colors_selected;  // Track number of colors selected in current session
   static Pattern pat;
   static bool keepgoing;
-  static Colorset new_colorset;  // Store original colorset when entering color selection
+  static uint32_t last_mode_switch_time;
+  static Colorset new_colorset;
 
 #ifdef HELIOS_CLI
   static bool sleeping;  // Only used in CLI mode
