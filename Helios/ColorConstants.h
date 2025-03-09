@@ -49,13 +49,31 @@
 #define RGB_HOT_PINK     (uint32_t)0xFF00B4 // 255, 0, 180
 #define RGB_MAGENTA      (uint32_t)0xFF003C // 255, 0, 60
 
-
 #define RGB_CREAM        (uint32_t)0xFF932A // 255, 147, 42  - Warm cream with golden undertones
 #define RGB_CORAL        (uint32_t)0xFF2813 // 255, 40, 19   - Deep coral with rich red base
 #define RGB_CYAN         (uint32_t)0x00E5FA // 0, 255, 255   - Pure cyan, equal mix of green and blue
 
 #define RGB_MINT         (uint32_t)0x40C090 // 64, 192, 144  - More green-blue tint, less white
 #define RGB_LUNA         (uint32_t)0x4050A0 // 64, 80, 160   - Deeper blue tint, less gray
+
+// Helios Medium Brightness Colors
+#define RGB_WHITE_BRI_MEDIUM         (uint32_t)0x787878 // 120 120 120
+#define RGB_RED_BRI_MEDIUM           (uint32_t)0x780000 // 120, 0, 0
+#define RGB_CORAL_ORANGE_BRI_MEDIUM  (uint32_t)0x780E00 // 120, 14, 0
+#define RGB_ORANGE_BRI_MEDIUM        (uint32_t)0x781C00 // 120, 28, 0
+#define RGB_YELLOW_BRI_MEDIUM        (uint32_t)0x783800 // 120, 56, 0
+#define RGB_LIME_GREEN_BRI_MEDIUM    (uint32_t)0x297800 // 41, 120, 0
+#define RGB_GREEN_BRI_MEDIUM         (uint32_t)0x007800 // 0, 120, 0
+#define RGB_SEAFOAM_BRI_MEDIUM       (uint32_t)0x00781C // 0, 120, 28
+#define RGB_TURQUOISE_BRI_MEDIUM     (uint32_t)0x007862 // 0, 120, 98
+#define RGB_ICE_BLUE_BRI_MEDIUM      (uint32_t)0x004E78 // 0, 78, 120
+#define RGB_LIGHT_BLUE_BRI_MEDIUM    (uint32_t)0x002178 // 0, 33, 120
+#define RGB_BLUE_BRI_MEDIUM          (uint32_t)0x000078 // 0, 0, 120
+#define RGB_ROYAL_BLUE_BRI_MEDIUM    (uint32_t)0x0D0078 // 13, 0, 120
+#define RGB_PURPLE_BRI_MEDIUM        (uint32_t)0x3D0078 // 61, 0, 120
+#define RGB_PINK_BRI_MEDIUM          (uint32_t)0x620078 // 98, 0, 120
+#define RGB_HOT_PINK_BRI_MEDIUM      (uint32_t)0x780054 // 120, 0, 84
+#define RGB_MAGENTA_BRI_MEDIUM       (uint32_t)0x78001C // 120, 0, 28
 
 // Helios Low Brightness Colors
 #define RGB_WHITE_BRI_LOW            (uint32_t)0x3C3C3C // 60 60 60
@@ -78,3 +96,73 @@
 
 // Helios Lowest Brightness Colors
 #define RGB_WHITE_BRI_LOWEST         (uint32_t)0x0A0A0A // 10 10 10
+#define RGB_RED_BRI_LOWEST           (uint32_t)0x0A0000 // 10, 0, 0
+#define RGB_CORAL_ORANGE_BRI_LOWEST  (uint32_t)0x0A0100 // 10, 1, 0
+#define RGB_ORANGE_BRI_LOWEST        (uint32_t)0x0A0200 // 10, 2, 0
+#define RGB_YELLOW_BRI_LOWEST        (uint32_t)0x0A0400 // 10, 4, 0
+#define RGB_LIME_GREEN_BRI_LOWEST    (uint32_t)0x030A00 // 3, 10, 0
+#define RGB_GREEN_BRI_LOWEST         (uint32_t)0x000A00 // 0, 10, 0
+#define RGB_SEAFOAM_BRI_LOWEST       (uint32_t)0x000A02 // 0, 10, 2
+#define RGB_TURQUOISE_BRI_LOWEST     (uint32_t)0x000A08 // 0, 10, 8
+#define RGB_ICE_BLUE_BRI_LOWEST      (uint32_t)0x00060A // 0, 6, 10
+#define RGB_LIGHT_BLUE_BRI_LOWEST    (uint32_t)0x00020A // 0, 2, 10
+#define RGB_BLUE_BRI_LOWEST          (uint32_t)0x00000A // 0, 0, 10
+#define RGB_ROYAL_BLUE_BRI_LOWEST    (uint32_t)0x01000A // 1, 0, 10
+#define RGB_PURPLE_BRI_LOWEST        (uint32_t)0x05000A // 5, 0, 10
+#define RGB_PINK_BRI_LOWEST          (uint32_t)0x08000A // 8, 0, 10
+#define RGB_HOT_PINK_BRI_LOWEST      (uint32_t)0x0A0007 // 10, 0, 7
+#define RGB_MAGENTA_BRI_LOWEST       (uint32_t)0x0A0002 // 10, 0, 2
+
+// Helios Medium Saturation Colors
+#define RGB_RED_SAT_MEDIUM           (uint32_t)0xFF2222 // 255, 34, 34
+#define RGB_CORAL_ORANGE_SAT_MEDIUM  (uint32_t)0xFF3C22 // 255, 60, 34
+#define RGB_ORANGE_SAT_MEDIUM        (uint32_t)0xFF5622 // 255, 86, 34
+#define RGB_YELLOW_SAT_MEDIUM        (uint32_t)0xFF8A22 // 255, 138, 34
+#define RGB_LIME_GREEN_SAT_MEDIUM    (uint32_t)0x6FFF22 // 111, 255, 34
+#define RGB_GREEN_SAT_MEDIUM         (uint32_t)0x22FF22 // 34, 255, 34
+#define RGB_SEAFOAM_SAT_MEDIUM       (uint32_t)0x22FF56 // 34, 255, 86
+#define RGB_TURQUOISE_SAT_MEDIUM     (uint32_t)0x22FFD7 // 34, 255, 215
+#define RGB_ICE_BLUE_SAT_MEDIUM      (uint32_t)0x22B3FF // 34, 179, 255
+#define RGB_LIGHT_BLUE_SAT_MEDIUM    (uint32_t)0x2260FF // 34, 96, 255
+#define RGB_BLUE_SAT_MEDIUM          (uint32_t)0x2222FF // 34, 34, 255
+#define RGB_ROYAL_BLUE_SAT_MEDIUM    (uint32_t)0x3C22FF // 60, 34, 255
+#define RGB_PURPLE_SAT_MEDIUM        (uint32_t)0x9422FF // 148, 34, 255
+#define RGB_PINK_SAT_MEDIUM          (uint32_t)0xD822FF // 216, 34, 255
+#define RGB_HOT_PINK_SAT_MEDIUM      (uint32_t)0xFF22BE // 255, 34, 190
+#define RGB_MAGENTA_SAT_MEDIUM       (uint32_t)0xFF2256 // 255, 34, 86
+
+// Helios Low Saturation Colors
+#define RGB_RED_SAT_LOW              (uint32_t)0xFF5555 // 255, 85, 85
+#define RGB_CORAL_ORANGE_SAT_LOW     (uint32_t)0xFF6955 // 255, 105, 85
+#define RGB_ORANGE_SAT_LOW           (uint32_t)0xFF7D55 // 255, 125, 85
+#define RGB_YELLOW_SAT_LOW           (uint32_t)0xFFA555 // 255, 165, 85
+#define RGB_LIME_GREEN_SAT_LOW       (uint32_t)0x90FF55 // 144, 255, 85
+#define RGB_GREEN_SAT_LOW            (uint32_t)0x55FF55 // 85, 255, 85
+#define RGB_SEAFOAM_SAT_LOW          (uint32_t)0x55FF7D // 85, 255, 125
+#define RGB_TURQUOISE_SAT_LOW        (uint32_t)0x55FFE0 // 85, 255, 224
+#define RGB_ICE_BLUE_SAT_LOW         (uint32_t)0x55C4FF // 85, 196, 255
+#define RGB_LIGHT_BLUE_SAT_LOW       (uint32_t)0x5584FF // 85, 132, 255
+#define RGB_BLUE_SAT_LOW             (uint32_t)0x5555FF // 85, 85, 255
+#define RGB_ROYAL_BLUE_SAT_LOW       (uint32_t)0x6855FF // 104, 85, 255
+#define RGB_PURPLE_SAT_LOW           (uint32_t)0xAC55FF // 172, 85, 255
+#define RGB_PINK_SAT_LOW             (uint32_t)0xE055FF // 224, 85, 255
+#define RGB_HOT_PINK_SAT_LOW         (uint32_t)0xFF55CD // 255, 85, 205
+#define RGB_MAGENTA_SAT_LOW          (uint32_t)0xFF557D // 255, 85, 125
+
+// Helios Lowest Saturation Colors
+#define RGB_RED_SAT_LOWEST           (uint32_t)0xFF7D7D // 255, 125, 125
+#define RGB_CORAL_ORANGE_SAT_LOWEST  (uint32_t)0xFF8C7D // 255, 140, 125
+#define RGB_ORANGE_SAT_LOWEST        (uint32_t)0xFF9B7D // 255, 155, 125
+#define RGB_YELLOW_SAT_LOWEST        (uint32_t)0xFFBA7D // 255, 186, 125
+#define RGB_LIME_GREEN_SAT_LOWEST    (uint32_t)0xAAFF7D // 170, 255, 125
+#define RGB_GREEN_SAT_LOWEST         (uint32_t)0x7DFF7D // 125, 255, 125
+#define RGB_SEAFOAM_SAT_LOWEST       (uint32_t)0x7DFF9B // 125, 255, 155
+#define RGB_TURQUOISE_SAT_LOWEST     (uint32_t)0x7DFFE7 // 125, 255, 231
+#define RGB_ICE_BLUE_SAT_LOWEST      (uint32_t)0x7DD2FF // 125, 210, 255
+#define RGB_LIGHT_BLUE_SAT_LOWEST    (uint32_t)0x7DA1FF // 125, 161, 255
+#define RGB_BLUE_SAT_LOWEST          (uint32_t)0x7D7DFF // 125, 125, 255
+#define RGB_ROYAL_BLUE_SAT_LOWEST    (uint32_t)0x8B7DFF // 139, 125, 255
+#define RGB_PURPLE_SAT_LOWEST        (uint32_t)0xBF7DFF // 191, 125, 255
+#define RGB_PINK_SAT_LOWEST          (uint32_t)0xE87DFF // 232, 125, 255
+#define RGB_HOT_PINK_SAT_LOWEST      (uint32_t)0xFF7DD8 // 255, 125, 216
+#define RGB_MAGENTA_SAT_LOWEST       (uint32_t)0xFF7D9B // 255, 125, 155
