@@ -93,7 +93,7 @@ bool Helios::init_components()
   num_colors_selected = 0;
   selected_base_group = 0;
   keepgoing = true;
-  last_mode_switch_time = Time::getCurtime();
+  last_mode_switch_time = 0;
 #ifdef HELIOS_CLI
   sleeping = false;
 #endif
@@ -383,14 +383,11 @@ void Helios::handle_off_menu(uint8_t mag, bool past)
       cur_state = STATE_SET_DEFAULTS;
       return; //RETURN HERE
     case 3:  // autoplay toggle
-      if (past) {
-        toggle_flag(FLAG_AUTOPLAY);
-        save_global_flags();
-        last_mode_switch_time = Time::getCurtime(); // Reset the timer when enabling autoplay
-        cur_state = STATE_MODES;
-      }
+      toggle_flag(FLAG_AUTOPLAY);
+      save_global_flags();
+      last_mode_switch_time = Time::getCurtime(); // Reset the timer when enabling autoplay
+      cur_state = STATE_MODES;
       return; //RETURN HERE
-      break;
     default:
       // just go back to sleep in hold-past off menu
       enter_sleep();
