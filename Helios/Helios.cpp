@@ -445,41 +445,13 @@ struct ColorsMenuData {
 
 // array of colors for selection
 static const ColorsMenuData color_menu_data[5] = {
-  // Red/Orange Group
-  {
-    RGB_RED,
-    RGB_CORAL_ORANGE,
-    RGB_ORANGE,
-    RGB_YELLOW
-  },
-  // Green Group
-  {
-    RGB_LIME_GREEN,
-    RGB_GREEN,
-    RGB_SEAFOAM,
-    RGB_TURQUOISE
-  },
-  // Blue Group
-  {
-    RGB_ICE_BLUE,
-    RGB_LIGHT_BLUE,
-    RGB_BLUE,
-    RGB_ROYAL_BLUE
-  },
-  // Purple/Pink Group
-  {
-    RGB_PURPLE,
-    RGB_PINK,
-    RGB_HOT_PINK,
-    RGB_MAGENTA
-  },
-  // Special Colors Group
-  {
-    RGB_CORAL,
-    RGB_CREAM,
-    RGB_MINT,
-    RGB_LUNA
-  }
+  // color0           color1              color2          color3
+  // ===================================================================
+  { RGB_RED,        RGB_CORAL_ORANGE, RGB_ORANGE,   RGB_YELLOW },
+  { RGB_LIME_GREEN, RGB_GREEN,        RGB_SEAFOAM,  RGB_TURQUOISE },
+  { RGB_ICE_BLUE,   RGB_LIGHT_BLUE,   RGB_BLUE,     RGB_ROYAL_BLUE },
+  { RGB_PURPLE,     RGB_PINK,         RGB_HOT_PINK, RGB_MAGENTA },
+  { RGB_CORAL,      RGB_CREAM,        RGB_MINT,     RGB_LUNA },
 };
 
 void Helios::handle_state_color_group_selection()
