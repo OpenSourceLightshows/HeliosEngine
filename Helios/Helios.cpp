@@ -35,7 +35,7 @@ uint8_t Helios::cur_mode;
 uint8_t Helios::selected_base_group;
 uint8_t Helios::num_colors_selected;
 Pattern Helios::pat;
-bool Helios::keepgoing = true;
+bool Helios::keepgoing;
 Colorset Helios::original_colorset;
 
 #ifdef HELIOS_CLI
