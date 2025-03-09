@@ -37,7 +37,7 @@ uint8_t Helios::num_colors_selected;
 Pattern Helios::pat;
 bool Helios::keepgoing;
 uint32_t Helios::last_mode_switch_time;
-Colorset Helios::original_colorset;
+Colorset Helios::new_colorset;
 
 #ifdef HELIOS_CLI
 bool Helios::sleeping;
@@ -416,9 +416,9 @@ void Helios::handle_on_menu(uint8_t mag, bool past)
       menu_selection = 0;
       num_colors_selected = 0;
       // Store original colorset before clearing
-      original_colorset = pat.colorset();
+      new_colorset = pat.colorset();
       // Clear existing colors in pattern
-      pat.colorset().clear();
+      new_colorset.clear();
 #if ALTERNATIVE_HSV_RGB == 1
       // use the nice hue to rgb rainbow
       g_hsv_rgb_alg = HSV_TO_RGB_RAINBOW;
@@ -467,41 +467,13 @@ struct ColorsMenuData {
 
 // array of colors for selection
 static const ColorsMenuData color_menu_data[5] = {
-  // Red/Orange Group
-  {
-    RGB_RED,
-    RGB_CORAL_ORANGE,
-    RGB_ORANGE,
-    RGB_YELLOW
-  },
-  // Green Group
-  {
-    RGB_LIME_GREEN,
-    RGB_GREEN,
-    RGB_SEAFOAM,
-    RGB_TURQUOISE
-  },
-  // Blue Group
-  {
-    RGB_ICE_BLUE,
-    RGB_LIGHT_BLUE,
-    RGB_BLUE,
-    RGB_ROYAL_BLUE
-  },
-  // Purple/Pink Group
-  {
-    RGB_PURPLE,
-    RGB_PINK,
-    RGB_HOT_PINK,
-    RGB_MAGENTA
-  },
-  // Special Colors Group
-  {
-    RGB_CORAL,
-    RGB_CREAM,
-    RGB_MINT,
-    RGB_LUNA
-  }
+  // color0           color1              color2          color3
+  // ===================================================================
+  { RGB_RED,        RGB_CORAL_ORANGE, RGB_ORANGE,   RGB_YELLOW },
+  { RGB_LIME_GREEN, RGB_GREEN,        RGB_SEAFOAM,  RGB_TURQUOISE },
+  { RGB_ICE_BLUE,   RGB_LIGHT_BLUE,   RGB_BLUE,     RGB_ROYAL_BLUE },
+  { RGB_PURPLE,     RGB_PINK,         RGB_HOT_PINK, RGB_MAGENTA },
+  { RGB_CORAL,      RGB_CREAM,        RGB_MINT,     RGB_LUNA },
 };
 
 void Helios::handle_state_color_group_selection()
@@ -520,12 +492,12 @@ void Helios::handle_state_color_group_selection()
     switch (menu_selection) {
       case 0:  // selected blank
         // add blank to set
-        pat.colorset().addColor(RGB_OFF);
+        new_colorset.addColor(RGB_OFF);
         num_colors_selected++;
         break;
       case 1:  // selected white
         // adds white
-        pat.colorset().addColor(RGB_WHITE);
+        new_colorset.addColor(RGB_WHITE);
         num_colors_selected++;
         break;
       default:  // 2-6 (color quadrants)
@@ -537,6 +509,8 @@ void Helios::handle_state_color_group_selection()
 
     // If we've selected enough colors, save and exit
     if (num_colors_selected >= NUM_COLOR_SLOTS) {
+      // Restore original colorset if no colors were selected
+      pat.setColorset(new_colorset);
       save_cur_mode();
 #if ALTERNATIVE_HSV_RGB == 1
       // restore hsv to rgb algorithm type, done color selection
@@ -585,22 +559,22 @@ void Helios::handle_state_color_group_selection()
     show_selection(RGB_WHITE_BRI_LOW);
   }
 
-   // If the user is on the blank option (menu_selection == 0) and holding, flash red to indicate they can save with current colors
-  if (Button::holdPressing() && menu_selection == 0) {
-    // flash red to indicate save action is available
-    Led::strobe(150, 150, RGB_RED_BRI_LOW, RGB_OFF);
-  }
-
-  if (Button::onHoldClick() && menu_selection == 0) {
-    cur_state = STATE_MODES;
-    if (num_colors_selected == 0) {
-      // Restore original colorset if no colors were selected
-      pat.colorset() = original_colorset;
-    } else {
-      // Save with current colors if at least one color is selected
-      save_cur_mode();
+  if (menu_selection == 0) {
+    // If the user is on the blank option (menu_selection == 0) and holding, flash red to indicate they can save with current colors
+    if (Button::holdPressing()) {
+        // flash red to indicate save action is available
+      Led::strobe(150, 150, RGB_RED_BRI_LOW, RGB_OFF);
     }
-    num_colors_selected = 0;
+
+    if (Button::onHoldClick()) {
+      cur_state = STATE_MODES;
+      if (num_colors_selected > 0) {
+        pat.setColorset(new_colorset);
+        // Save with current colors if at least one color is selected
+        save_cur_mode();
+      }
+      num_colors_selected = 0;
+    }
   }
 }
 
@@ -619,11 +593,13 @@ void Helios::handle_state_color_variant_selection()
 
   if (Button::onLongClick()) {
     // Save the color and increment counter
-    pat.colorset().addColor(selected_color);
+    new_colorset.addColor(selected_color);
     num_colors_selected++;
 
     // If we've selected enough colors, save and exit
     if (num_colors_selected >= NUM_COLOR_SLOTS) {
+      // Restore original colorset if no colors were selected
+      pat.setColorset(new_colorset);
       save_cur_mode();
 #if ALTERNATIVE_HSV_RGB == 1
       // restore hsv to rgb algorithm type, done color selection

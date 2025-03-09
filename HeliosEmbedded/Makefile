@@ -58,7 +58,7 @@ ifeq ($(OS),Windows_NT) # Windows
 else ifeq ($(OS),Darwin)
     AVRDUDE_PROGRAMMER = stk500v1
     AVRDUDE_BAUDRATE = 19200
-    AVRDUDE_PORT = /dev/tty.usbmodem21401
+    AVRDUDE_PORT = /dev/tty.usbmodem21301
 endif
 
 AVRDUDE_FLAGS = -C$(AVRDUDE_CONF) \

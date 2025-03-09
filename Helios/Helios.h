@@ -93,7 +93,7 @@ private:
   static Pattern pat;
   static bool keepgoing;
   static uint32_t last_mode_switch_time;
-  static Colorset original_colorset;  // Store original colorset when entering color selection
+  static Colorset new_colorset;
 
 #ifdef HELIOS_CLI
   static bool sleeping;  // Only used in CLI mode
