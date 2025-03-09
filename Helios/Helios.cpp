@@ -563,22 +563,24 @@ void Helios::handle_state_color_group_selection()
     show_selection(RGB_WHITE_BRI_LOW);
   }
 
-   // If the user is on the blank option (menu_selection == 0) and holding, flash red to indicate they can save with current colors
-  if (Button::holdPressing() && menu_selection == 0) {
-    // flash red to indicate save action is available
-    Led::strobe(150, 150, RGB_RED_BRI_LOW, RGB_OFF);
-  }
-
-  if (Button::onHoldClick() && menu_selection == 0) {
-    cur_state = STATE_MODES;
-    if (num_colors_selected == 0) {
-      // Restore original colorset if no colors were selected
-      pat.colorset() = original_colorset;
-    } else {
-      // Save with current colors if at least one color is selected
-      save_cur_mode();
+  if (menu_selection == 0) {
+    // If the user is on the blank option (menu_selection == 0) and holding, flash red to indicate they can save with current colors
+    if (Button::holdPressing()) {
+        // flash red to indicate save action is available
+      Led::strobe(150, 150, RGB_RED_BRI_LOW, RGB_OFF);
     }
-    num_colors_selected = 0;
+
+    if (Button::onHoldClick()) {
+      cur_state = STATE_MODES;
+      if (num_colors_selected == 0) {
+        // Restore original colorset if no colors were selected
+        pat.colorset() = original_colorset;
+      } else {
+        // Save with current colors if at least one color is selected
+        save_cur_mode();
+      }
+      num_colors_selected = 0;
+    }
   }
 }
 
