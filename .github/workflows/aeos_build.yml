@@ -1,4 +1,4 @@
-name: Helios Build
+name: Aeos Build
 
 on:
   push:
