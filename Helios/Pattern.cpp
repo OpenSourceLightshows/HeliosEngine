@@ -88,7 +88,12 @@ void Pattern::init()
 
   // Initialize morphing duration pattern
   if (isMorphDuration()) {
-    m_currentOnTime = m_args.on_dur; // Start with minimum on-time
+    // Ensure minimum values for on and off duration
+    if (m_args.on_dur < 1) m_args.on_dur = 1;
+    if (m_args.off_dur < 1) m_args.off_dur = 1;
+
+    // Initialize with the starting on_time
+    m_currentOnTime = m_args.on_dur;
     m_morphDirection = 1; // Start in increasing direction
   }
 }
@@ -210,27 +215,38 @@ void Pattern::onBlinkOff()
 
   // Check if this is a morphing duration pattern
   if (isMorphDuration()) {
-    // Update the morphing logic at the end of each cycle
-    uint8_t min_on_time = m_args.on_dur;
-    uint8_t max_on_time = m_args.gap_dur;
-    uint8_t morph_speed = m_args.morph_speed;
+    // Calculate the total period (on + off duration)
+    uint8_t total_period = m_args.on_dur + m_args.off_dur;
+    uint8_t min_on_time = 1; // Minimum on-time is 1ms to ensure LED is visible
+    uint8_t max_on_time = total_period - 1; // Maximum on-time (keep at least 1ms off-time)
+
+    // Calculate update rate based on morph_speed
+    // Lower values of morph_speed mean fewer updates (slower morphing)
+    // With morph_speed=1, we update every 100 ticks (10 seconds for full cycle with ~100 steps)
+    // With morph_speed=10, we update every 10 ticks (1 second for full cycle)
+    uint8_t update_rate = 110 - (m_args.morph_speed * 10);
+    if (update_rate < 1) update_rate = 1; // Safety check
+
+    if (Time::getCurtime() % update_rate != 0) {
+      return; // Only update on certain ticks based on morph_speed
+    }
 
     if (m_morphDirection == 1) {
-      // Currently increasing
-      m_currentOnTime += morph_speed;
-      if (m_currentOnTime >= max_on_time) {
-        m_currentOnTime = max_on_time;
-        m_morphDirection = 0; // Start decreasing
+      // Currently increasing on-time
+      if (m_currentOnTime < max_on_time) {
+        m_currentOnTime++;
+      } else {
+        // Reached maximum, start decreasing
+        m_morphDirection = 0;
       }
     } else {
-      // Currently decreasing
-      if (m_currentOnTime > min_on_time + morph_speed) {
-        m_currentOnTime -= morph_speed;
+      // Currently decreasing on-time
+      if (m_currentOnTime > min_on_time) {
+        m_currentOnTime--;
       } else {
-        m_currentOnTime = min_on_time;
-        // Completed a full cycle, move to next color
+        // Reached minimum, complete cycle and move to next color
+        m_morphDirection = 1;
         m_colorset.getNext();
-        m_morphDirection = 1; // Start increasing again
       }
     }
   }
@@ -252,7 +268,8 @@ void Pattern::nextState(uint8_t timing)
 {
   // Special case for morphing pattern
   if (isMorphDuration()) {
-    uint8_t total_period = m_args.gap_dur;
+    // Calculate the total period (on + off duration)
+    uint8_t total_period = m_args.on_dur + m_args.off_dur;
 
     if (m_state == STATE_BLINK_ON) {
       // When in ON state, use current morphing on-time
@@ -260,7 +277,8 @@ void Pattern::nextState(uint8_t timing)
     } else {
       // When in OFF state, calculate off time from total period
       uint8_t off_time = total_period - m_currentOnTime;
-      m_blinkTimer.init(off_time > 0 ? off_time : 1); // Ensure at least 1ms
+      if (off_time < 1) off_time = 1; // Ensure at least 1ms off-time
+      m_blinkTimer.init(off_time);
     }
   } else {
     // Normal pattern behavior

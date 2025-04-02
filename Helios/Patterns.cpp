@@ -31,7 +31,7 @@ void Patterns::make_default(uint8_t index, Pattern &pat)
   }
   PatternArgs args;
   switch (index) {
-    case 0:  // Rainbow Flow
+    case 0:  // Rainbow Flow - Using morphing duration pattern
       args.on_dur = 1;
       args.off_dur = 10;
       args.morph_speed = 1;
