@@ -87,7 +87,7 @@ private:
   static Flags global_flags;
   static uint8_t menu_selection;
   static uint8_t cur_mode;
-  // the quadrant that was selected in color select
+  // the group that was selected in color select
   static uint8_t selected_base_group;
   static uint8_t num_colors_selected;  // Track number of colors selected in current session
   static Pattern pat;
