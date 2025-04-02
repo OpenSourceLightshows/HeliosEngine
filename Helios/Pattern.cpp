@@ -92,8 +92,12 @@ void Pattern::init()
     if (m_args.on_dur < 1) m_args.on_dur = 1;
     if (m_args.off_dur < 1) m_args.off_dur = 1;
 
+    // Start with a more visible on-time to avoid the LED being barely visible at start
+    uint8_t total_period = m_args.on_dur + m_args.off_dur;
+    uint8_t starting_on_time = (total_period / 3) > 1 ? (total_period / 3) : m_args.on_dur;
+
     // Initialize with the starting on_time
-    m_currentOnTime = m_args.on_dur;
+    m_currentOnTime = starting_on_time;
     m_morphDirection = 1; // Start in increasing direction
   }
 }
@@ -222,31 +226,36 @@ void Pattern::onBlinkOff()
 
     // Calculate update rate based on morph_speed
     // Lower values of morph_speed mean fewer updates (slower morphing)
-    // With morph_speed=1, we update every 100 ticks (10 seconds for full cycle with ~100 steps)
-    // With morph_speed=10, we update every 10 ticks (1 second for full cycle)
-    uint8_t update_rate = 110 - (m_args.morph_speed * 10);
+    // With morph_speed=1, we update roughly every 50 ticks
+    // With morph_speed=10, we update roughly every 5 ticks
+    uint8_t update_rate = 55 - (m_args.morph_speed * 5);
     if (update_rate < 1) update_rate = 1; // Safety check
 
-    if (Time::getCurtime() % update_rate != 0) {
-      return; // Only update on certain ticks based on morph_speed
-    }
+    // Start morphing immediately when pattern begins
+    // Then continue at the calculated rate
+    static uint32_t last_update_time = 0;
+    uint32_t current_time = Time::getCurtime();
 
-    if (m_morphDirection == 1) {
-      // Currently increasing on-time
-      if (m_currentOnTime < max_on_time) {
-        m_currentOnTime++;
+    if (current_time - last_update_time >= update_rate) {
+      last_update_time = current_time;
+
+      if (m_morphDirection == 1) {
+        // Currently increasing on-time
+        if (m_currentOnTime < max_on_time) {
+          m_currentOnTime++;
+        } else {
+          // Reached maximum, start decreasing
+          m_morphDirection = 0;
+        }
       } else {
-        // Reached maximum, start decreasing
-        m_morphDirection = 0;
-      }
-    } else {
-      // Currently decreasing on-time
-      if (m_currentOnTime > min_on_time) {
-        m_currentOnTime--;
-      } else {
-        // Reached minimum, complete cycle and move to next color
-        m_morphDirection = 1;
-        m_colorset.getNext();
+        // Currently decreasing on-time
+        if (m_currentOnTime > min_on_time) {
+          m_currentOnTime--;
+        } else {
+          // Reached minimum, complete cycle and move to next color
+          m_morphDirection = 1;
+          m_colorset.getNext();
+        }
       }
     }
   }
