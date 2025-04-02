@@ -38,21 +38,23 @@ static void printState(PatternState state)
 #endif
 
 Pattern::Pattern(uint8_t onDur, uint8_t offDur, uint8_t gap,
-          uint8_t dash, uint8_t group, uint8_t blend) :
-  m_args(onDur, offDur, gap, dash, group, blend),
+          uint8_t dash, uint8_t group, uint8_t blend, uint8_t morph) :
+  m_args(onDur, offDur, gap, dash, group, blend, morph),
   m_patternFlags(0),
   m_colorset(),
   m_groupCounter(0),
   m_state(STATE_BLINK_ON),
   m_blinkTimer(),
   m_cur(),
-  m_next()
+  m_next(),
+  m_currentOnTime(0),
+  m_morphDirection(1)
 {
 }
 
 Pattern::Pattern(const PatternArgs &args) :
   Pattern(args.on_dur, args.off_dur, args.gap_dur,
-      args.dash_dur, args.group_size, args.blend_speed)
+      args.dash_dur, args.group_size, args.blend_speed, args.morph_speed)
 {
 }
 
@@ -66,21 +68,28 @@ void Pattern::init()
 
   // the default state to begin with
   m_state = STATE_BLINK_ON;
+
   // if a dash is present then always start with the dash because
   // it consumes the first color in the colorset
-  if (m_args.dash_dur > 0) {
+  if (m_args.dash_dur > 0 && !isMorphDuration()) {
     m_state = STATE_BEGIN_DASH;
   }
   // if there's no on duration or dash duration the led is just disabled
   if ((!m_args.on_dur && !m_args.dash_dur) || !m_colorset.numColors()) {
     m_state = STATE_DISABLED;
   }
-  m_groupCounter = m_args.group_size ? m_args.group_size : (m_colorset.numColors() - (m_args.dash_dur != 0));
+  m_groupCounter = m_args.group_size ? m_args.group_size : (m_colorset.numColors() - (m_args.dash_dur != 0 && !isMorphDuration()));
 
-  if (m_args.blend_speed > 0) {
+  if (isBlend()) {
     // convert current/next colors to HSV but only if we are doing a blend
     m_cur = m_colorset.getNext();
     m_next = m_colorset.getNext();
+  }
+
+  // Initialize morphing duration pattern
+  if (isMorphDuration()) {
+    m_currentOnTime = m_args.on_dur; // Start with minimum on-time
+    m_morphDirection = 1; // Start in increasing direction
   }
 }
 
@@ -183,6 +192,14 @@ void Pattern::onBlinkOn()
     blendBlinkOn();
     return;
   }
+
+  // Check if this is a morphing duration pattern
+  if (isMorphDuration()) {
+    // Just use the current color without advancing to the next one yet
+    Led::set(m_colorset.cur());
+    return;
+  }
+
   Led::set(m_colorset.getNext());
 }
 
@@ -190,6 +207,33 @@ void Pattern::onBlinkOff()
 {
   PRINT_STATE(STATE_OFF);
   Led::clear();
+
+  // Check if this is a morphing duration pattern
+  if (isMorphDuration()) {
+    // Update the morphing logic at the end of each cycle
+    uint8_t min_on_time = m_args.on_dur;
+    uint8_t max_on_time = m_args.gap_dur;
+    uint8_t morph_speed = m_args.morph_speed;
+
+    if (m_morphDirection == 1) {
+      // Currently increasing
+      m_currentOnTime += morph_speed;
+      if (m_currentOnTime >= max_on_time) {
+        m_currentOnTime = max_on_time;
+        m_morphDirection = 0; // Start decreasing
+      }
+    } else {
+      // Currently decreasing
+      if (m_currentOnTime > min_on_time + morph_speed) {
+        m_currentOnTime -= morph_speed;
+      } else {
+        m_currentOnTime = min_on_time;
+        // Completed a full cycle, move to next color
+        m_colorset.getNext();
+        m_morphDirection = 1; // Start increasing again
+      }
+    }
+  }
 }
 
 void Pattern::beginGap()
@@ -206,7 +250,23 @@ void Pattern::beginDash()
 
 void Pattern::nextState(uint8_t timing)
 {
-  m_blinkTimer.init(timing);
+  // Special case for morphing pattern
+  if (isMorphDuration()) {
+    uint8_t total_period = m_args.gap_dur;
+
+    if (m_state == STATE_BLINK_ON) {
+      // When in ON state, use current morphing on-time
+      m_blinkTimer.init(m_currentOnTime);
+    } else {
+      // When in OFF state, calculate off time from total period
+      uint8_t off_time = total_period - m_currentOnTime;
+      m_blinkTimer.init(off_time > 0 ? off_time : 1); // Ensure at least 1ms
+    }
+  } else {
+    // Normal pattern behavior
+    m_blinkTimer.init(timing);
+  }
+
   m_state = (PatternState)(m_state + 1);
 }
 
