@@ -34,7 +34,7 @@ void Patterns::make_default(uint8_t index, Pattern &pat)
     case 0:  // Rainbow Flow - Using morphing duration pattern
       args.on_dur = 1;
       args.off_dur = 10;
-      args.morph_speed = 1;
+      args.morph_speed = 255;
       break;
     case 1:  // Ghostly
       args.on_dur = 1;
@@ -107,7 +107,7 @@ void Patterns::make_pattern(PatternID id, Pattern &pat)
   case PATTERN_MORPH_DURATION:
     args.on_dur = 1;
     args.off_dur = 10;
-    args.morph_speed = 1;
+    args.morph_speed = 255;
     break;
 
   case PATTERN_DASH_DOPS:

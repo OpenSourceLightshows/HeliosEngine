@@ -141,6 +141,8 @@ protected:
   uint8_t m_currentOnTime;
   // morphing direction (1 = increasing, 0 = decreasing)
   uint8_t m_morphDirection;
+  // last time the morph was updated
+  uint32_t m_lastMorphUpdateTime;
 };
 
 #endif

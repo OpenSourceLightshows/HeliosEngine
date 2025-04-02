@@ -48,7 +48,8 @@ Pattern::Pattern(uint8_t onDur, uint8_t offDur, uint8_t gap,
   m_cur(),
   m_next(),
   m_currentOnTime(0),
-  m_morphDirection(1)
+  m_morphDirection(1),
+  m_lastMorphUpdateTime(0)
 {
 }
 
@@ -92,13 +93,12 @@ void Pattern::init()
     if (m_args.on_dur < 1) m_args.on_dur = 1;
     if (m_args.off_dur < 1) m_args.off_dur = 1;
 
-    // Start with a more visible on-time to avoid the LED being barely visible at start
-    uint8_t total_period = m_args.on_dur + m_args.off_dur;
-    uint8_t starting_on_time = (total_period / 3) > 1 ? (total_period / 3) : m_args.on_dur;
-
-    // Initialize with the starting on_time
-    m_currentOnTime = starting_on_time;
+    // Start with the minimum on-time
+    m_currentOnTime = m_args.on_dur;
     m_morphDirection = 1; // Start in increasing direction
+
+    // Reset the last update time to ensure immediate update
+    m_lastMorphUpdateTime = 0;
   }
 }
 
@@ -221,23 +221,21 @@ void Pattern::onBlinkOff()
   if (isMorphDuration()) {
     // Calculate the total period (on + off duration)
     uint8_t total_period = m_args.on_dur + m_args.off_dur;
-    uint8_t min_on_time = 1; // Minimum on-time is 1ms to ensure LED is visible
-    uint8_t max_on_time = total_period - 1; // Maximum on-time (keep at least 1ms off-time)
+    uint8_t min_on_time = m_args.on_dur;
+    uint8_t max_on_time = total_period - 1; // Keep at least 1ms off-time
 
-    // Calculate update rate based on morph_speed
-    // Lower values of morph_speed mean fewer updates (slower morphing)
-    // With morph_speed=1, we update roughly every 50 ticks
-    // With morph_speed=10, we update roughly every 5 ticks
-    uint8_t update_rate = 55 - (m_args.morph_speed * 5);
-    if (update_rate < 1) update_rate = 1; // Safety check
+    // Get morph speed directly as milliseconds between updates
+    // Higher value = slower morphing (more milliseconds between steps)
+    // Lower value = faster morphing (fewer milliseconds between steps)
+    // Min value of 1 to avoid division by zero
+    uint32_t step_delay = m_args.morph_speed > 0 ? m_args.morph_speed : 1;
 
-    // Start morphing immediately when pattern begins
-    // Then continue at the calculated rate
-    static uint32_t last_update_time = 0;
+    // Get current time
     uint32_t current_time = Time::getCurtime();
 
-    if (current_time - last_update_time >= update_rate) {
-      last_update_time = current_time;
+    // Update the morphing state if enough time has passed
+    if (current_time - m_lastMorphUpdateTime >= step_delay) {
+      m_lastMorphUpdateTime = current_time;
 
       if (m_morphDirection == 1) {
         // Currently increasing on-time
