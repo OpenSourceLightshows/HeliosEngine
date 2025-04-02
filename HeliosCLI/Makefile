@@ -2,7 +2,7 @@
 .SUFFIXES:
 
 # List all make targets which are not filenames
-.PHONY: all tests clean pngs bmps clean_storage
+.PHONY: all tests clean pngs bmps clean_storage coverage
 
 # compiler tool definitions
 CC=g++
@@ -12,7 +12,19 @@ MAKE=make
 RM=rm -rf
 RANLIB=ranlib
 
+# Default flags
 CFLAGS=-O2 -g -Wall -std=c++11
+
+# Define coverage flag variable (empty by default)
+COVERAGE_FLAGS=
+
+# Check if coverage is requested
+ifeq ($(COVERAGE),1)
+    # Modified coverage flags for compatibility with both GCC and Clang
+    COVERAGE_FLAGS=-fprofile-arcs -ftest-coverage
+    CFLAGS=-g -O0 -Wall -std=c++11 $(COVERAGE_FLAGS)
+    LIBS+=-lgcov
+endif
 
 # compiler defines
 DEFINES=\
@@ -48,6 +60,10 @@ LLIBS=\
 # MUST have LLIBS BEFORE the standard libraries
 LIBS=\
 	$(LLIBS) \
+
+# Link with gcov library if coverage is enabled
+ifeq ($(COVERAGE),1)
+endif
 
 # source files
 # local source files first, other sources after
@@ -89,7 +105,7 @@ tests: $(TESTS)
 
 # target for vortex lib
 helios: compute_version $(DEPS)
-	$(CC) $(CFLAGS) $(DEPS) -o $@ $(LLIBS)
+	$(CC) $(CFLAGS) $(DEPS) -o $@ $(LLIBS) $(LIBS)
 
 # catch-all make target to generate .o and .d files
 %.o: %.cpp
@@ -108,6 +124,20 @@ FORCE:
 # generic clean target
 clean:
 	@$(RM) $(DFILES) $(OBJS) $(TARGETS) $(TESTS)
+	@find . -name "*.gcda" -delete
+	@find . -name "*.gcno" -delete
+	@find ../Helios -name "*.gcda" -delete
+	@find ../Helios -name "*.gcno" -delete
+	@$(RM) ../tests/coverage
+
+# Coverage related targets
+coverage:
+	@echo "Generating code coverage report..."
+	@mkdir -p ../tests/coverage
+	@lcov --capture --directory . --directory ../Helios --output-file ../tests/coverage/coverage.info
+	@lcov --remove ../tests/coverage/coverage.info '/usr/include/*' --output-file ../tests/coverage/coverage.info
+	@genhtml ../tests/coverage/coverage.info --output-directory ../tests/coverage
+	@echo "Code coverage report generated in ../tests/coverage/"
 
 compute_version:
 	$(eval LATEST_TAG ?= $(shell git fetch --depth=1 origin +refs/tags/*:refs/tags/* &> /dev/null && git tag --list | sort -V | tail -n1))

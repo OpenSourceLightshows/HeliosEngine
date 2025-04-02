@@ -15,7 +15,7 @@ for arg in "$@"
 do
   if [ "$arg" == "-v" ]; then
     VALGRIND=
-    VERBOSE=1
+    # VERBOSE=1
   fi
   if [ "$arg" == "-n" ]; then
     NOMAKE=1
@@ -25,7 +25,7 @@ do
   fi
   if [ "$arg" == "-a" ]; then
     AUDIT=1
-    VERBOSE=1
+    # VERBOSE=1
     VALGRIND=
   fi
   if [[ $arg =~ ^-t=([0-9]*)$ ]]; then
@@ -34,7 +34,7 @@ do
 done
 
 function run_tests() {
-  PROJECT="tests"
+  PROJECT="tests/tests"
 
   ALLSUCCES=1
 
@@ -76,7 +76,7 @@ function run_tests() {
     INPUT="$(grep "Input=" $FILE | cut -d= -f2 | tr -d '\n' | tr -d '\r')"
     BRIEF="$(grep "Brief=" $FILE | cut -d= -f2 | tr -d '\n' | tr -d '\r')"
     ARGS="$(grep "Args=" $FILE | cut -d= -f2 | tr -d '\n' | tr -d '\r')"
-    TESTNUM="$(echo $FILE | cut -d/ -f2 | cut -d_ -f1 | cut -d/ -f2)"
+    TESTNUM="$(basename $FILE | cut -d_ -f1)"
     TESTNUM=$((10#$TESTNUM))
     TESTCOUNT=$((TESTCOUNT + 1))
     echo -e -n "\e[33mRunning test ($TESTCOUNT/$NUMFILES) [\e[97m$BRIEF\e[33m] "
