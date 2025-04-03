@@ -228,22 +228,22 @@ void Pattern::onBlinkOff()
     // Get current time
     uint32_t current_time = Time::getCurtime();
 
-   // Update the morphing state if enough time has passed
-  if (current_time - m_lastMorphUpdateTime >= step_delay) {
-    m_lastMorphUpdateTime = current_time;
+    // Update the morphing state if enough time has passed
+    if (current_time - m_lastMorphUpdateTime >= step_delay) {
+      m_lastMorphUpdateTime = current_time;
 
-    int next = m_currentOnTime + (m_morphDirection ? 1 : -1);
-    if (next > max_on_time) {
-      m_currentOnTime = max_on_time;
-      m_morphDirection = 0;
-    } else if (next < min_on_time) {
-      m_currentOnTime = min_on_time;
-      m_morphDirection = 1;
-      m_colorset.getNext();
-    } else {
-      m_currentOnTime = next;
+      int next = m_currentOnTime + (m_morphDirection ? 1 : -1);
+      if (next > max_on_time) {
+        m_currentOnTime = max_on_time;
+        m_morphDirection = 0;
+      } else if (next < min_on_time) {
+        m_currentOnTime = min_on_time;
+        m_morphDirection = 1;
+        m_colorset.getNext();
+      } else {
+        m_currentOnTime = next;
+      }
     }
-  }
   }
 }
 
