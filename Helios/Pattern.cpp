@@ -90,7 +90,7 @@ void Pattern::init()
   if (isMorphDuration()) {
     // Start with the minimum on-time
     m_currentOnTime = m_args.on_dur;
-    m_morphDirection = 1; // Start in increasing direction
+    m_morphDirection = 0; // Start in increasing direction
 
     // Reset the last update time to ensure immediate update
     m_lastMorphUpdateTime = 0;
