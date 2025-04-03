@@ -114,29 +114,3 @@ jobs:
         with:
           name: embedded-firmware
           path: HeliosEmbedded/embedded-firmware.zip
-
-  wasm:
-    needs: [setup, build, tests, embedded]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout current repository
-        uses: actions/checkout@v4
-      - name: Update Package Lists
-        run: sudo apt-get update
-      - name: Install Emscripten
-        run: |
-          sudo apt install -y cmake python3
-          git clone https://github.com/emscripten-core/emsdk.git
-          cd emsdk
-          ./emsdk install latest
-          ./emsdk activate latest
-        working-directory: HeliosLib
-      - name: Build Webassembly
-        run: |
-          source ./emsdk/emsdk_env.sh
-          export HELIOS_VERSION_MAJOR=${{ needs.setup.outputs.helios_version_major }}
-          export HELIOS_VERSION_MINOR=${{ needs.setup.outputs.helios_version_minor }}
-          export HELIOS_BUILD_NUMBER=${{ needs.setup.outputs.helios_build_number }}
-          export HELIOS_VERSION_NUMBER=${{ needs.setup.outputs.helios_version_number }}
-          make -j wasm
-        working-directory: HeliosLib
