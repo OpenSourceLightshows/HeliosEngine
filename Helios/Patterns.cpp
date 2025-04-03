@@ -32,10 +32,9 @@ void Patterns::make_default(uint8_t index, Pattern &pat)
   PatternArgs args;
   switch (index) {
     case 0:  // Rainbow Flow - Using morphing duration pattern
-      args.on_dur = 1;      // Minimum on time
-      args.off_dur = 15;    // Remaining time in period
-      args.morph_dur = 4;   // Very smooth morphing (smaller values = smoother)
-      args.morph_step = 100; // Small step size for smoother transitions
+      args.on_dur = 1;
+      args.off_dur = 15;
+      args.morph_dur = 255;
       break;
     case 1:  // Ghostly
       args.on_dur = 1;
@@ -106,10 +105,9 @@ void Patterns::make_pattern(PatternID id, Pattern &pat)
     break;
 
   case PATTERN_MORPH_DURATION:
-    args.on_dur = 1;      // Minimum on time
-    args.off_dur = 15;    // Remaining time in period
-    args.morph_dur = 4;   // Very smooth morphing (smaller values = smoother)
-    args.morph_step = 10; // Small step size for smoother transitions
+    args.on_dur = 1;
+    args.off_dur = 15;
+    args.morph_dur = 255;
     break;
 
   case PATTERN_DASH_DOPS:

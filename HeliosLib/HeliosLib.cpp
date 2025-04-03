@@ -127,8 +127,7 @@ EMSCRIPTEN_BINDINGS(Vortex) {
     .property("dash_dur", &PatternArgs::dash_dur)
     .property("group_size", &PatternArgs::group_size)
     .property("blend_speed", &PatternArgs::blend_speed)
-    .property("morph_dur", &PatternArgs::morph_dur)
-    .property("morph_step", &PatternArgs::morph_step);
+    .property("morph_dur", &PatternArgs::morph_dur);
 
   // pattern class
   class_<Pattern>("Pattern")

@@ -8,8 +8,8 @@
 
 // for specifying things like default args
 struct PatternArgs {
-  PatternArgs(uint8_t on = 0, uint8_t off = 0, uint8_t gap = 0, uint8_t dash = 0, uint8_t group = 0, uint8_t blend = 0, uint8_t morph = 0, uint8_t morphStep = 0) :
-    on_dur(on), off_dur(off), gap_dur(gap), dash_dur(dash), group_size(group), blend_speed(blend), morph_dur(morph), morph_step(morphStep) {}
+  PatternArgs(uint8_t on = 0, uint8_t off = 0, uint8_t gap = 0, uint8_t dash = 0, uint8_t group = 0, uint8_t blend = 0, uint8_t morph = 0) :
+    on_dur(on), off_dur(off), gap_dur(gap), dash_dur(dash), group_size(group), blend_speed(blend), morph_dur(morph) {}
   uint8_t on_dur;
   uint8_t off_dur;
   uint8_t gap_dur;
@@ -17,7 +17,6 @@ struct PatternArgs {
   uint8_t group_size;
   uint8_t blend_speed;
   uint8_t morph_dur;
-  uint8_t morph_step;
 };
 
 class Pattern
@@ -144,12 +143,6 @@ protected:
   uint8_t m_morphDirection;
   // last time the morph was updated
   uint32_t m_lastMorphUpdateTime;
-  // Fixed-point representation for smoother morphing (8.8 format)
-  uint16_t m_currentOnTimeFP;  // Fixed-point current on-time
-  uint16_t m_morphStepFP;      // Fixed-point morphing step size
-
-  // Helper method for updating morph duration
-  void updateMorphDuration();
 };
 
 #endif
