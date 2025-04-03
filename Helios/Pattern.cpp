@@ -55,7 +55,7 @@ Pattern::Pattern(uint8_t onDur, uint8_t offDur, uint8_t gap,
 
 Pattern::Pattern(const PatternArgs &args) :
   Pattern(args.on_dur, args.off_dur, args.gap_dur,
-      args.dash_dur, args.group_size, args.blend_speed, args.morph_speed)
+      args.dash_dur, args.group_size, args.blend_speed, args.morph_dur)
 {
 }
 
@@ -223,7 +223,7 @@ void Pattern::onBlinkOff()
     // Higher value = slower morphing (more milliseconds between steps)
     // Lower value = faster morphing (fewer milliseconds between steps)
     // Min value of 1 to avoid division by zero
-    uint32_t step_delay = m_args.morph_speed > 0 ? m_args.morph_speed : 1;
+    uint32_t step_delay = m_args.morph_dur > 0 ? m_args.morph_dur : 1;
 
     // Get current time
     uint32_t current_time = Time::getCurtime();
