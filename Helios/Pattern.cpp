@@ -88,10 +88,6 @@ void Pattern::init()
 
   // Initialize morphing duration pattern
   if (isMorphDuration()) {
-    // Ensure minimum values for on and off duration
-    if (m_args.on_dur < 1) m_args.on_dur = 1;
-    if (m_args.off_dur < 1) m_args.off_dur = 1;
-
     // Start with the minimum on-time
     m_currentOnTime = m_args.on_dur;
     m_morphDirection = 1; // Start in increasing direction
@@ -232,29 +228,22 @@ void Pattern::onBlinkOff()
     // Get current time
     uint32_t current_time = Time::getCurtime();
 
-    // Update the morphing state if enough time has passed
-    if (current_time - m_lastMorphUpdateTime >= step_delay) {
-      m_lastMorphUpdateTime = current_time;
+   // Update the morphing state if enough time has passed
+  if (current_time - m_lastMorphUpdateTime >= step_delay) {
+    m_lastMorphUpdateTime = current_time;
 
-      if (m_morphDirection == 1) {
-        // Currently increasing on-time
-        if (m_currentOnTime < max_on_time) {
-          m_currentOnTime++;
-        } else {
-          // Reached maximum, start decreasing
-          m_morphDirection = 0;
-        }
-      } else {
-        // Currently decreasing on-time
-        if (m_currentOnTime > min_on_time) {
-          m_currentOnTime--;
-        } else {
-          // Reached minimum, complete cycle and move to next color
-          m_morphDirection = 1;
-          m_colorset.getNext();
-        }
-      }
+    int next = m_currentOnTime + (m_morphDirection ? 1 : -1);
+    if (next > max_on_time) {
+      m_currentOnTime = max_on_time;
+      m_morphDirection = 0;
+    } else if (next < min_on_time) {
+      m_currentOnTime = min_on_time;
+      m_morphDirection = 1;
+      m_colorset.getNext();
+    } else {
+      m_currentOnTime = next;
     }
+  }
   }
 }
 
