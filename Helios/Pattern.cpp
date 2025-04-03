@@ -49,7 +49,9 @@ Pattern::Pattern(uint8_t onDur, uint8_t offDur, uint8_t gap,
   m_next(),
   m_currentOnTime(0),
   m_morphDirection(1),
-  m_lastMorphUpdateTime(0)
+  m_lastMorphUpdateTime(0),
+  m_currentOnTimeFP(0),
+  m_morphStepFP(0)
 {
 }
 
@@ -57,6 +59,8 @@ Pattern::Pattern(const PatternArgs &args) :
   Pattern(args.on_dur, args.off_dur, args.gap_dur,
       args.dash_dur, args.group_size, args.blend_speed, args.morph_dur)
 {
+  // Copy the morph step value which isn't passed to the other constructor
+  m_args.morph_step = args.morph_step;
 }
 
 Pattern::~Pattern()
@@ -91,6 +95,21 @@ void Pattern::init()
     // Start with the minimum on-time
     m_currentOnTime = m_args.on_dur;
     m_morphDirection = 0; // Start in increasing direction
+
+    // Initialize fixed-point values (8.8 format - 8 bits integer, 8 bits fraction)
+    m_currentOnTimeFP = m_args.on_dur << 8; // Convert to fixed-point
+
+    // Calculate step size based on morph_step or morph_dur
+    // If morph_step is specified, use it directly, otherwise calculate from morph_dur
+    if (m_args.morph_step > 0) {
+      m_morphStepFP = m_args.morph_step; // Direct step size
+    } else {
+      // Lower morph_dur = faster morphing (larger step)
+      // Higher morph_dur = slower morphing (smaller step)
+      m_morphStepFP = (m_args.morph_dur > 0) ? (256 / (m_args.morph_dur + 1)) : 256;
+      // Ensure we have at least some movement
+      if (m_morphStepFP < 1) m_morphStepFP = 1;
+    }
 
     // Reset the last update time to ensure immediate update
     m_lastMorphUpdateTime = 0;
@@ -199,7 +218,8 @@ void Pattern::onBlinkOn()
 
   // Check if this is a morphing duration pattern
   if (isMorphDuration()) {
-    // Just use the current color without advancing to the next one yet
+    // Update morphing parameters on every cycle, not just based on time
+    updateMorphDuration();
     Led::set(m_colorset.cur());
     return;
   }
@@ -212,39 +232,7 @@ void Pattern::onBlinkOff()
   PRINT_STATE(STATE_OFF);
   Led::clear();
 
-  // Check if this is a morphing duration pattern
-  if (isMorphDuration()) {
-    // Calculate the total period (on + off duration)
-    uint8_t total_period = m_args.on_dur + m_args.off_dur;
-    uint8_t min_on_time = m_args.on_dur;
-    uint8_t max_on_time = total_period - 1; // Keep at least 1ms off-time
-
-    // Get morph speed directly as milliseconds between updates
-    // Higher value = slower morphing (more milliseconds between steps)
-    // Lower value = faster morphing (fewer milliseconds between steps)
-    // Min value of 1 to avoid division by zero
-    uint32_t step_delay = m_args.morph_dur > 0 ? m_args.morph_dur : 1;
-
-    // Get current time
-    uint32_t current_time = Time::getCurtime();
-
-    // Update the morphing state if enough time has passed
-    if (current_time - m_lastMorphUpdateTime >= step_delay) {
-      m_lastMorphUpdateTime = current_time;
-
-      int next = m_currentOnTime + (m_morphDirection ? 1 : -1);
-      if (next > max_on_time) {
-        m_currentOnTime = max_on_time;
-        m_morphDirection = 0;
-      } else if (next < min_on_time) {
-        m_currentOnTime = min_on_time;
-        m_morphDirection = 1;
-        m_colorset.getNext();
-      } else {
-        m_currentOnTime = next;
-      }
-    }
-  }
+  // No longer need the morphing logic here as it's handled in onBlinkOn
 }
 
 void Pattern::beginGap()
@@ -351,4 +339,45 @@ void Pattern::interpolate(uint8_t &current, const uint8_t next)
     uint8_t step = (current - next) > m_args.blend_speed ? m_args.blend_speed : (current - next);
     current -= step;
   }
+}
+
+// Helper method to update morphing duration values
+void Pattern::updateMorphDuration()
+{
+  uint8_t total_period = m_args.on_dur + m_args.off_dur;
+  uint8_t min_on_time = m_args.on_dur;
+  uint8_t max_on_time = total_period - 1; // Keep at least 1ms off-time
+
+  uint16_t min_fp = min_on_time << 8;
+  uint16_t max_fp = max_on_time << 8;
+
+  // Update fixed-point value
+  if (m_morphDirection) {
+    m_currentOnTimeFP += m_morphStepFP;
+    if (m_currentOnTimeFP >= max_fp) {
+      m_currentOnTimeFP = max_fp;
+      m_morphDirection = 0;
+    }
+  } else {
+    if (m_currentOnTimeFP <= m_morphStepFP) {
+      // Prevent underflow
+      m_currentOnTimeFP = min_fp;
+      m_morphDirection = 1;
+      m_colorset.getNext(); // Advance color at minimum point
+    } else {
+      m_currentOnTimeFP -= m_morphStepFP;
+      if (m_currentOnTimeFP < min_fp) {
+        m_currentOnTimeFP = min_fp;
+        m_morphDirection = 1;
+        m_colorset.getNext();
+      }
+    }
+  }
+
+  // Extract integer portion for actual timing
+  m_currentOnTime = m_currentOnTimeFP >> 8;
+
+  // Safety checks
+  if (m_currentOnTime < min_on_time) m_currentOnTime = min_on_time;
+  if (m_currentOnTime > max_on_time) m_currentOnTime = max_on_time;
 }
