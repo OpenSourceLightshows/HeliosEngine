@@ -69,17 +69,16 @@ void Pattern::init()
 
   // the default state to begin with
   m_state = STATE_BLINK_ON;
-
   // if a dash is present then always start with the dash because
   // it consumes the first color in the colorset
-  if (m_args.dash_dur > 0 && !isMorphDuration()) {
+  if (m_args.dash_dur > 0) {
     m_state = STATE_BEGIN_DASH;
   }
   // if there's no on duration or dash duration the led is just disabled
   if ((!m_args.on_dur && !m_args.dash_dur) || !m_colorset.numColors()) {
     m_state = STATE_DISABLED;
   }
-  m_groupCounter = m_args.group_size ? m_args.group_size : (m_colorset.numColors() - (m_args.dash_dur != 0 && !isMorphDuration()));
+  m_groupCounter = m_args.group_size ? m_args.group_size : (m_colorset.numColors() - (m_args.dash_dur != 0));
 
   if (isBlend()) {
     // convert current/next colors to HSV but only if we are doing a blend
