@@ -296,6 +296,10 @@ void Helios::handle_state_modes()
     }
   }
 
+  // flash red briefly when locked and short clicked
+  if (has_flag(FLAG_LOCKED) && Button::onShortClick()) {
+    Led::set(RGB_RED_BRI_LOW);
+  }
   // check for lock and go back to sleep
   if (has_flag(FLAG_LOCKED) && hasReleased && !Button::onRelease()) {
     enter_sleep();
