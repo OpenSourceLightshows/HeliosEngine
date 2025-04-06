@@ -13,8 +13,7 @@
 !*.atsln
 !*.componentinfo.xml
 !*.cppproj
-!*.github/workflows/aeos_build.yml
-!*.github/workflows/aeos_release.yml
+!*.github/workflows/**
 # Ignore object files, dependency files, and other build artifacts
 *.o
 *.d
