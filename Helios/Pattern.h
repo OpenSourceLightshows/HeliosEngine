@@ -64,7 +64,7 @@ public:
   bool isBlend() const { return m_args.blend_speed > 0; }
 
   // whether fade speed is non 0
-  bool isMorphDuration() const { return m_args.fade_dur > 0; }
+  bool isFade() const { return m_args.fade_dur > 0; }
 
 protected:
   // ==================================
@@ -135,14 +135,14 @@ protected:
   void interpolate(uint8_t &current, const uint8_t next);
 
   // ==================================
-  //  Morph Duration Members
+  //  Fade Duration Members
 
   // current on-time for fadeing duration pattern
   uint8_t m_currentOnTime;
   // fadeing direction (1 = increasing, 0 = decreasing)
   uint8_t m_fadeDirection;
   // last time the fade was updated
-  uint32_t m_lastMorphUpdateTime;
+  uint32_t m_lastFadeUpdateTime;
 };
 
 #endif

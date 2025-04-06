@@ -49,7 +49,7 @@ Pattern::Pattern(uint8_t onDur, uint8_t offDur, uint8_t gap,
   m_next(),
   m_currentOnTime(0),
   m_fadeDirection(0),
-  m_lastMorphUpdateTime(0)
+  m_lastFadeUpdateTime(0)
 {
 }
 
@@ -87,13 +87,13 @@ void Pattern::init()
   }
 
   // Initialize fadeing duration pattern
-  if (isMorphDuration()) {
+  if (isFade()) {
     // Start with the minimum on-time
     m_currentOnTime = m_args.on_dur;
     m_fadeDirection = 0; // Start in increasing direction
 
     // Reset the last update time to ensure immediate update
-    m_lastMorphUpdateTime = 0;
+    m_lastFadeUpdateTime = 0;
   }
 }
 
@@ -198,7 +198,7 @@ void Pattern::onBlinkOn()
   }
 
   // Check if this is a fadeing duration pattern
-  if (isMorphDuration()) {
+  if (isFade()) {
     // Just use the current color without advancing to the next one yet
     Led::set(m_colorset.cur());
     return;
@@ -213,7 +213,7 @@ void Pattern::onBlinkOff()
   Led::clear();
 
   // Check if this is a fadeing duration pattern
-  if (isMorphDuration()) {
+  if (isFade()) {
     // Calculate the total period (on + off duration)
     uint8_t total_period = m_args.on_dur + m_args.off_dur;
     uint8_t min_on_time = m_args.on_dur;
@@ -229,8 +229,8 @@ void Pattern::onBlinkOff()
     uint32_t current_time = Time::getCurtime();
 
     // Update the fadeing state if enough time has passed
-    if (current_time - m_lastMorphUpdateTime >= step_delay) {
-      m_lastMorphUpdateTime = current_time;
+    if (current_time - m_lastFadeUpdateTime >= step_delay) {
+      m_lastFadeUpdateTime = current_time;
 
       int next = m_currentOnTime + (m_fadeDirection ? 1 : -1);
       if (next > max_on_time) {
@@ -262,7 +262,7 @@ void Pattern::beginDash()
 void Pattern::nextState(uint8_t timing)
 {
   // Special case for fadeing pattern
-  if (isMorphDuration()) {
+  if (isFade()) {
     // Calculate the total period (on + off duration)
     uint8_t total_period = m_args.on_dur + m_args.off_dur;
 
