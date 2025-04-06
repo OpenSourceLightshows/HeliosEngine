@@ -25,7 +25,7 @@
 // some internal macros that shouldn't change
 // The number of menus in hue/sat/val selection
 #define NUM_COLORS_PER_GROUP 4
-// the number of menus in quadrant selection
+// the number of menus in group selection
 #define NUM_MENUS_GROUP 8
 
 Helios::State Helios::cur_state;
@@ -439,7 +439,7 @@ void Helios::handle_state_color_selection()
 {
   switch (cur_state) {
     case STATE_COLOR_GROUP_SELECTION:
-      // pick the hue quadrant
+      // pick the hue group
       handle_state_color_group_selection();
       break;
     case STATE_COLOR_VARIANT_SELECTION:
@@ -479,7 +479,7 @@ void Helios::handle_state_color_group_selection()
     menu_selection = (menu_selection + 1) % NUM_MENUS_GROUP;
   }
 
-  uint8_t color_quad = (menu_selection - 2) % 5;  // Now using 5 quadrants
+  uint8_t color_quad = (menu_selection - 2) % 5;  // Now using 5 groups
   if (menu_selection > 6) {
     menu_selection = 0;
   }
@@ -497,7 +497,7 @@ void Helios::handle_state_color_group_selection()
         new_colorset.addColor(RGB_WHITE);
         num_colors_selected++;
         break;
-      default:  // 2-6 (color quadrants)
+      default:  // 2-6 (color groups)
         selected_base_group = color_quad;
         cur_state = STATE_COLOR_VARIANT_SELECTION;
         menu_selection = 0;
@@ -604,7 +604,7 @@ void Helios::handle_state_color_variant_selection()
 #endif
       cur_state = STATE_MODES;
     } else {
-      // Go back to quadrant selection for next color
+      // Go back to group selection for next color
       cur_state = STATE_COLOR_GROUP_SELECTION;
       menu_selection = 0;
     }

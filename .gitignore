@@ -13,6 +13,7 @@
 !*.atsln
 !*.componentinfo.xml
 !*.cppproj
+!*.github/workflows/aeos_build.yml
 
 # Ignore object files, dependency files, and other build artifacts
 *.o
@@ -37,3 +38,5 @@
 
 !**/Makefile
 
+
+!*.test
