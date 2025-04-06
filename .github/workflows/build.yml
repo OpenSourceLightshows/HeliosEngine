@@ -23,8 +23,8 @@ jobs:
         run: |
           # Fetch all tags
           git fetch --depth=1 origin +refs/tags/*:refs/tags/*
-          # Get the latest tag that matches the branch suffix
-          LATEST_TAG=$(git tag --list | sort -V | tail -n1)
+          # Get the latest tag that starts with a number (no prefix)
+          LATEST_TAG=$(git tag --list | grep "^[0-9]" | sort -V | tail -n1)
           if [ -z "$LATEST_TAG" ]; then
             echo "No matching tags found. Setting default version."
             VERSION_MAJOR="0"
