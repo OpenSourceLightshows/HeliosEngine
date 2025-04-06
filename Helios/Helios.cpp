@@ -296,7 +296,6 @@ void Helios::handle_state_modes()
     }
   }
 
-
   // check for lock and go back to sleep
   if (has_flag(FLAG_LOCKED) && hasReleased && !Button::onRelease()) {
     enter_sleep();
