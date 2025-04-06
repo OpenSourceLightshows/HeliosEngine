@@ -38,21 +38,24 @@ static void printState(PatternState state)
 #endif
 
 Pattern::Pattern(uint8_t onDur, uint8_t offDur, uint8_t gap,
-          uint8_t dash, uint8_t group, uint8_t blend) :
-  m_args(onDur, offDur, gap, dash, group, blend),
+          uint8_t dash, uint8_t group, uint8_t blend, uint8_t morph) :
+  m_args(onDur, offDur, gap, dash, group, blend, morph),
   m_patternFlags(0),
   m_colorset(),
   m_groupCounter(0),
   m_state(STATE_BLINK_ON),
   m_blinkTimer(),
   m_cur(),
-  m_next()
+  m_next(),
+  m_currentOnTime(0),
+  m_morphDirection(1),
+  m_lastMorphUpdateTime(0)
 {
 }
 
 Pattern::Pattern(const PatternArgs &args) :
   Pattern(args.on_dur, args.off_dur, args.gap_dur,
-      args.dash_dur, args.group_size, args.blend_speed)
+      args.dash_dur, args.group_size, args.blend_speed, args.morph_dur)
 {
 }
 
@@ -77,10 +80,20 @@ void Pattern::init()
   }
   m_groupCounter = m_args.group_size ? m_args.group_size : (m_colorset.numColors() - (m_args.dash_dur != 0));
 
-  if (m_args.blend_speed > 0) {
+  if (isBlend()) {
     // convert current/next colors to HSV but only if we are doing a blend
     m_cur = m_colorset.getNext();
     m_next = m_colorset.getNext();
+  }
+
+  // Initialize morphing duration pattern
+  if (isMorphDuration()) {
+    // Start with the minimum on-time
+    m_currentOnTime = m_args.on_dur;
+    m_morphDirection = 0; // Start in increasing direction
+
+    // Reset the last update time to ensure immediate update
+    m_lastMorphUpdateTime = 0;
   }
 }
 
@@ -183,6 +196,14 @@ void Pattern::onBlinkOn()
     blendBlinkOn();
     return;
   }
+
+  // Check if this is a morphing duration pattern
+  if (isMorphDuration()) {
+    // Just use the current color without advancing to the next one yet
+    Led::set(m_colorset.cur());
+    return;
+  }
+
   Led::set(m_colorset.getNext());
 }
 
@@ -190,6 +211,40 @@ void Pattern::onBlinkOff()
 {
   PRINT_STATE(STATE_OFF);
   Led::clear();
+
+  // Check if this is a morphing duration pattern
+  if (isMorphDuration()) {
+    // Calculate the total period (on + off duration)
+    uint8_t total_period = m_args.on_dur + m_args.off_dur;
+    uint8_t min_on_time = m_args.on_dur;
+    uint8_t max_on_time = total_period - 1; // Keep at least 1ms off-time
+
+    // Get morph speed directly as milliseconds between updates
+    // Higher value = slower morphing (more milliseconds between steps)
+    // Lower value = faster morphing (fewer milliseconds between steps)
+    // Min value of 1 to avoid division by zero
+    uint32_t step_delay = m_args.morph_dur > 0 ? m_args.morph_dur : 1;
+
+    // Get current time
+    uint32_t current_time = Time::getCurtime();
+
+    // Update the morphing state if enough time has passed
+    if (current_time - m_lastMorphUpdateTime >= step_delay) {
+      m_lastMorphUpdateTime = current_time;
+
+      int next = m_currentOnTime + (m_morphDirection ? 1 : -1);
+      if (next > max_on_time) {
+        m_currentOnTime = max_on_time;
+        m_morphDirection = 0;
+      } else if (next < min_on_time) {
+        m_currentOnTime = min_on_time;
+        m_morphDirection = 1;
+        m_colorset.getNext();
+      } else {
+        m_currentOnTime = next;
+      }
+    }
+  }
 }
 
 void Pattern::beginGap()
@@ -206,7 +261,25 @@ void Pattern::beginDash()
 
 void Pattern::nextState(uint8_t timing)
 {
-  m_blinkTimer.init(timing);
+  // Special case for morphing pattern
+  if (isMorphDuration()) {
+    // Calculate the total period (on + off duration)
+    uint8_t total_period = m_args.on_dur + m_args.off_dur;
+
+    if (m_state == STATE_BLINK_ON) {
+      // When in ON state, use current morphing on-time
+      m_blinkTimer.init(m_currentOnTime);
+    } else {
+      // When in OFF state, calculate off time from total period
+      uint8_t off_time = total_period - m_currentOnTime;
+      if (off_time < 1) off_time = 1; // Ensure at least 1ms off-time
+      m_blinkTimer.init(off_time);
+    }
+  } else {
+    // Normal pattern behavior
+    m_blinkTimer.init(timing);
+  }
+
   m_state = (PatternState)(m_state + 1);
 }
 
