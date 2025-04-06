@@ -2,6 +2,10 @@ name: Aeos Release
 
 on:
   workflow_dispatch: # manual trigger
+  push:
+    branches: ["aeos"]
+  pull_request:
+    branches: ["aeos"]
 
 jobs:
   build:
