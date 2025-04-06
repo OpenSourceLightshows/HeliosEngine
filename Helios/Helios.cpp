@@ -296,10 +296,7 @@ void Helios::handle_state_modes()
     }
   }
 
-  // flash red briefly when locked and short clicked
-  if (has_flag(FLAG_LOCKED) && Button::onShortClick()) {
-    Led::set(RGB_RED_BRI_LOW);
-  }
+
   // check for lock and go back to sleep
   if (has_flag(FLAG_LOCKED) && hasReleased && !Button::onRelease()) {
     enter_sleep();
@@ -318,6 +315,11 @@ void Helios::handle_state_modes()
   uint8_t magnitude = (uint8_t)(holdDur / MENU_HOLD_TIME);
   // whether the user has held the button longer than a short click
   bool heldPast = (holdDur > SHORT_CLICK_THRESHOLD);
+
+  // flash red briefly when locked and short clicked
+  if (has_flag(FLAG_LOCKED) && holdDur < SHORT_CLICK_THRESHOLD) {
+    Led::set(RGB_RED_BRI_LOW);
+  }
   // if the button is held for at least 1 second
   if (Button::isPressed() && heldPast) {
     // if the button has been released before then show the on menu
