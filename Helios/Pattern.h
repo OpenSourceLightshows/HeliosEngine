@@ -8,15 +8,15 @@
 
 // for specifying things like default args
 struct PatternArgs {
-  PatternArgs(uint8_t on = 0, uint8_t off = 0, uint8_t gap = 0, uint8_t dash = 0, uint8_t group = 0, uint8_t blend = 0, uint8_t morph = 0) :
-    on_dur(on), off_dur(off), gap_dur(gap), dash_dur(dash), group_size(group), blend_speed(blend), morph_dur(morph) {}
+  PatternArgs(uint8_t on = 0, uint8_t off = 0, uint8_t gap = 0, uint8_t dash = 0, uint8_t group = 0, uint8_t blend = 0, uint8_t fade = 0) :
+    on_dur(on), off_dur(off), gap_dur(gap), dash_dur(dash), group_size(group), blend_speed(blend), fade_dur(fade) {}
   uint8_t on_dur;
   uint8_t off_dur;
   uint8_t gap_dur;
   uint8_t dash_dur;
   uint8_t group_size;
   uint8_t blend_speed;
-  uint8_t morph_dur;
+  uint8_t fade_dur;
 };
 
 class Pattern
@@ -24,7 +24,7 @@ class Pattern
 public:
   // try to not set on duration to 0
   Pattern(uint8_t onDur = 1, uint8_t offDur = 0, uint8_t gap = 0,
-          uint8_t dash = 0, uint8_t group = 0, uint8_t blend = 0, uint8_t morph = 0);
+          uint8_t dash = 0, uint8_t group = 0, uint8_t blend = 0, uint8_t fade = 0);
   Pattern(const PatternArgs &args);
   ~Pattern();
 
@@ -63,8 +63,8 @@ public:
   // whether blend speed is non 0
   bool isBlend() const { return m_args.blend_speed > 0; }
 
-  // whether morph speed is non 0
-  bool isMorphDuration() const { return m_args.morph_dur > 0; }
+  // whether fade speed is non 0
+  bool isMorphDuration() const { return m_args.fade_dur > 0; }
 
 protected:
   // ==================================
@@ -137,11 +137,11 @@ protected:
   // ==================================
   //  Morph Duration Members
 
-  // current on-time for morphing duration pattern
+  // current on-time for fadeing duration pattern
   uint8_t m_currentOnTime;
-  // morphing direction (1 = increasing, 0 = decreasing)
-  uint8_t m_morphDirection;
-  // last time the morph was updated
+  // fadeing direction (1 = increasing, 0 = decreasing)
+  uint8_t m_fadeDirection;
+  // last time the fade was updated
   uint32_t m_lastMorphUpdateTime;
 };
 

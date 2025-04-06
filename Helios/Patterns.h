@@ -32,7 +32,7 @@ enum PatternID : int8_t {
   PATTERN_DASH_DOPS,
   PATTERN_DASH_DOT,
   // Morph duration
-  PATTERN_MORPH_DURATION,
+  PATTERN_FADE,
   // Meta pattern constants
   INTERNAL_PATTERNS_END,
   PATTERN_LAST = (INTERNAL_PATTERNS_END - 1),

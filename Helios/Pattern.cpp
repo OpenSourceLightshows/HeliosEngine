@@ -38,8 +38,8 @@ static void printState(PatternState state)
 #endif
 
 Pattern::Pattern(uint8_t onDur, uint8_t offDur, uint8_t gap,
-          uint8_t dash, uint8_t group, uint8_t blend, uint8_t morph) :
-  m_args(onDur, offDur, gap, dash, group, blend, morph),
+          uint8_t dash, uint8_t group, uint8_t blend, uint8_t fade) :
+  m_args(onDur, offDur, gap, dash, group, blend, fade),
   m_patternFlags(0),
   m_colorset(),
   m_groupCounter(0),
@@ -48,14 +48,14 @@ Pattern::Pattern(uint8_t onDur, uint8_t offDur, uint8_t gap,
   m_cur(),
   m_next(),
   m_currentOnTime(0),
-  m_morphDirection(1),
+  m_fadeDirection(0),
   m_lastMorphUpdateTime(0)
 {
 }
 
 Pattern::Pattern(const PatternArgs &args) :
   Pattern(args.on_dur, args.off_dur, args.gap_dur,
-      args.dash_dur, args.group_size, args.blend_speed, args.morph_dur)
+      args.dash_dur, args.group_size, args.blend_speed, args.fade_dur)
 {
 }
 
@@ -86,11 +86,11 @@ void Pattern::init()
     m_next = m_colorset.getNext();
   }
 
-  // Initialize morphing duration pattern
+  // Initialize fadeing duration pattern
   if (isMorphDuration()) {
     // Start with the minimum on-time
     m_currentOnTime = m_args.on_dur;
-    m_morphDirection = 0; // Start in increasing direction
+    m_fadeDirection = 0; // Start in increasing direction
 
     // Reset the last update time to ensure immediate update
     m_lastMorphUpdateTime = 0;
@@ -197,7 +197,7 @@ void Pattern::onBlinkOn()
     return;
   }
 
-  // Check if this is a morphing duration pattern
+  // Check if this is a fadeing duration pattern
   if (isMorphDuration()) {
     // Just use the current color without advancing to the next one yet
     Led::set(m_colorset.cur());
@@ -212,33 +212,33 @@ void Pattern::onBlinkOff()
   PRINT_STATE(STATE_OFF);
   Led::clear();
 
-  // Check if this is a morphing duration pattern
+  // Check if this is a fadeing duration pattern
   if (isMorphDuration()) {
     // Calculate the total period (on + off duration)
     uint8_t total_period = m_args.on_dur + m_args.off_dur;
     uint8_t min_on_time = m_args.on_dur;
     uint8_t max_on_time = total_period - 1; // Keep at least 1ms off-time
 
-    // Get morph speed directly as milliseconds between updates
-    // Higher value = slower morphing (more milliseconds between steps)
-    // Lower value = faster morphing (fewer milliseconds between steps)
+    // Get fade speed directly as milliseconds between updates
+    // Higher value = slower fadeing (more milliseconds between steps)
+    // Lower value = faster fadeing (fewer milliseconds between steps)
     // Min value of 1 to avoid division by zero
-    uint32_t step_delay = m_args.morph_dur > 0 ? m_args.morph_dur : 1;
+    uint32_t step_delay = m_args.fade_dur > 0 ? m_args.fade_dur : 1;
 
     // Get current time
     uint32_t current_time = Time::getCurtime();
 
-    // Update the morphing state if enough time has passed
+    // Update the fadeing state if enough time has passed
     if (current_time - m_lastMorphUpdateTime >= step_delay) {
       m_lastMorphUpdateTime = current_time;
 
-      int next = m_currentOnTime + (m_morphDirection ? 1 : -1);
+      int next = m_currentOnTime + (m_fadeDirection ? 1 : -1);
       if (next > max_on_time) {
         m_currentOnTime = max_on_time;
-        m_morphDirection = 0;
+        m_fadeDirection = 0;
       } else if (next < min_on_time) {
         m_currentOnTime = min_on_time;
-        m_morphDirection = 1;
+        m_fadeDirection = 1;
         m_colorset.getNext();
       } else {
         m_currentOnTime = next;
@@ -261,13 +261,13 @@ void Pattern::beginDash()
 
 void Pattern::nextState(uint8_t timing)
 {
-  // Special case for morphing pattern
+  // Special case for fadeing pattern
   if (isMorphDuration()) {
     // Calculate the total period (on + off duration)
     uint8_t total_period = m_args.on_dur + m_args.off_dur;
 
     if (m_state == STATE_BLINK_ON) {
-      // When in ON state, use current morphing on-time
+      // When in ON state, use current fadeing on-time
       m_blinkTimer.init(m_currentOnTime);
     } else {
       // When in OFF state, calculate off time from total period
