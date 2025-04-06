@@ -33,7 +33,7 @@ jobs:
             BUILD_NUMBER="0"
           else
             echo "Found latest tag: $LATEST_TAG"
-            VERSION_NUMBER=$(echo $LATEST_TAG | sed "s/${TAG_PREFIX}//g")
+            VERSION_NUMBER=$(echo $LATEST_TAG | sed "s/aeos-//g")
             VERSION_MAJOR=$(echo $VERSION_NUMBER | cut -d. -f1)
             VERSION_MINOR=$(echo $VERSION_NUMBER | cut -d. -f2)
             LAST_BUILD_NUMBER=$(echo $VERSION_NUMBER | cut -d. -f3)
