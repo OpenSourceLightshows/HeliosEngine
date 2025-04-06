@@ -31,10 +31,10 @@ void Patterns::make_default(uint8_t index, Pattern &pat)
   }
   PatternArgs args;
   switch (index) {
-    case 0:  // Rainbow Flow - Using morphing duration pattern
-      args.on_dur = 1;
-      args.off_dur = 15;
-      args.morph_dur = 255;
+    case 0:  // Rainbow Flow
+      args.on_dur = 3;
+      args.off_dur = 23;
+      args.blend_speed = 10;
       break;
     case 1:  // Ghostly
       args.on_dur = 1;
@@ -104,12 +104,6 @@ void Patterns::make_pattern(PatternID id, Pattern &pat)
     args.blend_speed = 10;
     break;
 
-  case PATTERN_MORPH_DURATION:
-    args.on_dur = 1;
-    args.off_dur = 15;
-    args.morph_dur = 255;
-    break;
-
   case PATTERN_DASH_DOPS:
     args.on_dur = 1;
     args.off_dur = 9;
@@ -122,6 +116,13 @@ void Patterns::make_pattern(PatternID id, Pattern &pat)
     args.off_dur = 3;
     args.dash_dur = 24;
     break;
+
+  case PATTERN_MORPH_DURATION:
+    args.on_dur = 1;
+    args.off_dur = 15;
+    args.morph_dur = 255;
+    break;
+
   }
 
   pat.setArgs(args);
