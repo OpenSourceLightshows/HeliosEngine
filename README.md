@@ -12,6 +12,11 @@ With it's core derived from [Vortex Engine](https://github.com/StoneOrbits/Vorte
 ## Features
 
 - Extensive list of available flashing patterns
+  - Standard patterns (strobe, blink, glow, etc.)
+  - Blending patterns for smooth color transitions
+  - Morphing patterns:
+    - Color morphing (blends between colors)
+    - Duration morphing (dynamically shifts between on/off times while maintaining a constant total period)
 - Customizable colorsets with up to 6 slots and over 260 colors
 - Ability to shift modes
 - Colorset/Pattern randomizer feature
