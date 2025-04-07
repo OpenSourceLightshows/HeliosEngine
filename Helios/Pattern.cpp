@@ -80,7 +80,7 @@ void Pattern::init()
   }
   m_groupCounter = m_args.group_size ? m_args.group_size : (m_colorset.numColors() - (m_args.dash_dur != 0));
 
-  if (isBlend()) {
+  if (m_args.blend_speed > 0) {
     // convert current/next colors to HSV but only if we are doing a blend
     m_cur = m_colorset.getNext();
     m_next = m_colorset.getNext();
