@@ -137,9 +137,9 @@ protected:
   // ==================================
   //  Fade Duration Members
 
-  // current on-time for fadeing duration pattern
+  // current on-time for fading duration pattern
   uint8_t m_currentOnTime;
-  // fadeing direction (1 = increasing, 0 = decreasing)
+  // fading direction (1 = increasing, 0 = decreasing)
   uint8_t m_fadeDirection;
   // last time the fade was updated
   uint32_t m_lastFadeUpdateTime;

@@ -86,7 +86,7 @@ void Pattern::init()
     m_next = m_colorset.getNext();
   }
 
-    // Initialize fadeing duration pattern
+    // Initialize fading duration pattern
     // Start with the minimum on-time
     m_currentOnTime = m_args.on_dur;
     m_fadeDirection = 0; // Start in increasing direction
@@ -195,7 +195,7 @@ void Pattern::onBlinkOn()
     return;
   }
 
-  // Check if this is a fadeing duration pattern
+  // Check if this is a fading duration pattern
   if (isFade()) {
     // Just use the current color without advancing to the next one yet
     Led::set(m_colorset.cur());
@@ -210,7 +210,7 @@ void Pattern::onBlinkOff()
   PRINT_STATE(STATE_OFF);
   Led::clear();
 
-  // Check if this is a fadeing duration pattern
+  // Check if this is a fading duration pattern
   if (isFade()) {
     // Calculate the total period (on + off duration)
     uint8_t total_period = m_args.on_dur + m_args.off_dur;
@@ -218,15 +218,15 @@ void Pattern::onBlinkOff()
     uint8_t max_on_time = total_period - 1; // Keep at least 1ms off-time
 
     // Get fade speed directly as milliseconds between updates
-    // Higher value = slower fadeing (more milliseconds between steps)
-    // Lower value = faster fadeing (fewer milliseconds between steps)
+    // Higher value = slower fading (more milliseconds between steps)
+    // Lower value = faster fading (fewer milliseconds between steps)
     // Min value of 1 to avoid division by zero
     uint32_t step_delay = m_args.fade_dur > 0 ? m_args.fade_dur : 1;
 
     // Get current time
     uint32_t current_time = Time::getCurtime();
 
-    // Update the fadeing state if enough time has passed
+    // Update the fading state if enough time has passed
     if (current_time - m_lastFadeUpdateTime >= step_delay) {
       m_lastFadeUpdateTime = current_time;
 
@@ -259,13 +259,13 @@ void Pattern::beginDash()
 
 void Pattern::nextState(uint8_t timing)
 {
-  // Special case for fadeing pattern
+  // Special case for fading pattern
   if (isFade()) {
     // Calculate the total period (on + off duration)
     uint8_t total_period = m_args.on_dur + m_args.off_dur;
 
     if (m_state == STATE_BLINK_ON) {
-      // When in ON state, use current fadeing on-time
+      // When in ON state, use current fading on-time
       m_blinkTimer.init(m_currentOnTime);
     } else {
       // When in OFF state, calculate off time from total period
