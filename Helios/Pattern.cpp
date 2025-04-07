@@ -109,7 +109,8 @@ replay:
     if (m_args.on_dur > 0) {
       onBlinkOn();
       --m_groupCounter;
-      nextState(m_args.on_dur);
+      // When in ON state, use current fading on-time
+      nextState(isFade() ? m_currentOnTime : m_args.on_dur);
       return;
     }
     m_state = STATE_BLINK_OFF;
@@ -119,7 +120,9 @@ replay:
     if (m_groupCounter > 0 || (!m_args.gap_dur && !m_args.dash_dur)) {
       if (m_args.off_dur > 0) {
         onBlinkOff();
-        nextState(m_args.off_dur);
+        uint8_t off_time = m_args.on_dur + m_args.off_dur - m_currentOnTime;
+        if (off_time < 1) off_time = 1; // Ensure at least 1ms off-time
+        nextState(isFade() ? off_time : m_args.off_dur);
         return;
       }
       if (m_groupCounter > 0 && m_args.on_dur > 0) {
@@ -259,25 +262,7 @@ void Pattern::beginDash()
 
 void Pattern::nextState(uint8_t timing)
 {
-  // Special case for fading pattern
-  if (isFade()) {
-    // Calculate the total period (on + off duration)
-    uint8_t total_period = m_args.on_dur + m_args.off_dur;
-
-    if (m_state == STATE_BLINK_ON) {
-      // When in ON state, use current fading on-time
-      m_blinkTimer.init(m_currentOnTime);
-    } else {
-      // When in OFF state, calculate off time from total period
-      uint8_t off_time = total_period - m_currentOnTime;
-      if (off_time < 1) off_time = 1; // Ensure at least 1ms off-time
-      m_blinkTimer.init(off_time);
-    }
-  } else {
-    // Normal pattern behavior
-    m_blinkTimer.init(timing);
-  }
-
+  m_blinkTimer.init(timing);
   m_state = (PatternState)(m_state + 1);
 }
 
