@@ -513,17 +513,16 @@ void Helios::handle_state_color_group_selection()
     if (num_colors_selected >= NUM_COLOR_SLOTS) {
       // Restore original colorset if no colors were selected
       pat.setColorset(new_colorset);
-      pat.init();
       save_cur_mode();
 #if ALTERNATIVE_HSV_RGB == 1
       // restore hsv to rgb algorithm type, done color selection
       g_hsv_rgb_alg = HSV_TO_RGB_GENERIC;
 #endif
       cur_state = STATE_MODES;
-    } else {
-      // Otherwise reset menu selection to continue selecting colors
-      menu_selection = 0;
+      return;
     }
+    // Otherwise reset menu selection to continue selecting colors
+    menu_selection = 0;
   }
 
   // default col1/col2 to off and white for the first two options
@@ -573,7 +572,6 @@ void Helios::handle_state_color_group_selection()
       cur_state = STATE_MODES;
       if (num_colors_selected > 0) {
         pat.setColorset(new_colorset);
-        pat.init();
         // Save with current colors if at least one color is selected
         save_cur_mode();
       }
@@ -604,7 +602,6 @@ void Helios::handle_state_color_variant_selection()
     if (num_colors_selected >= NUM_COLOR_SLOTS) {
       // Restore original colorset if no colors were selected
       pat.setColorset(new_colorset);
-      pat.init();
       save_cur_mode();
 #if ALTERNATIVE_HSV_RGB == 1
       // restore hsv to rgb algorithm type, done color selection
