@@ -117,12 +117,6 @@ void Patterns::make_pattern(PatternID id, Pattern &pat)
     args.dash_dur = 24;
     break;
 
-  case PATTERN_MORPH_DURATION:
-    args.on_dur = 1;
-    args.off_dur = 15;
-    args.morph_dur = 255;
-    break;
-
   }
 
   pat.setArgs(args);
