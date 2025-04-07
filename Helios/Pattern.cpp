@@ -86,15 +86,13 @@ void Pattern::init()
     m_next = m_colorset.getNext();
   }
 
-  // Initialize fadeing duration pattern
-  if (isFade()) {
+    // Initialize fadeing duration pattern
     // Start with the minimum on-time
     m_currentOnTime = m_args.on_dur;
-    m_fadeDirection = 1; // Start in increasing direction
+    m_fadeDirection = 0; // Start in increasing direction
 
     // Reset the last update time to ensure immediate update
     m_lastFadeUpdateTime = 0;
-  }
 }
 
 void Pattern::play()
