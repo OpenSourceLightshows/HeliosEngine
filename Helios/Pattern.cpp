@@ -38,21 +38,24 @@ static void printState(PatternState state)
 #endif
 
 Pattern::Pattern(uint8_t onDur, uint8_t offDur, uint8_t gap,
-          uint8_t dash, uint8_t group, uint8_t blend) :
-  m_args(onDur, offDur, gap, dash, group, blend),
+          uint8_t dash, uint8_t group, uint8_t blend, uint8_t fade) :
+  m_args(onDur, offDur, gap, dash, group, blend, fade),
   m_patternFlags(0),
   m_colorset(),
   m_groupCounter(0),
   m_state(STATE_BLINK_ON),
   m_blinkTimer(),
   m_cur(),
-  m_next()
+  m_next(),
+  m_currentOnTime(0),
+  m_fadeDirection(0),
+  m_lastFadeUpdateTime(0)
 {
 }
 
 Pattern::Pattern(const PatternArgs &args) :
   Pattern(args.on_dur, args.off_dur, args.gap_dur,
-      args.dash_dur, args.group_size, args.blend_speed)
+      args.dash_dur, args.group_size, args.blend_speed, args.fade_dur)
 {
 }
 
@@ -82,6 +85,14 @@ void Pattern::init()
     m_cur = m_colorset.getNext();
     m_next = m_colorset.getNext();
   }
+
+    // Initialize fading duration pattern
+    // Start with the minimum on-time
+    m_currentOnTime = m_args.on_dur;
+    m_fadeDirection = 0; // Start in increasing direction
+
+    // Reset the last update time to ensure immediate update
+    m_lastFadeUpdateTime = 0;
 }
 
 void Pattern::play()
@@ -98,7 +109,8 @@ replay:
     if (m_args.on_dur > 0) {
       onBlinkOn();
       --m_groupCounter;
-      nextState(m_args.on_dur);
+      // When in ON state, use current fading on-time
+      nextState(isFade() ? m_currentOnTime : m_args.on_dur);
       return;
     }
     m_state = STATE_BLINK_OFF;
@@ -108,7 +120,9 @@ replay:
     if (m_groupCounter > 0 || (!m_args.gap_dur && !m_args.dash_dur)) {
       if (m_args.off_dur > 0) {
         onBlinkOff();
-        nextState(m_args.off_dur);
+        uint8_t off_time = m_args.on_dur + m_args.off_dur - m_currentOnTime;
+        if (off_time < 1) off_time = 1; // Ensure at least 1ms off-time
+        nextState(isFade() ? off_time : m_args.off_dur);
         return;
       }
       if (m_groupCounter > 0 && m_args.on_dur > 0) {
@@ -183,6 +197,14 @@ void Pattern::onBlinkOn()
     blendBlinkOn();
     return;
   }
+
+  // Check if this is a fading duration pattern
+  if (isFade()) {
+    // Just use the current color without advancing to the next one yet
+    Led::set(m_colorset.cur());
+    return;
+  }
+
   Led::set(m_colorset.getNext());
 }
 
@@ -190,6 +212,40 @@ void Pattern::onBlinkOff()
 {
   PRINT_STATE(STATE_OFF);
   Led::clear();
+
+  // Check if this is a fading duration pattern
+  if (isFade()) {
+    // Calculate the total period (on + off duration)
+    uint8_t total_period = m_args.on_dur + m_args.off_dur;
+    uint8_t min_on_time = m_args.on_dur;
+    uint8_t max_on_time = total_period - 1; // Keep at least 1ms off-time
+
+    // Get fade speed directly as milliseconds between updates
+    // Higher value = slower fading (more milliseconds between steps)
+    // Lower value = faster fading (fewer milliseconds between steps)
+    // Min value of 1 to avoid division by zero
+    uint32_t step_delay = m_args.fade_dur > 0 ? m_args.fade_dur : 1;
+
+    // Get current time
+    uint32_t current_time = Time::getCurtime();
+
+    // Update the fading state if enough time has passed
+    if (current_time - m_lastFadeUpdateTime >= step_delay) {
+      m_lastFadeUpdateTime = current_time;
+
+      int next = m_currentOnTime + (m_fadeDirection ? 1 : -1);
+      if (next > max_on_time) {
+        m_currentOnTime = max_on_time;
+        m_fadeDirection = 0;
+      } else if (next < min_on_time) {
+        m_currentOnTime = min_on_time;
+        m_fadeDirection = 1;
+        m_colorset.getNext();
+      } else {
+        m_currentOnTime = next;
+      }
+    }
+  }
 }
 
 void Pattern::beginGap()
