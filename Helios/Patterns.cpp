@@ -117,6 +117,7 @@ void Patterns::make_pattern(PatternID id, Pattern &pat)
     args.dash_dur = 24;
     break;
 
+  }
 
   pat.setArgs(args);
 }
