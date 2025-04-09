@@ -47,9 +47,7 @@ Pattern::Pattern(uint8_t onDur, uint8_t offDur, uint8_t gap,
   m_blinkTimer(),
   m_cur(),
   m_next(),
-  m_currentOnTime(0),
-  m_fadeDirection(0),
-  m_lastFadeUpdateTime(0)
+  m_fadeValue(0)
 {
 }
 
@@ -86,17 +84,32 @@ void Pattern::init()
     m_next = m_colorset.getNext();
   }
 
-    // Initialize fading duration pattern
-    // Start with the minimum on-time
-    m_currentOnTime = m_args.on_dur;
-    m_fadeDirection = 0; // Start in increasing direction
+  // Initialize fading value at 0
+  m_fadeValue = 0;
+}
 
-    // Reset the last update time to ensure immediate update
-    m_lastFadeUpdateTime = 0;
+void Pattern::tickFade()
+{
+  // Check if this is a fading duration pattern
+  if (!isFade()) {
+    return;
+  }
+  // only tick forward every fade_dur ticks
+  // TODO: adjust this to make fade_dur multiplied by some constant?
+  if ((Time::getCurtime() % m_args.fade_dur) != 0) {
+    return;
+  }
+  // calculate the total amplitude of the fade
+  uint8_t amplitude = m_args.on_dur + m_args.off_dur;
+
+  m_fadeValue += 
 }
 
 void Pattern::play()
 {
+  // tick forward the fade logic each tick
+  tickFade();
+
   // Sometimes the pattern needs to cycle multiple states in a single frame so
   // instead of using a loop or recursion I have just used a simple goto
 replay:
@@ -110,7 +123,7 @@ replay:
       onBlinkOn();
       --m_groupCounter;
       // When in ON state, use current fading on-time
-      nextState(isFade() ? m_currentOnTime : m_args.on_dur);
+      nextState(m_args.on_dur + m_fadeValue);
       return;
     }
     m_state = STATE_BLINK_OFF;
@@ -120,9 +133,9 @@ replay:
     if (m_groupCounter > 0 || (!m_args.gap_dur && !m_args.dash_dur)) {
       if (m_args.off_dur > 0) {
         onBlinkOff();
-        uint8_t off_time = m_args.on_dur + m_args.off_dur - m_currentOnTime;
+        uint8_t off_time = (m_args.on_dur + m_args.off_dur) - m_fadeValue;
         if (off_time < 1) off_time = 1; // Ensure at least 1ms off-time
-        nextState(isFade() ? off_time : m_args.off_dur);
+        nextState(off_time);
         return;
       }
       if (m_groupCounter > 0 && m_args.on_dur > 0) {
@@ -212,40 +225,6 @@ void Pattern::onBlinkOff()
 {
   PRINT_STATE(STATE_OFF);
   Led::clear();
-
-  // Check if this is a fading duration pattern
-  if (isFade()) {
-    // Calculate the total period (on + off duration)
-    uint8_t total_period = m_args.on_dur + m_args.off_dur;
-    uint8_t min_on_time = m_args.on_dur;
-    uint8_t max_on_time = total_period - 1; // Keep at least 1ms off-time
-
-    // Get fade speed directly as milliseconds between updates
-    // Higher value = slower fading (more milliseconds between steps)
-    // Lower value = faster fading (fewer milliseconds between steps)
-    // Min value of 1 to avoid division by zero
-    uint32_t step_delay = m_args.fade_dur > 0 ? m_args.fade_dur : 1;
-
-    // Get current time
-    uint32_t current_time = Time::getCurtime();
-
-    // Update the fading state if enough time has passed
-    if (current_time - m_lastFadeUpdateTime >= step_delay) {
-      m_lastFadeUpdateTime = current_time;
-
-      int next = m_currentOnTime + (m_fadeDirection ? 1 : -1);
-      if (next > max_on_time) {
-        m_currentOnTime = max_on_time;
-        m_fadeDirection = 0;
-      } else if (next < min_on_time) {
-        m_currentOnTime = min_on_time;
-        m_fadeDirection = 1;
-        m_colorset.getNext();
-      } else {
-        m_currentOnTime = next;
-      }
-    }
-  }
 }
 
 void Pattern::beginGap()

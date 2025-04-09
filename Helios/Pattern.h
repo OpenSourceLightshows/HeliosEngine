@@ -133,16 +133,13 @@ protected:
   // apis for blend
   void blendBlinkOn();
   void interpolate(uint8_t &current, const uint8_t next);
+  void tickFade();
 
   // ==================================
   //  Fade Duration Members
 
-  // current on-time for fading duration pattern
-  uint8_t m_currentOnTime;
-  // fading direction (1 = increasing, 0 = decreasing)
-  uint8_t m_fadeDirection;
-  // last time the fade was updated
-  uint32_t m_lastFadeUpdateTime;
+  // shifting value to represent current fade
+  uint8_t m_fadeValue;
 };
 
 #endif
