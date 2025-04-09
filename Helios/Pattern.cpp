@@ -9,34 +9,6 @@
 
 #include <string.h> // for memcpy
 
-#ifdef DEBUG_BASIC_PATTERN
-#include <stdio.h>
-// print out the current state of the pattern
-#define PRINT_STATE(state) printState(state)
-void Pattern::printState(PatternState state)
-{
-  static uint64_t lastPrint = UINT64_MAX;
-  if (lastPrint == Time::getCurtime()) return;
-  switch (m_state) {
-    case STATE_DISABLED: printf("DIS "); break;
-    case STATE_BLINK_ON: printf("ON  "); break;
-    case STATE_ON: printf("on  "); break;
-    case STATE_BLINK_OFF: printf("OFF "); break;
-    case STATE_OFF: printf("off "); break;
-    case STATE_BEGIN_GAP: printf("GAP"); break;
-    case STATE_IN_GAP: printf("gap1"); break;
-    case STATE_BEGIN_DASH: printf("DASH"); break;
-    case STATE_IN_DASH: printf("dash"); break;
-    case STATE_BEGIN_GAP2: printf("GAP2"); break;
-    case STATE_IN_GAP2: printf("gap2"); break;
-    default: printf("(%02u)", m_state); break;
-  }
-  lastPrint = Time::getCurtime();
-}
-#else
-#define PRINT_STATE(state) // do nothing
-#endif
-
 Pattern::Pattern(uint8_t onDur, uint8_t offDur, uint8_t gap,
           uint8_t dash, uint8_t group, uint8_t blend, uint8_t fade) :
   m_args(onDur, offDur, gap, dash, group, blend, fade),
@@ -331,3 +303,31 @@ void Pattern::interpolate(uint8_t &current, const uint8_t next)
     current -= step;
   }
 }
+
+// ==================================
+//  Debug Code
+#if DEBUG_BASIC_PATTERN == 1
+#include <stdio.h>
+void Pattern::printState(PatternState state)
+{
+  static uint32_t lastPrint = UINT32_MAX;
+  if (lastPrint == Time::getCurtime()) {
+    return;
+  }
+  switch (m_state) {
+    case STATE_DISABLED:   printf("DIS "); break;
+    case STATE_BLINK_ON:   printf("ON  "); break;
+    case STATE_ON:         printf("on  "); break;
+    case STATE_BLINK_OFF:  printf("OFF "); break;
+    case STATE_OFF:        printf("off "); break;
+    case STATE_BEGIN_GAP:  printf("GAP1"); break;
+    case STATE_IN_GAP:     printf("gap1"); break;
+    case STATE_BEGIN_DASH: printf("DASH"); break;
+    case STATE_IN_DASH:    printf("dash"); break;
+    case STATE_BEGIN_GAP2: printf("GAP2"); break;
+    case STATE_IN_GAP2:    printf("gap2"); break;
+    default:               printf("(%02u)", m_state); break;
+  }
+  lastPrint = Time::getCurtime();
+}
+#endif

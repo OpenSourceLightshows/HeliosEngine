@@ -143,13 +143,18 @@ protected:
   // apis for fade
   void tickFade();
 
-// uncomment me to print debug labels on the pattern states, this is useful if you
-// are debugging a pattern strip from the command line and want to see what state
-// the pattern is in each tick of the pattern
-#define DEBUG_BASIC_PATTERN
+  // ==================================
+  //  Debug Code
 
-#ifdef DEBUG_BASIC_PATTERN
+  // if debug basic pattern is enabled
+#if DEBUG_BASIC_PATTERN == 1
+  // define a function for printing out state info
   void printState(PatternState state);
+  // and define a macro that wraps it
+  #define PRINT_STATE(state) printState(state)
+#else
+  // otherwise if debug is off the macro does nothing 
+  #define PRINT_STATE(state)
 #endif
 };
 
