@@ -94,15 +94,20 @@ void Pattern::tickFade()
   if (!isFade()) {
     return;
   }
+  uint32_t now = Time::getCurtime();
   // only tick forward every fade_dur ticks
   // TODO: adjust this to make fade_dur multiplied by some constant?
-  if ((Time::getCurtime() % m_args.fade_dur) != 0) {
+  if ((now % m_args.fade_dur) != 0) {
     return;
   }
-  // calculate the total amplitude of the fade
-  uint8_t amplitude = m_args.on_dur + m_args.off_dur;
-
-  m_fadeValue += 
+  // count the number of steps (times this logic has run)
+  uint32_t step = now / m_args.fade_dur;
+  // the fade value fluctuates between 0 and off_dur each tick
+  m_fadeValue = steps % m_args.off_dur;
+  // each cycle of the fade, walk the colorset forward
+  if (!m_fadeValue) {
+    m_colorset.getNext();
+  }
 }
 
 void Pattern::play()
@@ -133,7 +138,10 @@ replay:
     if (m_groupCounter > 0 || (!m_args.gap_dur && !m_args.dash_dur)) {
       if (m_args.off_dur > 0) {
         onBlinkOff();
-        uint8_t off_time = (m_args.on_dur + m_args.off_dur) - m_fadeValue;
+        uint8_t off_time = m_args.off_dur;
+        if (isFade()) {
+          off_time -= m_fadeValue;
+        }
         if (off_time < 1) off_time = 1; // Ensure at least 1ms off-time
         nextState(off_time);
         return;
