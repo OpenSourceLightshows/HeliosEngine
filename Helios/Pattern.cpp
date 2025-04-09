@@ -9,27 +9,27 @@
 
 #include <string.h> // for memcpy
 
-// uncomment me to print debug labels on the pattern states, this is useful if you
-// are debugging a pattern strip from the command line and want to see what state
-// the pattern is in each tick of the pattern
-//#define DEBUG_BASIC_PATTERN
-
 #ifdef DEBUG_BASIC_PATTERN
-#include "../../Time/TimeControl.h"
 #include <stdio.h>
 // print out the current state of the pattern
 #define PRINT_STATE(state) printState(state)
-static void printState(PatternState state)
+void Pattern::printState(PatternState state)
 {
-  static uint64_t lastPrint = 0;
+  static uint64_t lastPrint = UINT64_MAX;
   if (lastPrint == Time::getCurtime()) return;
   switch (m_state) {
-  case STATE_ON: printf("on  "); break;
-  case STATE_OFF: printf("off "); break;
-  case STATE_IN_GAP: printf("gap1"); break;
-  case STATE_IN_DASH: printf("dash"); break;
-  case STATE_IN_GAP2: printf("gap2"); break;
-  default: return;
+    case STATE_DISABLED: printf("DIS "); break;
+    case STATE_BLINK_ON: printf("ON  "); break;
+    case STATE_ON: printf("on  "); break;
+    case STATE_BLINK_OFF: printf("OFF "); break;
+    case STATE_OFF: printf("off "); break;
+    case STATE_BEGIN_GAP: printf("GAP"); break;
+    case STATE_IN_GAP: printf("gap1"); break;
+    case STATE_BEGIN_DASH: printf("DASH"); break;
+    case STATE_IN_DASH: printf("dash"); break;
+    case STATE_BEGIN_GAP2: printf("GAP2"); break;
+    case STATE_IN_GAP2: printf("gap2"); break;
+    default: printf("(%02u)", m_state); break;
   }
   lastPrint = Time::getCurtime();
 }
@@ -82,30 +82,42 @@ void Pattern::init()
     // convert current/next colors to HSV but only if we are doing a blend
     m_cur = m_colorset.getNext();
     m_next = m_colorset.getNext();
+  } else if (m_args.fade_dur) {
+    // if there is a fade dur and no blend need to iterate colorset
+    m_colorset.getNext();
   }
 
-  // Initialize fading value at 0
+  // Initialize the fluctuating fade value
   m_fadeValue = 0;
 }
 
 void Pattern::tickFade()
 {
-  // Check if this is a fading duration pattern
-  if (!isFade()) {
-    return;
-  }
   uint32_t now = Time::getCurtime();
+  uint32_t duration = m_args.fade_dur * 10;
   // only tick forward every fade_dur ticks
   // TODO: adjust this to make fade_dur multiplied by some constant?
-  if ((now % m_args.fade_dur) != 0) {
+  if (!now || (now % duration) != 0) {
     return;
   }
   // count the number of steps (times this logic has run)
-  uint32_t step = now / m_args.fade_dur;
-  // the fade value fluctuates between 0 and off_dur each tick
-  m_fadeValue = steps % m_args.off_dur;
-  // each cycle of the fade, walk the colorset forward
-  if (!m_fadeValue) {
+  // NOTE: This function shouldn't run if fade_dur is 0
+  uint32_t steps = now / duration;
+  uint32_t range = m_args.off_dur;
+  // make sure the range is non-zero
+  if (range == 0) {
+    m_fadeValue = 0;
+    return;
+  }
+
+  uint32_t double_range = range * 2;
+  uint32_t mod = steps % double_range;
+
+  // Triangle wave: up from 0 to range, then down to 0
+  m_fadeValue = (mod < range) ? mod : (double_range - mod - 1);
+
+  // iterate color when at lowest point
+  if (mod == 0) {
     m_colorset.getNext();
   }
 }
@@ -113,7 +125,9 @@ void Pattern::tickFade()
 void Pattern::play()
 {
   // tick forward the fade logic each tick
-  tickFade();
+  if (isFade()) {
+    tickFade();
+  }
 
   // Sometimes the pattern needs to cycle multiple states in a single frame so
   // instead of using a loop or recursion I have just used a simple goto
@@ -138,12 +152,7 @@ replay:
     if (m_groupCounter > 0 || (!m_args.gap_dur && !m_args.dash_dur)) {
       if (m_args.off_dur > 0) {
         onBlinkOff();
-        uint8_t off_time = m_args.off_dur;
-        if (isFade()) {
-          off_time -= m_fadeValue;
-        }
-        if (off_time < 1) off_time = 1; // Ensure at least 1ms off-time
-        nextState(off_time);
+        nextState(m_args.off_dur - m_fadeValue);
         return;
       }
       if (m_groupCounter > 0 && m_args.on_dur > 0) {

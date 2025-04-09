@@ -133,13 +133,24 @@ protected:
   // apis for blend
   void blendBlinkOn();
   void interpolate(uint8_t &current, const uint8_t next);
-  void tickFade();
 
   // ==================================
-  //  Fade Duration Members
+  //  Fade Members
 
   // shifting value to represent current fade
   uint8_t m_fadeValue;
+
+  // apis for fade
+  void tickFade();
+
+// uncomment me to print debug labels on the pattern states, this is useful if you
+// are debugging a pattern strip from the command line and want to see what state
+// the pattern is in each tick of the pattern
+#define DEBUG_BASIC_PATTERN
+
+#ifdef DEBUG_BASIC_PATTERN
+  void printState(PatternState state);
+#endif
 };
 
 #endif
