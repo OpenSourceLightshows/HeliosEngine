@@ -32,9 +32,10 @@ void Patterns::make_default(uint8_t index, Pattern &pat)
   PatternArgs args;
   switch (index) {
     case 0:  // Rainbow Flow
-      args.on_dur = 3;
-      args.off_dur = 23;
-      args.blend_speed = 10;
+      args.on_dur = 1;
+      args.off_dur = 3;
+      //args.blend_speed = 0;
+      args.fade_range = 25;
       break;
     case 1:  // Ghostly
       args.on_dur = 1;
@@ -120,7 +121,7 @@ void Patterns::make_pattern(PatternID id, Pattern &pat)
   case PATTERN_FADE:
     args.on_dur = 1;
     args.off_dur = 15;
-    args.fade_dur = 255;
+    args.fade_range = 255;
     break;
 
   }

@@ -19,13 +19,14 @@ Pattern::Pattern(uint8_t onDur, uint8_t offDur, uint8_t gap,
   m_blinkTimer(),
   m_cur(),
   m_next(),
-  m_fadeValue(0)
+  m_fadeValue(0),
+  m_lastFadeTick(0)
 {
 }
 
 Pattern::Pattern(const PatternArgs &args) :
   Pattern(args.on_dur, args.off_dur, args.gap_dur,
-      args.dash_dur, args.group_size, args.blend_speed, args.fade_dur)
+      args.dash_dur, args.group_size, args.blend_speed, args.fade_range)
 {
 }
 
@@ -54,39 +55,35 @@ void Pattern::init()
     // convert current/next colors to HSV but only if we are doing a blend
     m_cur = m_colorset.getNext();
     m_next = m_colorset.getNext();
-  } else if (m_args.fade_dur) {
+  } else if (m_args.fade_range) {
     // if there is a fade dur and no blend need to iterate colorset
     m_colorset.getNext();
   }
 
   // Initialize the fluctuating fade value
   m_fadeValue = 0;
+  m_lastFadeTick = 0;
+  m_curStep = 0;
 }
+
+#include <stdio.h>
 
 void Pattern::tickFade()
 {
-  uint32_t now = Time::getCurtime();
-  uint32_t duration = m_args.fade_dur * 10;
-  // only tick forward every fade_dur ticks
-  // TODO: adjust this to make fade_dur multiplied by some constant?
-  if (!now || (now % duration) != 0) {
-    return;
-  }
-  // count the number of steps (times this logic has run)
-  // NOTE: This function shouldn't run if fade_dur is 0
-  uint32_t steps = now / duration;
-  uint32_t range = m_args.off_dur;
-  // make sure the range is non-zero
-  if (range == 0) {
-    m_fadeValue = 0;
-    return;
-  }
+  // TODO: adjust this to make fade_range multiplied by some constant?
+  //uint32_t duration = m_args.fade_range;
 
-  uint32_t double_range = range * 2;
-  uint32_t mod = steps % double_range;
+  // count the number of steps (times this logic has run)
+  // NOTE: This function shouldn't run if fade_range is 0
+  m_curStep++;
+
+  uint32_t double_range = (m_args.fade_range - 1) * 2;
+  uint32_t mod = m_curStep % double_range;
 
   // Triangle wave: up from 0 to range, then down to 0
-  m_fadeValue = (mod < range) ? mod : (double_range - mod - 1);
+  m_fadeValue = (mod < ((uint32_t)m_args.fade_range - 1)) ? mod : (double_range - mod);
+
+  //printf("m_fadeValue: %d\n", m_fadeValue);
 
   // iterate color when at lowest point
   if (mod == 0) {
@@ -96,11 +93,6 @@ void Pattern::tickFade()
 
 void Pattern::play()
 {
-  // tick forward the fade logic each tick
-  if (isFade()) {
-    tickFade();
-  }
-
   // Sometimes the pattern needs to cycle multiple states in a single frame so
   // instead of using a loop or recursion I have just used a simple goto
 replay:
@@ -125,6 +117,9 @@ replay:
       if (m_args.off_dur > 0) {
         onBlinkOff();
         nextState(m_args.off_dur - m_fadeValue);
+        if (isFade()) {
+          tickFade();
+        }
         return;
       }
       if (m_groupCounter > 0 && m_args.on_dur > 0) {
@@ -202,6 +197,7 @@ void Pattern::onBlinkOn()
 
   // Check if this is a fading duration pattern
   if (isFade()) {
+    //tickFade();
     // Just use the current color without advancing to the next one yet
     Led::set(m_colorset.cur());
     return;

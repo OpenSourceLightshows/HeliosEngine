@@ -12,7 +12,7 @@ MAKE=make
 RM=rm -rf
 RANLIB=ranlib
 
-CFLAGS=-O2 -g -Wall -std=c++11
+CFLAGS=-O0 -g -Wall -std=c++11
 
 # compiler defines
 DEFINES=\
@@ -110,7 +110,7 @@ clean:
 	@$(RM) $(DFILES) $(OBJS) $(TARGETS) $(TESTS)
 
 compute_version:
-	$(eval LATEST_TAG ?= $(shell git fetch --depth=1 origin +refs/tags/*:refs/tags/* &> /dev/null && git tag --list | sort -V | tail -n1))
+	$(eval LATEST_TAG ?= $(shell git tag --list | sort -V | tail -n1))
 	$(eval HELIOS_VERSION_MAJOR ?= $(shell echo $(LATEST_TAG) | cut -d. -f1))
 	$(eval HELIOS_VERSION_MINOR ?= $(shell echo $(LATEST_TAG) | cut -d. -f2))
 	$(eval LAST_HELIOS_BUILD_NUMBER ?= $(shell echo $(LATEST_TAG) | cut -d. -f3))
