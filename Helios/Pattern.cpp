@@ -211,6 +211,9 @@ void Pattern::onBlinkOn()
   if (isFade()) {
     // Check if we're at the initial INDEX_NONE position
     if (m_colorset.curIndex() == 255) {  // INDEX_NONE = 255
+      // First time after colorset change, reset fade values too
+      m_fadeValue = 0;
+      m_fadeStartTime = Time::getCurtime();
       // First time after colorset change, advance to first color
       Led::set(m_colorset.getNext());
     } else {
@@ -252,12 +255,6 @@ void Pattern::nextState(uint8_t timing)
 void Pattern::setColorset(const Colorset &set)
 {
   m_colorset = set;
-
-  // For fade patterns, just reset the index so cur() will return the first color
-  if (isFade()) {
-    // Initialize the fluctuating fade value
-    m_fadeValue = 0;
-  }
 }
 
 void Pattern::clearColorset()
