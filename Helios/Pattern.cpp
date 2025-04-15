@@ -19,7 +19,8 @@ Pattern::Pattern(uint8_t onDur, uint8_t offDur, uint8_t gap,
   m_blinkTimer(),
   m_cur(),
   m_next(),
-  m_fadeValue(0)
+  m_fadeValue(0),
+  m_fadeStartTime(0)
 {
 }
 
@@ -36,6 +37,9 @@ Pattern::~Pattern()
 void Pattern::init()
 {
   m_colorset.resetIndex();
+
+  // Reset the fade start time to the current time
+  m_fadeStartTime = Time::getCurtime();
 
   // the default state to begin with
   m_state = STATE_BLINK_ON;
@@ -66,16 +70,19 @@ void Pattern::init()
 void Pattern::tickFade()
 {
   uint32_t now = Time::getCurtime();
+  // Calculate relative time since pattern was initialized
+  uint32_t relativeTime = now - m_fadeStartTime;
   uint32_t duration = m_args.fade_dur * 10;
+
   // only tick forward every fade_dur ticks
-  // TODO: adjust this to make fade_dur multiplied by some constant?
-  if (!now || (now % duration) != 0) {
+  if (!relativeTime || (relativeTime % duration) != 0) {
     return;
   }
-  // count the number of steps (times this logic has run)
-  // NOTE: This function shouldn't run if fade_dur is 0
-  uint32_t steps = now / duration;
+
+  // count the number of steps based on relative time
+  uint32_t steps = relativeTime / duration;
   uint32_t range = m_args.off_dur;
+
   // make sure the range is non-zero
   if (range == 0) {
     m_fadeValue = 0;

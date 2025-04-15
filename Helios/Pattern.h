@@ -153,9 +153,12 @@ protected:
   // and define a macro that wraps it
   #define PRINT_STATE(state) printState(state)
 #else
-  // otherwise if debug is off the macro does nothing 
+  // otherwise if debug is off the macro does nothing
   #define PRINT_STATE(state)
 #endif
+
+  // Add a new member variable to store when the pattern was last initialized
+  uint32_t m_fadeStartTime;
 };
 
 #endif

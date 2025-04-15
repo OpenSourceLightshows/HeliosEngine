@@ -167,6 +167,6 @@
 // Turn this on to print debug labels on the pattern states, this is useful if you
 // are debugging a pattern strip from the command line and want to see what state
 // the pattern is in each tick of the pattern
-#define DEBUG_BASIC_PATTERN 1
+#define DEBUG_BASIC_PATTERN 0
 
 #endif
