@@ -90,13 +90,13 @@ void Pattern::tickFade()
   }
 
   uint32_t double_range = range * 2;
-  uint32_t mod = steps % double_range;
+  uint32_t step = steps % double_range;
 
   // Triangle wave: up from 0 to range, then down to 0
-  m_fadeValue = (mod < range) ? mod : (double_range - mod - 1);
+  m_fadeValue = (step < range) ? step : (double_range - step - 1);
 
   // iterate color when at lowest point
-  if (mod == 0) {
+  if (step == 0) {
     m_colorset.getNext();
   }
 }
