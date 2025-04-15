@@ -245,6 +245,15 @@ void Pattern::nextState(uint8_t timing)
 void Pattern::setColorset(const Colorset &set)
 {
   m_colorset = set;
+
+  // For fade patterns, just reset the index so cur() will return the first color
+  if (isFade()) {
+    // if there is a fade dur and no blend need to iterate colorset
+    m_colorset.getNext();
+
+    // Initialize the fluctuating fade value
+    m_fadeValue = 0;
+  }
 }
 
 void Pattern::clearColorset()
