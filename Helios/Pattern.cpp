@@ -209,10 +209,17 @@ void Pattern::onBlinkOn()
 
   // Check if this is a fading duration pattern
   if (isFade()) {
-    // Just use the current color without advancing to the next one yet
-    Led::set(m_colorset.cur());
+    // Check if we're at the initial INDEX_NONE position
+    if (m_colorset.curIndex() == 255) {  // INDEX_NONE = 255
+      // First time after colorset change, advance to first color
+      Led::set(m_colorset.getNext());
+    } else {
+      // Normal operation, just use current color
+      Led::set(m_colorset.cur());
+    }
     return;
   }
+
 
   Led::set(m_colorset.getNext());
 }
@@ -248,9 +255,6 @@ void Pattern::setColorset(const Colorset &set)
 
   // For fade patterns, just reset the index so cur() will return the first color
   if (isFade()) {
-    // if there is a fade dur and no blend need to iterate colorset
-    m_colorset.getNext();
-
     // Initialize the fluctuating fade value
     m_fadeValue = 0;
   }
