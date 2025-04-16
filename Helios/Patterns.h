@@ -34,7 +34,7 @@ enum PatternID : int8_t {
   // Fade
   PATTERN_FADE,
   PATTERN_MORPH_FADE,
-  PATTERN_SPEED_FADE,
+  PATTERN_GLITCH_FADE,
   // Meta pattern constants
   INTERNAL_PATTERNS_END,
   PATTERN_LAST = (INTERNAL_PATTERNS_END - 1),
