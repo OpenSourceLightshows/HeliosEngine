@@ -120,9 +120,21 @@ void Patterns::make_pattern(PatternID id, Pattern &pat)
   case PATTERN_FADE:
     args.on_dur = 1;
     args.off_dur = 15;
-    args.fade_dur = 255;
+    args.fade_dur = 25;
     break;
 
+  case PATTERN_MORPH_FADE:
+    args.on_dur = 1;
+    args.off_dur = 15;
+    args.fade_dur = 15;
+    args.blend_speed = 3;
+    break;
+
+  case PATTERN_SPEED_FADE:
+    args.on_dur = 1;
+    args.off_dur = 15;
+    args.fade_dur = 3;
+    break;
   }
 
   pat.setArgs(args);
