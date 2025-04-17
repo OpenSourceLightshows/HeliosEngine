@@ -214,6 +214,7 @@ void Pattern::nextState(uint8_t timing)
 void Pattern::setColorset(const Colorset &set)
 {
   m_colorset = set;
+  init();
 }
 
 void Pattern::clearColorset()
