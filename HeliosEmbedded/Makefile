@@ -274,10 +274,10 @@ upload_eeprom_fingers: eeprom_fingers.eep
 ###################
 
 upload_hex:
-	$(AVRDUDE) $(AVRDUDE_FLAGS) -U flash:w:helios_firmware.hex:i
+	$(AVRDUDE) $(AVRDUDE_FLAGS) -U flash:w:aeos_firmware.hex:i
 
-extract_hex: helios_firmware.hex
-	$(AVRDUDE) $(AVRDUDE_FLAGS) -U flash:r:helios_firmware.hex:i
+extract_hex: aeos_firmware.hex
+	$(AVRDUDE) $(AVRDUDE_FLAGS) -U flash:r:aeos_firmware.hex:i
 
 #####################
 ####### CLEAN #######

@@ -7,12 +7,12 @@
 // when no color is selected in the colorset the index is this
 // then when you call getNext() for the first time it returns
 // the 0th color in the colorset and after the index will be 0
-#define INDEX_NONE 255
+#define COLORSET_INDEX_INVALID 255
 
 Colorset::Colorset() :
   m_palette(),
   m_numColors(0),
-  m_curIndex(INDEX_NONE)
+  m_curIndex(COLORSET_INDEX_INVALID)
 {
   init();
 }
@@ -262,7 +262,7 @@ void Colorset::skip(int32_t amount)
     return;
   }
   // if the colorset hasn't started yet
-  if (m_curIndex == INDEX_NONE) {
+  if (m_curIndex == COLORSET_INDEX_INVALID) {
     m_curIndex = 0;
   }
 
@@ -281,11 +281,8 @@ void Colorset::skip(int32_t amount)
 
 RGBColor Colorset::cur()
 {
-  if (m_curIndex >= m_numColors) {
-    return RGBColor(0, 0, 0);
-  }
-  if (m_curIndex == INDEX_NONE) {
-    return m_palette[0];
+  if (m_curIndex >= m_numColors || !m_palette) {
+    return RGB_OFF;
   }
   return m_palette[m_curIndex];
 }
@@ -303,7 +300,7 @@ void Colorset::setCurIndex(uint8_t index)
 
 void Colorset::resetIndex()
 {
-  m_curIndex = INDEX_NONE;
+  m_curIndex = COLORSET_INDEX_INVALID;
 }
 
 RGBColor Colorset::getPrev()
@@ -312,7 +309,7 @@ RGBColor Colorset::getPrev()
     return RGB_OFF;
   }
   // handle wrapping at 0
-  if (m_curIndex == 0 || m_curIndex == INDEX_NONE) {
+  if (m_curIndex == 0 || m_curIndex == COLORSET_INDEX_INVALID) {
     m_curIndex = numColors() - 1;
   } else {
     m_curIndex--;
