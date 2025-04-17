@@ -66,30 +66,25 @@ EMSCRIPTEN_BINDINGS(Vortex) {
 
   // pattern id constants
   enum_<PatternID>("PatternID")
+    // Pattern IDs
     .value("PATTERN_NONE", PatternID::PATTERN_NONE)
     // Strobe
-    .value("PATTERN_RIBBON", PatternID::PATTERN_RIBBON)
-    .value("PATTERN_ULTRA_DOPS", PatternID::PATTERN_ULTRA_DOPS)
     .value("PATTERN_DOPS", PatternID::PATTERN_DOPS)
     .value("PATTERN_STROBE", PatternID::PATTERN_STROBE)
     .value("PATTERN_HYPNOSTROBE", PatternID::PATTERN_HYPNOSTROBE)
     .value("PATTERN_STROBIE", PatternID::PATTERN_STROBIE)
-    .value("PATTERN_RAZOR", PatternID::PATTERN_RAZOR)
-    .value("PATTERN_FLARE", PatternID::PATTERN_FLARE)
-    .value("PATTERN_BURST", PatternID::PATTERN_BURST)
     .value("PATTERN_GLOW", PatternID::PATTERN_GLOW)
     .value("PATTERN_FLICKER", PatternID::PATTERN_FLICKER)
-    .value("PATTERN_FLASH", PatternID::PATTERN_FLASH)
     // Morph
-    .value("PATTERN_MORPH", PatternID::PATTERN_MORPH)
     .value("PATTERN_MORPH_STROBE", PatternID::PATTERN_MORPH_STROBE)
     .value("PATTERN_MORPH_STROBIE", PatternID::PATTERN_MORPH_STROBIE)
-    .value("PATTERN_MORPH_GLOW", PatternID::PATTERN_MORPH_GLOW)
     // Dash
     .value("PATTERN_DASH_DOPS", PatternID::PATTERN_DASH_DOPS)
     .value("PATTERN_DASH_DOT", PatternID::PATTERN_DASH_DOT)
-    .value("PATTERN_WAVE_PARTICLE", PatternID::PATTERN_WAVE_PARTICLE)
-    .value("PATTERN_LIGHTSPEED", PatternID::PATTERN_LIGHTSPEED);
+    // Fade
+    .value("PATTERN_FADE", PatternID::PATTERN_FADE)
+    .value("PATTERN_MORPH_FADE", PatternID::PATTERN_MORPH_FADE)
+    .value("PATTERN_GLITCH_FADE", PatternID::PATTERN_GLITCH_FADE);
 
   // colorset class
   class_<Colorset>("Colorset")
@@ -126,7 +121,8 @@ EMSCRIPTEN_BINDINGS(Vortex) {
     .property("gap_dur", &PatternArgs::gap_dur)
     .property("dash_dur", &PatternArgs::dash_dur)
     .property("group_size", &PatternArgs::group_size)
-    .property("blend_speed", &PatternArgs::blend_speed);
+    .property("blend_speed", &PatternArgs::blend_speed)
+    .property("fade_dur", &PatternArgs::fade_dur);
 
   // pattern class
   class_<Pattern>("Pattern")
