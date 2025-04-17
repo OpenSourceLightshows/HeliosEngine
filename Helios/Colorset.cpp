@@ -281,7 +281,7 @@ void Colorset::skip(int32_t amount)
 
 RGBColor Colorset::cur()
 {
-  if (m_curIndex >= m_numColors || !m_palette) {
+  if (m_curIndex >= m_numColors) {
     return RGB_OFF;
   }
   return m_palette[m_curIndex];
