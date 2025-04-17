@@ -1,4 +1,4 @@
-name: Helios Release
+name: Aeos Release
 
 on:
   workflow_dispatch: # manual trigger
@@ -49,6 +49,8 @@ jobs:
     steps:
       - name: Checkout current repository
         uses: actions/checkout@v4
+        with:
+          ref: aeos  # Explicitly checkout the aeos branch
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -77,20 +79,22 @@ jobs:
       - name: Checkout current repository
         uses: actions/checkout@v4
         with:
+          ref: aeos  # Explicitly checkout the aeos branch
           fetch-depth: 0 # Fetch all history for calculating version
 
       - name: Get the latest tag
         id: get_tag
         run: |
-          latest_tag=$(git describe --tags `git rev-list --tags --max-count=1` 2>/dev/null || echo "none")
+          # Look for tags with the aeos- prefix
+          latest_tag=$(git tag --list "aeos-*" | sort -V | tail -n1 || echo "none")
           echo "tag=$latest_tag" >> $GITHUB_ENV
 
       - name: Check for existing tags
         id: check_tag
         run: |
           if [ "${{ env.tag }}" == "none" ]; then
-            echo "No tags found. Creating initial tag 1.0.0."
-            echo "new_tag=1.0.0" >> $GITHUB_ENV
+            echo "No aeos tags found. Creating initial tag aeos-1.0.0."
+            echo "new_tag=aeos-1.0.0" >> $GITHUB_ENV
           fi
 
       - name: Calculate new version
@@ -99,13 +103,19 @@ jobs:
           if [ "${{ env.new_tag }}" == "" ]; then
             latest_tag=${{ env.tag }}
             commits_since_tag=$(git rev-list $latest_tag..HEAD --count)
-            IFS='.' read -ra ADDR <<< "$latest_tag"
+
+            # Extract version number from the aeos tag
+            version_number=$(echo $latest_tag | sed "s/aeos-//g")
+
+            IFS='.' read -ra ADDR <<< "$version_number"
             patch=$((ADDR[2] + commits_since_tag))
             new_version="${ADDR[0]}.${ADDR[1]}.$patch"
             echo "new_version=$new_version" >> $GITHUB_ENV
-            echo "new_tag=$new_version" >> $GITHUB_ENV
+            echo "new_tag=aeos-$new_version" >> $GITHUB_ENV
           else
-            echo "new_version=${{ env.new_tag }}" >> $GITHUB_ENV
+            # Extract version number from the new tag
+            new_version=$(echo ${{ env.new_tag }} | sed "s/aeos-//g")
+            echo "new_version=$new_version" >> $GITHUB_ENV
           fi
 
       - name: Check if new tag exists
@@ -151,9 +161,9 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ env.new_tag }}
-          name: Helios ${{ env.new_version }}
+          name: Aeos ${{ env.new_version }}
           body: |
-            Release of Helios version ${{ env.new_version }}
+            Release of Aeos version ${{ env.new_version }}
           draft: false
           prerelease: false
         env:
@@ -164,7 +174,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./artifact/unzipped/embedded/helios.bin
-          asset_name: helios.bin
+          asset_name: aeos.bin
           asset_content_type: application/octet-stream
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -174,7 +184,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./artifact/unzipped/embedded/helios.elf
-          asset_name: helios.elf
+          asset_name: aeos.elf
           asset_content_type: application/octet-stream
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -184,7 +194,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./artifact/unzipped/embedded/helios.map
-          asset_name: helios.map
+          asset_name: aeos.map
           asset_content_type: application/octet-stream
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -194,7 +204,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./artifact/unzipped/embedded/helios.hex
-          asset_name: helios.hex
+          asset_name: aeos.hex
           asset_content_type: application/octet-stream
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -204,8 +214,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./artifact/unzipped/helioscli/helios
-          asset_name: helios
+          asset_name: aeos_cli
           asset_content_type: application/octet-stream
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
