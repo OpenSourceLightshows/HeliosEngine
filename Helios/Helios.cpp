@@ -288,13 +288,15 @@ void Helios::handle_state_modes()
     return;
   }
 
-  // Check for autoplay mode switching AFTER playing
-  if (has_flag(FLAG_AUTOPLAY) && hasReleased && !Button::isPressed()) {
-    uint32_t current_time = Time::getCurtime();
-    if (current_time - last_mode_switch_time >= AUTOPLAY_DURATION) {
-      // Switch if duration passed AND (colorset has <= 1 color OR it is at the start index)
-      if (pat.colorset().numColors() <= 1 || pat.colorset().onStart()) {
-        load_next_mode();
+  // Check for autoplay mode switching
+  if (has_flag(FLAG_AUTOPLAY)) {
+    if (hasReleased && !Button::isPressed()) {
+      uint32_t current_time = Time::getCurtime();
+      if (current_time - last_mode_switch_time >= AUTOPLAY_DURATION) {
+        // Switch if duration passed AND (colorset has <= 1 color OR it is at the start index)
+        if (pat.colorset().numColors() <= 1 || pat.colorset().onStart()) {
+          load_next_mode();
+        }
       }
     }
   }
