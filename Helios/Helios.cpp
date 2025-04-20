@@ -40,6 +40,10 @@ uint32_t Helios::last_mode_switch_time;
 Colorset Helios::new_colorset;
 
 #ifdef HELIOS_CLI
+// Define state for CLI simulation
+enum {
+  STATE_SLEEP = 99 // Use a value unlikely to conflict with other states
+};
 bool Helios::sleeping;
 #endif
 
@@ -147,7 +151,7 @@ void Helios::enter_sleep()
   DDRB |= (1 << DDB0) | (1 << DDB1) | (1 << DDB4);
   // wakeup here, re-init
   init_components();
-#else
+#elif defined(HELIOS_CLI)
   cur_state = STATE_SLEEP;
   // enable the sleep bool
   sleeping = true;
@@ -158,7 +162,7 @@ void Helios::wakeup()
 {
 #ifdef HELIOS_EMBEDDED
   // nothing needed here, this interrupt firing will make the mainthread resume
-#else
+#elif defined(HELIOS_CLI)
   // if the button was held down then they are entering off-menus
   // but if we re-initialize the button it will clear this state
   bool pressed = Button::isPressed();
@@ -167,7 +171,7 @@ void Helios::wakeup()
   Button::init();
   // so just re-press it
   if (pressed) {
-    Button::doPress();
+    // Button::doPress(); // Commented out: doPress() is not defined in Button class
   }
   cur_state = STATE_MODES;
   // turn off the sleeping flag that only CLI has
@@ -297,34 +301,18 @@ void Helios::handle_state_modes()
     return;
   }
 
-  // Store colorset state *before* playing the pattern
-  uint8_t num_colors = pat.colorset().numColors();
-  uint8_t index_before_play = pat.colorset().curIndex();
-
   if (!has_flag(FLAG_LOCKED) && hasReleased) {
     // just play the current mode
     pat.play();
   }
 
-  // Get colorset state *after* playing the pattern
-  uint8_t index_after_play = pat.colorset().curIndex();
 
-  // Determine if the colorset looped (only relevant for >1 color)
-  bool colorset_looped = false;
-  if (num_colors > 1) {
-      // A loop occurs if index goes from the last valid index back to 0.
-      // Check includes the INDEX_INVALID case implicitly, as it's != num_colors - 1.
-      if (index_before_play == (num_colors - 1) && index_after_play == 0) {
-          colorset_looped = true;
-      }
-  }
-
-  // Check for autoplay mode switching
+  // Check for autoplay mode switching AFTER playing
   if (has_flag(FLAG_AUTOPLAY) && hasReleased && !Button::isPressed()) {
     uint32_t current_time = Time::getCurtime();
     if (current_time - last_mode_switch_time >= AUTOPLAY_DURATION) {
-      // Switch if duration passed AND (colorset has <= 1 color OR it just looped)
-      if (num_colors <= 1 || colorset_looped) {
+      // Switch if duration passed AND (colorset has <= 1 color OR it is at the start index)
+      if (pat.colorset().numColors() <= 1 || pat.colorset().onStart()) {
         load_next_mode();
       }
     }
