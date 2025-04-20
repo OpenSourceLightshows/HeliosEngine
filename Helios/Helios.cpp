@@ -289,12 +289,20 @@ void Helios::handle_state_modes()
     return;
   }
 
+
+  // check for lock and go back to sleep
+  if (has_flag(FLAG_LOCKED) && hasReleased && !Button::onRelease()) {
+    enter_sleep();
+    // ALWAYS RETURN AFTER SLEEP! WE WILL WAKE HERE!
+    return;
+  }
+
   // Store colorset state *before* playing the pattern
   uint8_t num_colors = pat.colorset().numColors();
   uint8_t index_before_play = pat.colorset().curIndex();
 
   if (!has_flag(FLAG_LOCKED) && hasReleased) {
-    // just play the current mode (this might advance the colorset index)
+    // just play the current mode
     pat.play();
   }
 
@@ -322,17 +330,6 @@ void Helios::handle_state_modes()
     }
   }
 
-  // check for lock and go back to sleep
-  if (has_flag(FLAG_LOCKED) && hasReleased && !Button::onRelease()) {
-    enter_sleep();
-    // ALWAYS RETURN AFTER SLEEP! WE WILL WAKE HERE!
-    return;
-  }
-
-  if (!has_flag(FLAG_LOCKED) && hasReleased) {
-    // just play the current mode
-    pat.play();
-  }
   // check how long the button is held
   uint32_t holdDur = Button::holdDuration();
   // calculate a magnitude which corresponds to how many times past the MENU_HOLD_TIME
