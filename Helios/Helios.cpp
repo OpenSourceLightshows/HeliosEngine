@@ -329,14 +329,20 @@ void Helios::handle_state_modes()
     return;
   }
 
+  if (!has_flag(FLAG_LOCKED) && hasReleased) {
+    // just play the current mode
+    pat.play();
+  }
+  // check how long the button is held
+  uint32_t holdDur = Button::holdDuration();
   // calculate a magnitude which corresponds to how many times past the MENU_HOLD_TIME
   // the user has held the button, so 0 means haven't held fully past one yet, etc
-  uint8_t magnitude = (uint8_t)(Button::holdDuration() / MENU_HOLD_TIME);
+  uint8_t magnitude = (uint8_t)(holdDur / MENU_HOLD_TIME);
   // whether the user has held the button longer than a short click
-  bool heldPast = (Button::holdDuration() > SHORT_CLICK_THRESHOLD);
+  bool heldPast = (holdDur > SHORT_CLICK_THRESHOLD);
 
   // flash red briefly when locked and short clicked
-  if (has_flag(FLAG_LOCKED) && Button::holdDuration() < SHORT_CLICK_THRESHOLD) {
+  if (has_flag(FLAG_LOCKED) && holdDur < SHORT_CLICK_THRESHOLD) {
     Led::set(RGB_RED_BRI_LOW);
   }
   // if the button is held for at least 1 second
