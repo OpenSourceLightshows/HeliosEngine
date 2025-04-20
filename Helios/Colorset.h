@@ -130,7 +130,6 @@ public:
   // whether the colorset is currently on the first color or last color
   bool onStart() const;
   bool onEnd() const;
-
 private:
   // palette of colors
   RGBColor m_palette[NUM_COLOR_SLOTS];
