@@ -288,17 +288,12 @@ void Helios::handle_state_modes()
     return;
   }
 
-  // Check if autoplay mode is enabled and the button is not currently being pressed.
   if (has_flag(FLAG_AUTOPLAY) && !Button::isPressed()) {
-    // Get the current time from the system clock.
     uint32_t current_time = Time::getCurtime();
-    // Check if the time elapsed since the last mode switch is greater than or equal to the defined autoplay duration.
     if (current_time - last_mode_switch_time >= AUTOPLAY_DURATION) {
-      // Further condition: Switch mode only if the current pattern's colorset has one or zero colors,
-      // OR if the colorset is currently at its starting position (index 0).
-      // This prevents switching mid-cycle for patterns with long cycles, prevent the mode switch from interrupting the pattern.
+      // If a pattern has a single cycle that is longer than the autoplay duration,
+      // prevent the mode switch from interrupting the pattern so the full cycle can be seen.
       if (pat.colorset().numColors() <= 1 || pat.colorset().onStart()) {
-        // If all conditions are met, load the next mode in the sequence.
         load_next_mode();
       }
     }
