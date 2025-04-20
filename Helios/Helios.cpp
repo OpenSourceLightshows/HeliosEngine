@@ -288,11 +288,17 @@ void Helios::handle_state_modes()
     return;
   }
 
-  // Check for autoplay mode switching
-  if (has_flag(FLAG_AUTOPLAY) && hasReleased && !Button::isPressed()) {
+  // This handles iterating the mode forward when the autoplay feature is
+  // enabled. The modes automatically cycle forward every AUTOPLAY_DURATION ticks
+  // but only if the button isn't pressed to avoid iterating while opening menus
+  if (has_flag(FLAG_AUTOPLAY) && !Button::isPressed()) {
     uint32_t current_time = Time::getCurtime();
     if (current_time - last_mode_switch_time >= AUTOPLAY_DURATION) {
-      load_next_mode();
+      // If a pattern has a single cycle that is longer than the autoplay duration,
+      // prevent the mode switch from interrupting the pattern so the full cycle can be seen.
+      if (pat.colorset().numColors() <= 1 || pat.colorset().onStart()) {
+        load_next_mode();
+      }
     }
   }
 
