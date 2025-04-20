@@ -130,6 +130,10 @@ public:
   // whether the colorset is currently on the first color or last color
   bool onStart() const;
   bool onEnd() const;
+
+  // Check if the colorset just looped around in the last getNext() call
+  bool justLooped() const;
+
 private:
   // palette of colors
   RGBColor m_palette[NUM_COLOR_SLOTS];
@@ -138,6 +142,8 @@ private:
   // the current index, starts at UINT8_MAX so that
   // the very first call to getNext will iterate to 0
   uint8_t m_curIndex;
+  // Flag indicating if the index just looped back to 0
+  bool m_justLooped;
 };
 
 #endif

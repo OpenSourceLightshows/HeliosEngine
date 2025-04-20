@@ -291,8 +291,12 @@ void Helios::handle_state_modes()
   // Check for autoplay mode switching
   if (has_flag(FLAG_AUTOPLAY) && hasReleased && !Button::isPressed()) {
     uint32_t current_time = Time::getCurtime();
+    // Switch mode only if duration passed AND pattern completed at least one cycle
     if (current_time - last_mode_switch_time >= AUTOPLAY_DURATION) {
-      load_next_mode();
+      // Switch if the colorset just looped OR if it has <= 1 color (won't loop)
+      if (pat.colorset().justLooped() || pat.colorset().numColors() <= 1) {
+          load_next_mode();
+      }
     }
   }
 

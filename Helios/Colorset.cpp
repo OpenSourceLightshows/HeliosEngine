@@ -301,6 +301,7 @@ void Colorset::setCurIndex(uint8_t index)
 void Colorset::resetIndex()
 {
   m_curIndex = INDEX_INVALID;
+  m_justLooped = false; // Reset loop flag
 }
 
 RGBColor Colorset::getPrev()
@@ -320,6 +321,7 @@ RGBColor Colorset::getPrev()
 
 RGBColor Colorset::getNext()
 {
+  m_justLooped = false; // Reset loop flag at the start
   if (!m_numColors) {
     return RGB_OFF;
   }
@@ -327,6 +329,10 @@ RGBColor Colorset::getNext()
   m_curIndex++;
   // then modulate the result within max colors
   m_curIndex %= numColors();
+  // Set flag if we wrapped back to the beginning
+  if (m_curIndex == 0) {
+      m_justLooped = true;
+  }
   // return the color
   return m_palette[m_curIndex];
 }
@@ -362,4 +368,9 @@ bool Colorset::onEnd() const
     return false;
   }
   return (m_curIndex == m_numColors - 1);
+}
+
+// Check if the colorset just looped around in the last getNext() call
+bool Colorset::justLooped() const {
+    return m_justLooped;
 }
