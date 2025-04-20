@@ -40,10 +40,6 @@ uint32_t Helios::last_mode_switch_time;
 Colorset Helios::new_colorset;
 
 #ifdef HELIOS_CLI
-// Define state for CLI simulation
-enum {
-  STATE_SLEEP = 99 // Use a value unlikely to conflict with other states
-};
 bool Helios::sleeping;
 #endif
 
@@ -151,7 +147,7 @@ void Helios::enter_sleep()
   DDRB |= (1 << DDB0) | (1 << DDB1) | (1 << DDB4);
   // wakeup here, re-init
   init_components();
-#elif defined(HELIOS_CLI)
+#else
   cur_state = STATE_SLEEP;
   // enable the sleep bool
   sleeping = true;
@@ -162,7 +158,7 @@ void Helios::wakeup()
 {
 #ifdef HELIOS_EMBEDDED
   // nothing needed here, this interrupt firing will make the mainthread resume
-#elif defined(HELIOS_CLI)
+#else
   // if the button was held down then they are entering off-menus
   // but if we re-initialize the button it will clear this state
   bool pressed = Button::isPressed();
@@ -171,13 +167,14 @@ void Helios::wakeup()
   Button::init();
   // so just re-press it
   if (pressed) {
-    // Button::doPress(); // Commented out: doPress() is not defined in Button class
+    Button::doPress();
   }
   cur_state = STATE_MODES;
   // turn off the sleeping flag that only CLI has
   sleeping = false;
 #endif
 }
+
 
 void Helios::load_next_mode()
 {
