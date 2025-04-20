@@ -295,7 +295,7 @@ void Helios::handle_state_modes()
     if (current_time - last_mode_switch_time >= AUTOPLAY_DURATION) {
       // Switch if the colorset just looped OR if it has <= 1 color (won't loop)
       if (pat.colorset().justLooped() || pat.colorset().numColors() <= 1) {
-          load_next_mode();
+        load_next_mode();
       }
     }
   }
