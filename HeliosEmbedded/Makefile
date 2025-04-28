@@ -174,20 +174,38 @@ DFILES = $(HELIOS_DFILES) $(LOCAL_DFILES)
 # Target name
 TARGET = helios
 
-all: compute_version $(TARGET).hex
+# Define local output directory
+LOCAL_OUTPUT_DIR = ./output
+
+# Define ROOT_OUTPUT_DIR and FINAL_HEX_TARGET
+ROOT_OUTPUT_DIR ?= ../output
+FINAL_HEX_TARGET = $(ROOT_OUTPUT_DIR)/helios_firmware.hex
+
+# Define targets for intermediate files in local output
+LOCAL_ELF_TARGET = $(LOCAL_OUTPUT_DIR)/$(TARGET).elf
+LOCAL_BIN_TARGET = $(LOCAL_OUTPUT_DIR)/$(TARGET).bin
+LOCAL_EEP_TARGET = $(LOCAL_OUTPUT_DIR)/$(TARGET).eep
+LOCAL_LST_TARGET = $(LOCAL_OUTPUT_DIR)/$(TARGET).lst
+LOCAL_MAP_TARGET = $(LOCAL_OUTPUT_DIR)/$(TARGET).map
+
+all: compute_version $(FINAL_HEX_TARGET)
 	@echo Detected Operating System: $(OS)
-	$(OBJDUMP) --disassemble --source --line-numbers --demangle --section=.text $(TARGET).elf > $(TARGET).lst
-	$(NM) --numeric-sort --line-numbers --demangle --print-size --format=s $(TARGET).elf > $(TARGET).map
+	$(OBJDUMP) --disassemble --source --line-numbers --demangle --section=.text $(LOCAL_ELF_TARGET) > $(LOCAL_LST_TARGET)
+	$(NM) --numeric-sort --line-numbers --demangle --print-size --format=s $(LOCAL_ELF_TARGET) > $(LOCAL_MAP_TARGET)
 	chmod +x avrsize.sh
-	./avrsize.sh $(TARGET).elf
+	./avrsize.sh $(LOCAL_ELF_TARGET)
 	@echo "== Success building Helios v$(HELIOS_VERSION_NUMBER) =="
 
-$(TARGET).hex: $(TARGET).elf
-	$(OBJCOPY) -O binary -R .eeprom $(TARGET).elf $(TARGET).bin
-	$(OBJCOPY) -O ihex -j .eeprom --set-section-flags=.eeprom=alloc,load --no-change-warnings --change-section-lma .eeprom=0 $(TARGET).elf $(TARGET).eep
+$(FINAL_HEX_TARGET): $(LOCAL_ELF_TARGET)
+	@mkdir -p $(dir $@)
+	@mkdir -p $(LOCAL_OUTPUT_DIR)
+	$(OBJCOPY) -O binary -R .eeprom $< $(LOCAL_BIN_TARGET)
+	$(OBJCOPY) -O ihex -j .eeprom --set-section-flags=.eeprom=alloc,load --no-change-warnings --change-section-lma .eeprom=0 $< $(LOCAL_EEP_TARGET)
 	$(OBJCOPY) -O ihex -R .eeprom $< $@
+	@echo "Created final hex: $@"
 
-$(TARGET).elf: compute_version $(OBJS)
+$(LOCAL_ELF_TARGET): compute_version $(OBJS)
+	@mkdir -p $(dir $@)
 	$(LD) $(LDFLAGS) $(OBJS) -o $@
 
 # Rules for building object files
@@ -201,8 +219,8 @@ $(BUILD_DIR)/%.o: %.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
 	$(CC) $(CFLAGS) -MM -MT "$@" -MF "$(BUILD_DIR)/$*.d" $<
 
-upload: set_fuses $(TARGET).hex
-	$(AVRDUDE) $(AVRDUDE_FLAGS) -Uflash:w:$(TARGET).hex:i
+upload: set_fuses $(FINAL_HEX_TARGET)
+	$(AVRDUDE) $(AVRDUDE_FLAGS) -Uflash:w:$(FINAL_HEX_TARGET):i
 
 #######################
 ### LINUX SETUP #######
@@ -302,12 +320,11 @@ extract_hex: helios_firmware.hex
 #####################
 
 clean:
-	@echo "Cleaning up..."
-	@$(RM) -f $(TARGET).bin $(TARGET).eep $(TARGET).elf $(TARGET).hex $(TARGET).lst $(TARGET).map
-	@$(RM) -f $(OBJS) $(DFILES)
-	@$(RM) -rf $(BUILD_DIR)
+	@echo "Cleaning up HeliosEmbedded..."
+	@$(RM) -rf $(BUILD_DIR) $(LOCAL_OUTPUT_DIR)
+	@$(RM) -f $(OBJS) $(DFILES) $(FINAL_HEX_TARGET)
 	@$(RM) -f *.d ../Helios/*.d
-	@echo "Cleaned!"
+	@echo "Cleaned HeliosEmbedded!"
 
 compute_version:
 	$(eval LATEST_TAG ?= $(shell git fetch --depth=1 origin +refs/tags/*:refs/tags/* &> /dev/null && git tag --list | sort -V | tail -n1))

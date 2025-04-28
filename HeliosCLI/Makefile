@@ -34,11 +34,12 @@ ifneq ($(INCLUDES),)
     CFLAGS+=$(INCLUDES)
 endif
 
+# Define ROOT_OUTPUT_DIR and FINAL_TARGET
+ROOT_OUTPUT_DIR ?= ../output
+FINAL_TARGET = $(ROOT_OUTPUT_DIR)/helios_cli
+
 # Build directory for object files - default to ./build if not specified
 BUILD_DIR ?= ./build
-
-# Create architecture-specific build directories
-$(shell mkdir -p $(BUILD_DIR)/Helios)
 
 # local NONSTANDARD libraries to link with
 # these MUST be exact filenames, cannot be -l syntax
@@ -101,7 +102,8 @@ tests: $(TESTS)
 
 # target for helios cli
 helios: compute_version $(DEPS)
-	$(CC) $(CFLAGS) $(OBJS) -o $@ $(LLIBS)
+	@mkdir -p $(ROOT_OUTPUT_DIR)
+	$(CC) $(CFLAGS) $(OBJS) -o $(FINAL_TARGET) $(LLIBS)
 
 # Rules for building object files
 $(BUILD_DIR)/Helios/%.o: ../Helios/%.cpp
@@ -124,7 +126,8 @@ FORCE:
 
 # generic clean target
 clean:
-	@$(RM) $(DFILES) $(OBJS) $(TARGETS) $(TESTS) $(BUILD_DIR)
+	@$(RM) -f $(DFILES) $(OBJS) $(FINAL_TARGET) $(TESTS)
+	@$(RM) -rf $(BUILD_DIR)
 
 compute_version:
 	$(eval LATEST_TAG ?= $(shell git fetch --depth=1 origin +refs/tags/*:refs/tags/* &> /dev/null && git tag --list | sort -V | tail -n1))

@@ -9,25 +9,25 @@ HELIOS_LIB_DIR = HeliosLib
 HELIOS_CLI_DIR = HeliosCLI
 HELIOS_EMBEDDED_DIR = HeliosEmbedded
 
-# Architecture directories for object files
-ARCH_DIRS = build/avr build/x64 build/wasm
+# Build and Output directories
+BUILD_BASE_DIR = build
+OUTPUT_DIR = output
+ARCH_DIRS = $(BUILD_BASE_DIR)/avr $(BUILD_BASE_DIR)/x64 $(BUILD_BASE_DIR)/wasm $(OUTPUT_DIR)
 
 # Setup build directories
 setup_dirs:
-	@echo "Setting up architecture-specific build directories..."
+	@echo "Setting up build and output directories..."
 	@mkdir -p $(ARCH_DIRS)
 
 # Default target - Build the embedded version
 embedded: setup_dirs
 	@echo "Building Helios Embedded..."
-	@$(MAKE) -C $(HELIOS_EMBEDDED_DIR) ARCH=avr BUILD_DIR=../build/avr
-	@cp $(HELIOS_EMBEDDED_DIR)/helios.hex ./helios_firmware.hex
+	@$(MAKE) -C $(HELIOS_EMBEDDED_DIR) ARCH=avr BUILD_DIR=../$(BUILD_BASE_DIR)/avr ROOT_OUTPUT_DIR=../$(OUTPUT_DIR)
 
 # CLI builds lib implicitly
 cli: setup_dirs
 	@echo "Building Helios CLI..."
-	@$(MAKE) -C $(HELIOS_CLI_DIR) ARCH=x64 BUILD_DIR=../build/x64
-	@cp $(HELIOS_CLI_DIR)/helios ./helios_cli
+	@$(MAKE) -C $(HELIOS_CLI_DIR) ARCH=x64 BUILD_DIR=../$(BUILD_BASE_DIR)/x64 ROOT_OUTPUT_DIR=../$(OUTPUT_DIR)
 
 # Build everything (truly "all") - but build them separately to avoid conflicts
 all:
@@ -41,27 +41,24 @@ all:
 # Build the Helios library
 lib: setup_dirs
 	@echo "Building Helios library..."
-	@$(MAKE) -C $(HELIOS_LIB_DIR) ARCH=x64 BUILD_DIR=../build/x64
-	@cp $(HELIOS_LIB_DIR)/helios.a ./helios_lib.a
+	@$(MAKE) -C $(HELIOS_LIB_DIR) ARCH=x64 BUILD_DIR=../$(BUILD_BASE_DIR)/x64 ROOT_OUTPUT_DIR=../$(OUTPUT_DIR)
 
 # Build WebAssembly version - HeliosLib will check for compiler availability
 wasm: setup_dirs
 	@echo "Building WebAssembly library..."
-	@$(MAKE) -C $(HELIOS_LIB_DIR) wasm ARCH=wasm BUILD_DIR=../build/wasm
-	@cp -f $(HELIOS_LIB_DIR)/HeliosLib.js ./helios_wasm.js 2>/dev/null || true
-	@cp -f $(HELIOS_LIB_DIR)/HeliosLib.wasm ./helios_wasm.wasm 2>/dev/null || true
+	@$(MAKE) -C $(HELIOS_LIB_DIR) wasm ARCH=wasm BUILD_DIR=../$(BUILD_BASE_DIR)/wasm ROOT_OUTPUT_DIR=../$(OUTPUT_DIR)
 
 # Upload embedded firmware
 upload:
 	@echo "Uploading firmware to device..."
-	@$(MAKE) -C $(HELIOS_EMBEDDED_DIR) upload
+	@$(MAKE) -C $(HELIOS_EMBEDDED_DIR) upload ROOT_OUTPUT_DIR=../$(OUTPUT_DIR)
 
 # Run tests
 tests: setup_dirs
 	@echo "Running tests for Helios CLI..."
-	@$(MAKE) -C $(HELIOS_CLI_DIR) tests ARCH=x64 BUILD_DIR=../build/x64
+	@$(MAKE) -C $(HELIOS_CLI_DIR) tests ARCH=x64 BUILD_DIR=../$(BUILD_BASE_DIR)/x64 ROOT_OUTPUT_DIR=../$(OUTPUT_DIR)
 	@echo "Running tests for Helios Library..."
-	@$(MAKE) -C $(HELIOS_LIB_DIR) tests ARCH=x64 BUILD_DIR=../build/x64
+	@$(MAKE) -C $(HELIOS_LIB_DIR) tests ARCH=x64 BUILD_DIR=../$(BUILD_BASE_DIR)/x64 ROOT_OUTPUT_DIR=../$(OUTPUT_DIR)
 
 # Generate PNGs for documentation
 pngs:
@@ -87,23 +84,15 @@ clean:
 	@$(MAKE) -C $(HELIOS_EMBEDDED_DIR) clean
 	@echo "Cleaning storage files..."
 	@$(MAKE) -C $(HELIOS_CLI_DIR) clean_storage
-	@echo "Cleaning root directory artifacts..."
-	@rm -f helios_cli helios_lib.a helios_firmware.hex helios_wasm.js helios_wasm.wasm
-	@rm -rf assets helios_package helios_package.zip build
+	@echo "Cleaning root directories..."
+	@rm -rf assets helios_package helios_package.zip $(BUILD_BASE_DIR) $(OUTPUT_DIR)
 
 # Package all compiled binaries into a zip file
 package:
 	@echo "Packaging Helios binaries..."
-	@$(MAKE) embedded
-	@$(MAKE) cli
-	@$(MAKE) lib
-	@$(MAKE) wasm
+	@$(MAKE) all
 	@mkdir -p helios_package
-	@cp helios_cli helios_package/
-	@cp helios_lib.a helios_package/
-	@cp helios_firmware.hex helios_package/
-	@cp helios_wasm.js helios_package/ 2>/dev/null || true
-	@cp helios_wasm.wasm helios_package/ 2>/dev/null || true
+	@cp $(OUTPUT_DIR)/* helios_package/ 2>/dev/null || true
 	@cp -r assets helios_package/ 2>/dev/null || true
 	@zip -r helios_package.zip helios_package
 	@rm -rf helios_package
@@ -114,17 +103,17 @@ help:
 	@echo "Helios Engine Unified Build System"
 	@echo ""
 	@echo "Available targets:"
-	@echo "  embedded       - default, Build the embedded firmware"
-	@echo "  cli            - Build the Helios CLI tool (implicitly builds lib)"
-	@echo "  all            - Build everything: CLI, embedded firmware, and WebAssembly (if available)"
-	@echo "  lib            - Build just the Helios library"
-	@echo "  wasm           - Build WebAssembly version of library (requires Emscripten)"
-	@echo "  upload         - Upload firmware to ATtiny device"
+	@echo "  embedded       - default, Build the embedded firmware into ./output"
+	@echo "  cli            - Build the Helios CLI tool into ./output (implicitly builds lib)"
+	@echo "  all            - Build everything into ./output: CLI, embedded, lib, wasm (if available)"
+	@echo "  lib            - Build just the Helios library into ./output"
+	@echo "  wasm           - Build WebAssembly version into ./output (requires Emscripten)"
+	@echo "  upload         - Upload firmware from ./output/helios_firmware.hex"
 	@echo "  tests          - Run all tests"
 	@echo "  pngs           - Generate PNG documentation files and copy to ./assets"
 	@echo "  bmps           - Generate BMP files and copy to ./assets"
-	@echo "  clean          - Clean all build artifacts and storage files"
-	@echo "  package        - Build all components and package into a zip file"
+	@echo "  clean          - Clean all build artifacts, output files, and storage files"
+	@echo "  package        - Build all components and package output/* into a zip file"
 	@echo "  help           - Show this help information"
 
 # Important note for component Makefiles:

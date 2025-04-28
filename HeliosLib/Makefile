@@ -102,12 +102,17 @@ DEPS=\
 # unit tests
 TESTS=\
 
-# target files
+# Define ROOT_OUTPUT_DIR and FINAL_TARGETs
+ROOT_OUTPUT_DIR ?= ../output
+FINAL_LIB_TARGET = $(ROOT_OUTPUT_DIR)/helios_lib.a
+FINAL_WASM_TARGET = $(ROOT_OUTPUT_DIR)/helios_wasm.js
+FINAL_WASM_BIN_TARGET = $(ROOT_OUTPUT_DIR)/helios_wasm.wasm
+
+# Update TARGETS definition
 ifdef WASM
-TARGETS=HeliosLib.js \
-	helios.a
+TARGETS=$(FINAL_WASM_TARGET) $(FINAL_LIB_TARGET)
 else
-TARGETS=helios.a
+TARGETS=$(FINAL_LIB_TARGET)
 endif
 
 # Default target for 'make' command
@@ -120,18 +125,22 @@ tests: $(TESTS)
 wasm: FORCE
 	@if command -v em++; then \
 		echo "WebAssembly compiler found, building WASM..."; \
-		env WASM=1 $(MAKE); \
+		env WASM=1 $(MAKE) $(FINAL_WASM_TARGET) $(FINAL_LIB_TARGET); \
 	else \
 		echo "WebAssembly compiler (em++) not found, skipping WASM build."; \
-		touch HeliosLib.js; \
+		touch $(FINAL_WASM_TARGET); \
+		touch $(FINAL_WASM_BIN_TARGET); \
 	fi
 
 # target for helios lib
-helios.a: compute_version $(DEPS)
+$(FINAL_LIB_TARGET): compute_version $(DEPS)
+	@mkdir -p $(dir $@)
 	$(AR) $@ $(DEPS)
+	@echo "Created $@"
 
 HeliosLib.js: compute_version $(DEPS)
-	$(CC) $(LDFLAGS) $(DEPS) -o $@ $(LLIBS)
+	@mkdir -p $(ROOT_OUTPUT_DIR)
+	$(CC) $(LDFLAGS) $(DEPS) -o $(FINAL_WASM_TARGET) $(LLIBS)
 
 # Rules for building object files
 $(BUILD_DIR)/Helios/%.o: ../Helios/%.cpp
@@ -147,7 +156,7 @@ FORCE:
 
 # generic clean target
 clean:
-	@$(RM) $(DFILES) $(OBJS) $(TARGETS) $(TESTS) HeliosLib.js HeliosLib.wasm $(BUILD_DIR)
+	@$(RM) $(DFILES) $(OBJS) $(FINAL_LIB_TARGET) $(FINAL_WASM_TARGET) $(FINAL_WASM_BIN_TARGET) $(TESTS) HeliosLib.js HeliosLib.wasm $(BUILD_DIR)
 
 compute_version:
 	$(eval LATEST_TAG ?= $(shell git fetch --depth=1 origin +refs/tags/*:refs/tags/* &> /dev/null && git tag --list | sort -V | tail -n1))
