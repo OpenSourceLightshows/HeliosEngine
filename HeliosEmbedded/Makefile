@@ -56,9 +56,9 @@ ifeq ($(OS),Windows_NT) # Windows
     AVRDUDE_BAUDRATE = 115200
     AVRDUDE_PORT = usb
 else ifeq ($(OS),Darwin)
-    AVRDUDE_PROGRAMMER = usbtiny
+    AVRDUDE_PROGRAMMER = stk500v1
     AVRDUDE_BAUDRATE = 19200
-    AVRDUDE_PORT = usb
+    AVRDUDE_PORT = /dev/tty.usbmodem21301
 endif
 
 AVRDUDE_FLAGS = -C$(AVRDUDE_CONF) \
@@ -274,10 +274,10 @@ upload_eeprom_fingers: eeprom_fingers.eep
 ###################
 
 upload_hex:
-	$(AVRDUDE) $(AVRDUDE_FLAGS) -U flash:w:helios_firmware.hex:i
+	$(AVRDUDE) $(AVRDUDE_FLAGS) -U flash:w:aeos_firmware.hex:i
 
-extract_hex: helios_firmware.hex
-	$(AVRDUDE) $(AVRDUDE_FLAGS) -U flash:r:helios_firmware.hex:i
+extract_hex: aeos_firmware.hex
+	$(AVRDUDE) $(AVRDUDE_FLAGS) -U flash:r:aeos_firmware.hex:i
 
 #####################
 ####### CLEAN #######

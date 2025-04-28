@@ -9,50 +9,24 @@
 
 #include <string.h> // for memcpy
 
-// uncomment me to print debug labels on the pattern states, this is useful if you
-// are debugging a pattern strip from the command line and want to see what state
-// the pattern is in each tick of the pattern
-//#define DEBUG_BASIC_PATTERN
-
-#ifdef DEBUG_BASIC_PATTERN
-#include "../../Time/TimeControl.h"
-#include <stdio.h>
-// print out the current state of the pattern
-#define PRINT_STATE(state) printState(state)
-static void printState(PatternState state)
-{
-  static uint64_t lastPrint = 0;
-  if (lastPrint == Time::getCurtime()) return;
-  switch (m_state) {
-  case STATE_ON: printf("on  "); break;
-  case STATE_OFF: printf("off "); break;
-  case STATE_IN_GAP: printf("gap1"); break;
-  case STATE_IN_DASH: printf("dash"); break;
-  case STATE_IN_GAP2: printf("gap2"); break;
-  default: return;
-  }
-  lastPrint = Time::getCurtime();
-}
-#else
-#define PRINT_STATE(state) // do nothing
-#endif
-
 Pattern::Pattern(uint8_t onDur, uint8_t offDur, uint8_t gap,
-          uint8_t dash, uint8_t group, uint8_t blend) :
-  m_args(onDur, offDur, gap, dash, group, blend),
+          uint8_t dash, uint8_t group, uint8_t blend, uint8_t fade) :
+  m_args(onDur, offDur, gap, dash, group, blend, fade),
   m_patternFlags(0),
   m_colorset(),
   m_groupCounter(0),
   m_state(STATE_BLINK_ON),
   m_blinkTimer(),
   m_cur(),
-  m_next()
+  m_next(),
+  m_fadeValue(0),
+  m_fadeStartTime(0)
 {
 }
 
 Pattern::Pattern(const PatternArgs &args) :
   Pattern(args.on_dur, args.off_dur, args.gap_dur,
-      args.dash_dur, args.group_size, args.blend_speed)
+      args.dash_dur, args.group_size, args.blend_speed, args.fade_dur)
 {
 }
 
@@ -63,6 +37,9 @@ Pattern::~Pattern()
 void Pattern::init()
 {
   m_colorset.resetIndex();
+
+  // Reset the fade start time to the current time
+  m_fadeStartTime = Time::getCurtime();
 
   // the default state to begin with
   m_state = STATE_BLINK_ON;
@@ -81,11 +58,56 @@ void Pattern::init()
     // convert current/next colors to HSV but only if we are doing a blend
     m_cur = m_colorset.getNext();
     m_next = m_colorset.getNext();
+  } else if (m_args.fade_dur) {
+    // if there is a fade dur and no blend need to iterate colorset
+    m_colorset.getNext();
+  }
+
+  // Initialize the fluctuating fade value
+  m_fadeValue = 0;
+}
+
+void Pattern::tickFade()
+{
+  uint32_t now = Time::getCurtime();
+  // Calculate relative time since pattern was initialized
+  uint32_t relativeTime = now - m_fadeStartTime;
+  uint32_t duration = m_args.fade_dur * 10;
+
+  // only tick forward every fade_dur ticks
+  if (!relativeTime || (relativeTime % duration) != 0) {
+    return;
+  }
+
+  // count the number of steps based on relative time
+  uint32_t steps = relativeTime / duration;
+  uint32_t range = m_args.off_dur;
+
+  // make sure the range is non-zero
+  if (range == 0) {
+    m_fadeValue = 0;
+    return;
+  }
+
+  uint32_t double_range = range * 2;
+  uint32_t step = steps % double_range;
+
+  // Triangle wave: up from 0 to range, then down to 0
+  m_fadeValue = (step < range) ? step : (double_range - step - 1);
+
+  // iterate color when at lowest point
+  if (step == 0) {
+    m_colorset.getNext();
   }
 }
 
 void Pattern::play()
 {
+  // tick forward the fade logic each tick
+  if (isFade()) {
+    tickFade();
+  }
+
   // Sometimes the pattern needs to cycle multiple states in a single frame so
   // instead of using a loop or recursion I have just used a simple goto
 replay:
@@ -98,7 +120,8 @@ replay:
     if (m_args.on_dur > 0) {
       onBlinkOn();
       --m_groupCounter;
-      nextState(m_args.on_dur);
+      // When in ON state, use current fading on-time
+      nextState(m_args.on_dur + m_fadeValue);
       return;
     }
     m_state = STATE_BLINK_OFF;
@@ -108,7 +131,7 @@ replay:
     if (m_groupCounter > 0 || (!m_args.gap_dur && !m_args.dash_dur)) {
       if (m_args.off_dur > 0) {
         onBlinkOff();
-        nextState(m_args.off_dur);
+        nextState(m_args.off_dur - m_fadeValue);
         return;
       }
       if (m_groupCounter > 0 && m_args.on_dur > 0) {
@@ -183,6 +206,14 @@ void Pattern::onBlinkOn()
     blendBlinkOn();
     return;
   }
+
+  // Check if this is a fading duration pattern
+  if (isFade()) {
+    Led::set(m_colorset.cur());
+    return;
+  }
+
+
   Led::set(m_colorset.getNext());
 }
 
@@ -280,3 +311,31 @@ void Pattern::interpolate(uint8_t &current, const uint8_t next)
     current -= step;
   }
 }
+
+// ==================================
+//  Debug Code
+#if DEBUG_BASIC_PATTERN == 1
+#include <stdio.h>
+void Pattern::printState(PatternState state)
+{
+  static uint32_t lastPrint = UINT32_MAX;
+  if (lastPrint == Time::getCurtime()) {
+    return;
+  }
+  switch (m_state) {
+    case STATE_DISABLED:   printf("DIS "); break;
+    case STATE_BLINK_ON:   printf("ON  "); break;
+    case STATE_ON:         printf("on  "); break;
+    case STATE_BLINK_OFF:  printf("OFF "); break;
+    case STATE_OFF:        printf("off "); break;
+    case STATE_BEGIN_GAP:  printf("GAP1"); break;
+    case STATE_IN_GAP:     printf("gap1"); break;
+    case STATE_BEGIN_DASH: printf("DASH"); break;
+    case STATE_IN_DASH:    printf("dash"); break;
+    case STATE_BEGIN_GAP2: printf("GAP2"); break;
+    case STATE_IN_GAP2:    printf("gap2"); break;
+    default:               printf("(%02u)", m_state); break;
+  }
+  lastPrint = Time::getCurtime();
+}
+#endif
