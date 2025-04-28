@@ -46,7 +46,7 @@ lib: setup_dirs
 
 # Check if WASM compiler is available before trying to build
 check_wasm:
-	@if command -v em++ >/dev/null 2>&1; then \
+	@if command -v em++; then \
 		echo "WebAssembly compiler found, building WASM..."; \
 		$(MAKE) wasm; \
 	else \
@@ -58,7 +58,7 @@ wasm: setup_dirs
 	@echo "Building WebAssembly library..."
 	@$(MAKE) -C $(HELIOS_LIB_DIR) wasm ARCH=wasm BUILD_DIR=../build/wasm
 	@cp $(HELIOS_LIB_DIR)/HeliosLib.js ./helios_wasm.js
-	@cp $(HELIOS_LIB_DIR)/HeliosLib.wasm ./helios_wasm.wasm 2>/dev/null || true
+	@cp $(HELIOS_LIB_DIR)/HeliosLib.wasm ./helios_wasm.wasm
 
 # Upload embedded firmware
 upload:
@@ -77,14 +77,14 @@ pngs:
 	@echo "Generating PNG files..."
 	@$(MAKE) -C $(HELIOS_CLI_DIR) pngs
 	@mkdir -p ./assets
-	@cp $(HELIOS_CLI_DIR)/*.png ./assets/ 2>/dev/null || true
+	@cp $(HELIOS_CLI_DIR)/*.png ./assets/
 
 # Generate BMPs for documentation
 bmps:
 	@echo "Generating BMP files..."
 	@$(MAKE) -C $(HELIOS_CLI_DIR) bmps
 	@mkdir -p ./assets
-	@cp $(HELIOS_CLI_DIR)/*.bmp ./assets/ 2>/dev/null || true
+	@cp $(HELIOS_CLI_DIR)/*.bmp ./assets/
 
 # Clean all build artifacts and storage files
 clean:
@@ -95,7 +95,7 @@ clean:
 	@echo "Cleaning Helios Embedded..."
 	@$(MAKE) -C $(HELIOS_EMBEDDED_DIR) clean
 	@echo "Cleaning storage files..."
-	@$(MAKE) -C $(HELIOS_CLI_DIR) clean_storage 2>/dev/null || true
+	@$(MAKE) -C $(HELIOS_CLI_DIR) clean_storage
 	@echo "Cleaning root directory artifacts..."
 	@rm -f helios_cli helios_lib.a helios_firmware.hex helios_wasm.js helios_wasm.wasm
 	@rm -rf assets helios_package helios_package.zip build
@@ -106,14 +106,14 @@ package:
 	@$(MAKE) embedded
 	@$(MAKE) cli
 	@$(MAKE) lib
-	@if command -v em++ >/dev/null 2>&1; then $(MAKE) wasm; fi
+	@if command -v em++; then $(MAKE) wasm; fi
 	@mkdir -p helios_package
-	@cp helios_cli helios_package/ 2>/dev/null || true
-	@cp helios_lib.a helios_package/ 2>/dev/null || true
-	@cp helios_firmware.hex helios_package/ 2>/dev/null || true
-	@cp helios_wasm.js helios_package/ 2>/dev/null || true
-	@cp helios_wasm.wasm helios_package/ 2>/dev/null || true
-	@cp -r assets helios_package/ 2>/dev/null || true
+	@cp helios_cli helios_package/
+	@cp helios_lib.a helios_package/
+	@cp helios_firmware.hex helios_package/
+	@cp helios_wasm.js helios_package/
+	@cp helios_wasm.wasm helios_package/
+	@cp -r assets helios_package/
 	@zip -r helios_package.zip helios_package
 	@rm -rf helios_package
 	@echo "Package created: helios_package.zip"
