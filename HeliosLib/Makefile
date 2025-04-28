@@ -138,9 +138,9 @@ $(FINAL_LIB_TARGET): compute_version $(DEPS)
 	$(AR) $@ $(DEPS)
 	@echo "Created $@"
 
-HeliosLib.js: compute_version $(DEPS)
+$(FINAL_WASM_TARGET): compute_version $(DEPS)
 	@mkdir -p $(ROOT_OUTPUT_DIR)
-	$(CC) $(LDFLAGS) $(DEPS) -o $(FINAL_WASM_TARGET) $(LLIBS)
+	$(CC) $(LDFLAGS) $(DEPS) -o $@ $(LLIBS)
 
 # Rules for building object files
 $(BUILD_DIR)/Helios/%.o: ../Helios/%.cpp
