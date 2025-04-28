@@ -96,7 +96,6 @@ DEFINES=\
 
 CFLAGS = -g \
 	 -Os \
-	 -MMD \
 	 -Wall \
 	 -flto \
 	 -mrelax \
@@ -141,18 +140,32 @@ CFLAGS+=$(INCLUDES)
 ### SOURCE FILES ######
 #######################
 
+# Build directory for object files - default to ./build if not specified
+BUILD_DIR ?= ./build
+
+# Create architecture-specific build directories
+$(shell mkdir -p $(BUILD_DIR)/Helios)
+
 # Source files
 ifeq ($(OS),Windows_NT) # Windows
-SRCS = \
-       $(shell find ../Helios -maxdepth 1 -type f -name '\*.cpp') main.cpp
-else # linux
-SRCS = \
-       $(shell find ../Helios -maxdepth 1 -type f -name \*.cpp) main.cpp
+HELIOS_SRCS = \
+       $(shell find ../Helios -maxdepth 1 -type f -name '\*.cpp')
+LOCAL_SRCS = main.cpp
+else # linux/macos
+HELIOS_SRCS = \
+       $(shell find ../Helios -maxdepth 1 -type f -name \*.cpp)
+LOCAL_SRCS = main.cpp
 endif
 
-OBJS = $(SRCS:.cpp=.o)
+# Generate object file paths using BUILD_DIR
+HELIOS_OBJS = $(patsubst ../Helios/%.cpp,$(BUILD_DIR)/Helios/%.o,$(HELIOS_SRCS))
+LOCAL_OBJS = $(patsubst %.cpp,$(BUILD_DIR)/%.o,$(LOCAL_SRCS))
+OBJS = $(HELIOS_OBJS) $(LOCAL_OBJS)
 
-DFILES = $(SRCS:.cpp=.d)
+# Generate dependency file paths
+HELIOS_DFILES = $(patsubst ../Helios/%.cpp,$(BUILD_DIR)/Helios/%.d,$(HELIOS_SRCS))
+LOCAL_DFILES = $(patsubst %.cpp,$(BUILD_DIR)/%.d,$(LOCAL_SRCS))
+DFILES = $(HELIOS_DFILES) $(LOCAL_DFILES)
 
 #######################
 ### BUILD TARGETS #####
@@ -177,11 +190,16 @@ $(TARGET).hex: $(TARGET).elf
 $(TARGET).elf: compute_version $(OBJS)
 	$(LD) $(LDFLAGS) $(OBJS) -o $@
 
-%.o: %.S
-	$(CC) $(ASMFLAGS) -c $< -o $@
-
-%.o: %.cpp
+# Rules for building object files
+$(BUILD_DIR)/Helios/%.o: ../Helios/%.cpp
+	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -MM -MT "$@" -MF "$(BUILD_DIR)/Helios/$*.d" $<
+
+$(BUILD_DIR)/%.o: %.cpp
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -MM -MT "$@" -MF "$(BUILD_DIR)/$*.d" $<
 
 upload: set_fuses $(TARGET).hex
 	$(AVRDUDE) $(AVRDUDE_FLAGS) -Uflash:w:$(TARGET).hex:i
@@ -284,7 +302,12 @@ extract_hex: helios_firmware.hex
 #####################
 
 clean:
-	rm -f $(OBJS) $(TARGET).elf $(TARGET).hex $(DFILES) $(TARGET).bin $(TARGET).eep $(TARGET).lst $(TARGET).map
+	@echo "Cleaning up..."
+	@$(RM) -f $(TARGET).bin $(TARGET).eep $(TARGET).elf $(TARGET).hex $(TARGET).lst $(TARGET).map
+	@$(RM) -f $(OBJS) $(DFILES)
+	@$(RM) -rf $(BUILD_DIR)
+	@$(RM) -f *.d ../Helios/*.d
+	@echo "Cleaned!"
 
 compute_version:
 	$(eval LATEST_TAG ?= $(shell git fetch --depth=1 origin +refs/tags/*:refs/tags/* &> /dev/null && git tag --list | sort -V | tail -n1))

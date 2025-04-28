@@ -34,6 +34,12 @@ ifneq ($(INCLUDES),)
     CFLAGS+=$(INCLUDES)
 endif
 
+# Build directory for object files - default to ./build if not specified
+BUILD_DIR ?= ./build
+
+# Create architecture-specific build directories
+$(shell mkdir -p $(BUILD_DIR)/Helios)
+
 # local NONSTANDARD libraries to link with
 # these MUST be exact filenames, cannot be -l syntax
 # for example:
@@ -59,13 +65,19 @@ else
         $(shell find . -type f -name '*.cpp')
 endif
 
-# object files are source files with .c replaced with .o
-OBJS=\
-	$(SRC:.cpp=.o) \
+# Separate source files by directory
+HELIOS_SRC = $(shell find ../Helios -type f -name '*.cpp')
+LOCAL_SRC = $(shell find . -type f -name '*.cpp')
 
-# dependency files are source files with .c replaced with .d
-DFILES=\
-	$(SRC:.cpp=.d) \
+# Generate object file paths using BUILD_DIR
+HELIOS_OBJS = $(patsubst ../Helios/%.cpp,$(BUILD_DIR)/Helios/%.o,$(HELIOS_SRC))
+LOCAL_OBJS = $(patsubst ./%.cpp,$(BUILD_DIR)/%.o,$(LOCAL_SRC))
+OBJS = $(HELIOS_OBJS) $(LOCAL_OBJS)
+
+# dependency files
+HELIOS_DFILES = $(patsubst ../Helios/%.cpp,$(BUILD_DIR)/Helios/%.d,$(HELIOS_SRC))
+LOCAL_DFILES = $(patsubst ./%.cpp,$(BUILD_DIR)/%.d,$(LOCAL_SRC))
+DFILES = $(HELIOS_DFILES) $(LOCAL_DFILES)
 
 # target dependencies
 # this includes any script generated c/h files,
@@ -87,12 +99,17 @@ all: $(TARGETS)
 # unit test target
 tests: $(TESTS)
 
-# target for vortex lib
+# target for helios cli
 helios: compute_version $(DEPS)
-	$(CC) $(CFLAGS) $(DEPS) -o $@ $(LLIBS)
+	$(CC) $(CFLAGS) $(OBJS) -o $@ $(LLIBS)
 
-# catch-all make target to generate .o and .d files
-%.o: %.cpp
+# Rules for building object files
+$(BUILD_DIR)/Helios/%.o: ../Helios/%.cpp
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -MMD -c $< -o $@
+
+$(BUILD_DIR)/%.o: ./%.cpp
+	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -MMD -c $< -o $@
 
 # catch-all for static libraries in the form of:
@@ -107,7 +124,7 @@ FORCE:
 
 # generic clean target
 clean:
-	@$(RM) $(DFILES) $(OBJS) $(TARGETS) $(TESTS)
+	@$(RM) $(DFILES) $(OBJS) $(TARGETS) $(TESTS) $(BUILD_DIR)
 
 compute_version:
 	$(eval LATEST_TAG ?= $(shell git fetch --depth=1 origin +refs/tags/*:refs/tags/* &> /dev/null && git tag --list | sort -V | tail -n1))
