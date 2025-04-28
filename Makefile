@@ -2,7 +2,7 @@
 # This Makefile runs commands in subdirectories
 
 # List all make targets which are not filenames
-.PHONY: all clean lib cli embedded tests wasm docs help package setup_dirs check_wasm
+.PHONY: all clean lib cli embedded tests wasm docs help package setup_dirs
 
 # Directories containing Makefiles
 HELIOS_LIB_DIR = HeliosLib
@@ -35,7 +35,7 @@ all:
 	@$(MAKE) embedded
 	@$(MAKE) cli
 	@$(MAKE) lib
-	@$(MAKE) check_wasm
+	@$(MAKE) wasm
 	@echo "All components built successfully"
 
 # Build the Helios library
@@ -44,21 +44,12 @@ lib: setup_dirs
 	@$(MAKE) -C $(HELIOS_LIB_DIR) ARCH=x64 BUILD_DIR=../build/x64
 	@cp $(HELIOS_LIB_DIR)/helios.a ./helios_lib.a
 
-# Check if WASM compiler is available before trying to build
-check_wasm:
-	@if command -v em++; then \
-		echo "WebAssembly compiler found, building WASM..."; \
-		$(MAKE) wasm; \
-	else \
-		echo "WebAssembly compiler (em++) not found, skipping WASM build."; \
-	fi
-
-# Build WebAssembly version
+# Build WebAssembly version - HeliosLib will check for compiler availability
 wasm: setup_dirs
 	@echo "Building WebAssembly library..."
 	@$(MAKE) -C $(HELIOS_LIB_DIR) wasm ARCH=wasm BUILD_DIR=../build/wasm
-	@cp $(HELIOS_LIB_DIR)/HeliosLib.js ./helios_wasm.js
-	@cp $(HELIOS_LIB_DIR)/HeliosLib.wasm ./helios_wasm.wasm
+	@cp -f $(HELIOS_LIB_DIR)/HeliosLib.js ./helios_wasm.js 2>/dev/null || true
+	@cp -f $(HELIOS_LIB_DIR)/HeliosLib.wasm ./helios_wasm.wasm 2>/dev/null || true
 
 # Upload embedded firmware
 upload:
@@ -106,14 +97,14 @@ package:
 	@$(MAKE) embedded
 	@$(MAKE) cli
 	@$(MAKE) lib
-	@if command -v em++; then $(MAKE) wasm; fi
+	@$(MAKE) wasm
 	@mkdir -p helios_package
 	@cp helios_cli helios_package/
 	@cp helios_lib.a helios_package/
 	@cp helios_firmware.hex helios_package/
-	@cp helios_wasm.js helios_package/
-	@cp helios_wasm.wasm helios_package/
-	@cp -r assets helios_package/
+	@cp helios_wasm.js helios_package/ 2>/dev/null || true
+	@cp helios_wasm.wasm helios_package/ 2>/dev/null || true
+	@cp -r assets helios_package/ 2>/dev/null || true
 	@zip -r helios_package.zip helios_package
 	@rm -rf helios_package
 	@echo "Package created: helios_package.zip"

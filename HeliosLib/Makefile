@@ -118,7 +118,13 @@ tests: $(TESTS)
 
 # force sub-build of wasm
 wasm: FORCE
-	env WASM=1 $(MAKE)
+	@if command -v em++; then \
+		echo "WebAssembly compiler found, building WASM..."; \
+		env WASM=1 $(MAKE); \
+	else \
+		echo "WebAssembly compiler (em++) not found, skipping WASM build."; \
+		touch HeliosLib.js; \
+	fi
 
 # target for helios lib
 helios.a: compute_version $(DEPS)
