@@ -65,23 +65,23 @@ svgs:
 # Run tests
 run_tests: cli
 	@echo "Running tests for Helios CLI..."
-	@(cd $(HELIOS_CLI_DIR) && ../tests/run_tests.sh)
+	@$(MAKE) -C $(HELIOS_CLI_DIR) run_tests
 
 record_tests: cli
 	@echo "Recording tests for Helios CLI..."
-	@(cd $(HELIOS_CLI_DIR) && ../tests/record_tests.sh)
+	@$(MAKE) -C $(HELIOS_CLI_DIR) record_tests
 
 create_tests: cli
 	@echo "Creating tests for Helios CLI..."
-	@(cd $(HELIOS_CLI_DIR) && ../tests/create_test.sh)
+	@$(MAKE) -C $(HELIOS_CLI_DIR) create_tests
 
 export_tests: cli
 	@echo "Exporting tests for Helios CLI..."
-	@(cd $(HELIOS_CLI_DIR) && ../tests/export_tests.sh)
+	@$(MAKE) -C $(HELIOS_CLI_DIR) export_tests
 
 import_tests: cli
 	@echo "Importing tests for Helios CLI..."
-	@(cd $(HELIOS_CLI_DIR) && ../tests/import_tests.sh "$$@") # Pass arguments like CSV file path
+	@$(MAKE) -C $(HELIOS_CLI_DIR) import_tests
 
 # Clean all build artifacts and storage files
 clean:
@@ -124,8 +124,6 @@ help:
 	@echo "  export_tests   - Export tests to CSV"
 	@echo "  import_tests   - Import tests from CSV"
 	@echo "  svgs           - Generate SVG documentation files"
-	@echo "  pngs           - Generate PNG documentation files and copy to ./assets"
-	@echo "  bmps           - Generate BMP files and copy to ./assets"
 	@echo "  clean          - Clean all build artifacts, output files, and storage files"
 	@echo "  package        - Build all components and package ./output/* into a zip file"
 	@echo "  help           - Show this help information"
