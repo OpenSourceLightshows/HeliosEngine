@@ -148,9 +148,6 @@ ARCH ?= avr
 BUILD_DIR = $(ARCH)
 LOCAL_OUTPUT_DIR = output
 
-# Create architecture-specific build directories
-$(shell mkdir -p $(BUILD_DIR)/Helios)
-
 # Source files
 ifeq ($(OS),Windows_NT) # Windows
 HELIOS_SRCS = \
