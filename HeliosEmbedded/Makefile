@@ -140,8 +140,12 @@ CFLAGS+=$(INCLUDES)
 ### SOURCE FILES ######
 #######################
 
-# Build directory for object files - default to ./build if not specified
-BUILD_DIR ?= ./build
+# Architecture passed from parent Makefile (default to avr if run standalone)
+ARCH ?= avr
+
+# Build and Output directories relative to this Makefile
+BUILD_DIR = $(ARCH)
+LOCAL_OUTPUT_DIR = output
 
 # Create architecture-specific build directories
 $(shell mkdir -p $(BUILD_DIR)/Helios)
@@ -174,12 +178,9 @@ DFILES = $(HELIOS_DFILES) $(LOCAL_DFILES)
 # Target name
 TARGET = helios
 
-# Define local output directory
-LOCAL_OUTPUT_DIR = ./output
-
-# Define ROOT_OUTPUT_DIR and FINAL_HEX_TARGET
-ROOT_OUTPUT_DIR ?= ../output
-FINAL_HEX_TARGET = $(ROOT_OUTPUT_DIR)/helios_firmware.hex
+# Define final hex target (still goes to root output)
+ROOT_OUTPUT_DIR = ../output # This needs to stay for the root makefile to copy
+FINAL_HEX_TARGET = $(ROOT_OUTPUT_DIR)/helios_firmware.hex # Keep final target name
 
 # Define targets for intermediate files in local output
 LOCAL_ELF_TARGET = $(LOCAL_OUTPUT_DIR)/$(TARGET).elf
@@ -201,8 +202,8 @@ $(FINAL_HEX_TARGET): $(LOCAL_ELF_TARGET)
 	@mkdir -p $(LOCAL_OUTPUT_DIR)
 	$(OBJCOPY) -O binary -R .eeprom $< $(LOCAL_BIN_TARGET)
 	$(OBJCOPY) -O ihex -j .eeprom --set-section-flags=.eeprom=alloc,load --no-change-warnings --change-section-lma .eeprom=0 $< $(LOCAL_EEP_TARGET)
-	$(OBJCOPY) -O ihex -R .eeprom $< $@
-	@echo "Created final hex: $@"
+	$(OBJCOPY) -O ihex -R .eeprom $< ../output/helios_firmware.hex
+	@echo "Created final hex: ../output/helios_firmware.hex"
 
 $(LOCAL_ELF_TARGET): compute_version $(OBJS)
 	@mkdir -p $(dir $@)
@@ -322,7 +323,7 @@ extract_hex: helios_firmware.hex
 clean:
 	@echo "Cleaning up HeliosEmbedded..."
 	@$(RM) -rf $(BUILD_DIR) $(LOCAL_OUTPUT_DIR)
-	@$(RM) -f $(OBJS) $(DFILES) $(FINAL_HEX_TARGET)
+	@$(RM) -f $(OBJS) $(DFILES) # Keep FINAL_HEX_TARGET out of here, root cleans it
 	@$(RM) -f *.d ../Helios/*.d
 	@echo "Cleaned HeliosEmbedded!"
 

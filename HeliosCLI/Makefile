@@ -34,12 +34,13 @@ ifneq ($(INCLUDES),)
     CFLAGS+=$(INCLUDES)
 endif
 
-# Define ROOT_OUTPUT_DIR and FINAL_TARGET
-ROOT_OUTPUT_DIR ?= ../output
-FINAL_TARGET = $(ROOT_OUTPUT_DIR)/helios_cli
+# Architecture passed from parent Makefile (default to x64 if run standalone)
+ARCH ?= x64
 
-# Build directory for object files - default to ./build if not specified
-BUILD_DIR ?= ./build
+# Build and Output directories relative to this Makefile
+BUILD_DIR = $(ARCH)
+OUTPUT_DIR = output
+FINAL_TARGET = $(OUTPUT_DIR)/helios_cli
 
 # local NONSTANDARD libraries to link with
 # these MUST be exact filenames, cannot be -l syntax
@@ -102,7 +103,7 @@ tests: $(TESTS)
 
 # target for helios cli
 helios: compute_version $(DEPS)
-	@mkdir -p $(ROOT_OUTPUT_DIR)
+	@mkdir -p $(OUTPUT_DIR)
 	$(CC) $(CFLAGS) $(OBJS) -o $(FINAL_TARGET) $(LLIBS)
 
 # Rules for building object files
@@ -126,8 +127,8 @@ FORCE:
 
 # generic clean target
 clean:
-	@$(RM) -f $(DFILES) $(OBJS) $(FINAL_TARGET) $(TESTS)
-	@$(RM) -rf $(BUILD_DIR)
+	@$(RM) -rf $(BUILD_DIR) $(OUTPUT_DIR)
+	@$(RM) -f $(DFILES) $(OBJS) $(TESTS)
 
 compute_version:
 	$(eval LATEST_TAG ?= $(shell git fetch --depth=1 origin +refs/tags/*:refs/tags/* &> /dev/null && git tag --list | sort -V | tail -n1))
@@ -141,17 +142,18 @@ compute_version:
 	$(eval HELIOS_BUILD_NUMBER := $(if $(HELIOS_BUILD_NUMBER),$(HELIOS_BUILD_NUMBER),0))
 	$(eval HELIOS_VERSION_NUMBER := $(HELIOS_VERSION_MAJOR).$(HELIOS_VERSION_MINOR).$(HELIOS_BUILD_NUMBER))
 
+# generate bmps
+bmps:
+	./PatternGenerator/generate_bmps.sh -c
+
 # generate svg
 svgs: bmps
-	./generate_svgs.sh
+	./PatternGenerator/generate_svgs.sh
 
 # generate pngs
 pngs: bmps
-	./generate_pngs.sh
+	./PatternGenerator/generate_pngs.sh
 
-# generate pngs
-bmps:
-	./generate_bmps.sh -c
 
 clean_storage:
 	@echo "Cleaning Helios storage file..."
