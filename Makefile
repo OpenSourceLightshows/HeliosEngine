@@ -55,26 +55,21 @@ upload:
 	@echo "Uploading firmware to device..."
 	@$(MAKE) -C $(HELIOS_EMBEDDED_DIR) upload
 
-# Run tests
-tests: setup_root_output
-	@echo "Running tests for Helios CLI..."
-	@$(MAKE) -C $(HELIOS_CLI_DIR) tests ARCH=x64
-	@echo "Running tests for Helios Library..."
-	@$(MAKE) -C $(HELIOS_LIB_DIR) tests ARCH=x64
-
 # Generate PNGs for documentation
-pngs:
+svgs:
 	@echo "Generating PNG files..."
-	@$(MAKE) -C $(HELIOS_CLI_DIR) pngs
+	@$(MAKE) -C $(HELIOS_CLI_DIR) svgs
 	@mkdir -p ./assets
 	@cp $(HELIOS_CLI_DIR)/*.png ./assets/
 
-# Generate BMPs for documentation
-bmps:
-	@echo "Generating BMP files..."
-	@$(MAKE) -C $(HELIOS_CLI_DIR) bmps
-	@mkdir -p ./assets
-	@cp $(HELIOS_CLI_DIR)/*.bmp ./assets/
+# Run tests
+run_tests: cli
+	@echo "Running tests for Helios CLI..."
+	@$(MAKE) -C $(HELIOS_CLI_DIR) run_tests ARCH=x64
+
+record_tests: cli
+	@echo "Recording tests for Helios CLI..."
+	@$(MAKE) -C $(HELIOS_CLI_DIR) record_tests ARCH=x64
 
 # Clean all build artifacts and storage files
 clean:
