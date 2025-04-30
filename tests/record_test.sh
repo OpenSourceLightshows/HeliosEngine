@@ -1,6 +1,6 @@
 #!/bin/bash
 
-HELIOS="../output/helios_cli"
+HELIOS="HeliosCLI/output/helios_cli"
 
 FILE=$1
 VALIDATE=$2

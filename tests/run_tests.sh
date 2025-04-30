@@ -1,7 +1,7 @@
 #!/bin/bash
 
 VALGRIND=
-HELIOS="../output/helios_cli"
+HELIOS="HeliosCLI/output/helios_cli"
 DIFF="diff --strip-trailing-cr"
 
 # select the target repo to create a test for

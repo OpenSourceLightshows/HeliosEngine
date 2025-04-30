@@ -156,27 +156,27 @@ pngs: bmps
 
 # record tests
 record_tests: all
-	./tests/record_tests.sh
+	../tests/record_tests.sh
 
 # record test
 record_test: all
-	./tests/record_test.sh
+	../tests/record_test.sh
 
 # run tests
 run_tests: all
-	./tests/run_tests.sh
+	../tests/run_tests.sh
 
 # create_tests
 create_tests: all
-	./tests/create_test.sh
+	../tests/create_test.sh
 
 # export tests
 export_tests: all
-	./tests/export_tests.sh
+	../tests/export_tests.sh
 
 # import tests
 import_tests: all
-	./tests/import_tests.sh
+	../tests/import_tests.sh
 
 # clean storage
 clean_storage:
