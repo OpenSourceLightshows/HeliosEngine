@@ -34,6 +34,14 @@ ifneq ($(INCLUDES),)
     CFLAGS+=$(INCLUDES)
 endif
 
+# Architecture passed from parent Makefile (default to x64 if run standalone)
+ARCH ?= x64
+
+# Build and Output directories relative to this Makefile
+BUILD_DIR = $(ARCH)
+OUTPUT_DIR = output
+FINAL_TARGET = $(OUTPUT_DIR)/helios_cli
+
 # local NONSTANDARD libraries to link with
 # these MUST be exact filenames, cannot be -l syntax
 # for example:
@@ -59,13 +67,19 @@ else
         $(shell find . -type f -name '*.cpp')
 endif
 
-# object files are source files with .c replaced with .o
-OBJS=\
-	$(SRC:.cpp=.o) \
+# Separate source files by directory
+HELIOS_SRC = $(shell find ../Helios -type f -name '*.cpp')
+LOCAL_SRC = $(shell find . -type f -name '*.cpp')
 
-# dependency files are source files with .c replaced with .d
-DFILES=\
-	$(SRC:.cpp=.d) \
+# Generate object file paths using BUILD_DIR
+HELIOS_OBJS = $(patsubst ../Helios/%.cpp,$(BUILD_DIR)/Helios/%.o,$(HELIOS_SRC))
+LOCAL_OBJS = $(patsubst ./%.cpp,$(BUILD_DIR)/%.o,$(LOCAL_SRC))
+OBJS = $(HELIOS_OBJS) $(LOCAL_OBJS)
+
+# dependency files
+HELIOS_DFILES = $(patsubst ../Helios/%.cpp,$(BUILD_DIR)/Helios/%.d,$(HELIOS_SRC))
+LOCAL_DFILES = $(patsubst ./%.cpp,$(BUILD_DIR)/%.d,$(LOCAL_SRC))
+DFILES = $(HELIOS_DFILES) $(LOCAL_DFILES)
 
 # target dependencies
 # this includes any script generated c/h files,
@@ -87,12 +101,18 @@ all: $(TARGETS)
 # unit test target
 tests: $(TESTS)
 
-# target for vortex lib
+# target for helios cli
 helios: compute_version $(DEPS)
-	$(CC) $(CFLAGS) $(DEPS) -o $@ $(LLIBS)
+	@mkdir -p $(OUTPUT_DIR)
+	$(CC) $(CFLAGS) $(OBJS) -o $(FINAL_TARGET) $(LLIBS)
 
-# catch-all make target to generate .o and .d files
-%.o: %.cpp
+# Rules for building object files
+$(BUILD_DIR)/Helios/%.o: ../Helios/%.cpp
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -MMD -c $< -o $@
+
+$(BUILD_DIR)/%.o: ./%.cpp
+	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -MMD -c $< -o $@
 
 # catch-all for static libraries in the form of:
@@ -107,7 +127,8 @@ FORCE:
 
 # generic clean target
 clean:
-	@$(RM) $(DFILES) $(OBJS) $(TARGETS) $(TESTS)
+	@$(RM) -rf $(BUILD_DIR) $(OUTPUT_DIR)
+	@$(RM) -f $(DFILES) $(OBJS) $(TESTS)
 
 compute_version:
 	$(eval LATEST_TAG ?= $(shell git fetch --depth=1 origin +refs/tags/*:refs/tags/* &> /dev/null && git tag --list | sort -V | tail -n1))
@@ -121,18 +142,43 @@ compute_version:
 	$(eval HELIOS_BUILD_NUMBER := $(if $(HELIOS_BUILD_NUMBER),$(HELIOS_BUILD_NUMBER),0))
 	$(eval HELIOS_VERSION_NUMBER := $(HELIOS_VERSION_MAJOR).$(HELIOS_VERSION_MINOR).$(HELIOS_BUILD_NUMBER))
 
+# generate bmps
+bmps:
+	./PatternGenerator/generate_bmps.sh -c
+
 # generate svg
 svgs: bmps
-	./generate_svgs.sh
+	./PatternGenerator/generate_svgs.sh
 
 # generate pngs
 pngs: bmps
-	./generate_pngs.sh
+	./PatternGenerator/generate_pngs.sh
 
-# generate pngs
-bmps:
-	./generate_bmps.sh -c
+# record tests
+record_tests: all
+	../tests/record_tests.sh
 
+# record test
+record_test: all
+	../tests/record_test.sh
+
+# run tests
+run_tests: all
+	../tests/run_tests.sh
+
+# create_tests
+create_tests: all
+	../tests/create_test.sh
+
+# export tests
+export_tests: all
+	../tests/export_tests.sh
+
+# import tests
+import_tests: all
+	../tests/import_tests.sh
+
+# clean storage
 clean_storage:
 	@echo "Cleaning Helios storage file..."
 	@$(RM) Helios.storage

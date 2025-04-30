@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Directory containing test files
-TEST_DIR="./tests"
+# Directory containing test files relative to CWD (HeliosCLI)
+TEST_DIR="../tests/tests"
 
-# Output CSV file
+# Output CSV file relative to CWD (HeliosCLI)
 OUTPUT_CSV="output.csv"
 
 # Write header to the CSV file

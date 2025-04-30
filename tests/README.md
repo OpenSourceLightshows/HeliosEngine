@@ -18,17 +18,17 @@ Tests are located in the `tests/` directory and are organized as individual `.te
 To run the tests:
 
 1. Navigate to the `tests/` directory.
-2. Run the `runtests.sh` script:
+2. Run the `run_tests.sh` script:
 
 ```bash
-./runtests.sh
+./run_tests.sh
 ```
 
 This script will execute all available tests and report the results.
 
 ### Test Options
 
-The `runtests.sh` script supports several options:
+The `run_tests.sh` script supports several options:
 
 - `-v`: Verbose mode. Provides more detailed output during test execution.
 - `-n`: No-make mode. Skips rebuilding the Helios executable before running tests.
@@ -39,7 +39,7 @@ The `runtests.sh` script supports several options:
 Example usage:
 
 ```bash
-./runtests.sh -v -t=5
+./run_tests.sh -v -t=5
 ```
 
 This command runs test number 5 in verbose mode.
@@ -139,7 +139,7 @@ By following these guidelines, you can create a robust test suite that helps mai
 The project includes scripts for recording and replaying test scenarios:
 
 - `record_test.sh`: Records a single test case.
-- `recordtests.sh`: Records multiple test cases.
+- `record_tests.sh`: Records multiple test cases.
 
 #### Recording a Single Test
 
@@ -156,13 +156,13 @@ This script will prompt you to enter test commands, a description, and any neces
 To record multiple tests:
 
 1. Navigate to the `tests/` directory.
-2. Run the `recordtests.sh` script:
+2. Run the `record_tests.sh` script:
 
 ```bash
-./recordtests.sh [options]
+./record_tests.sh [options]
 ```
 
-The `recordtests.sh` script supports the following options:
+The `record_tests.sh` script supports the following options:
 
 - `-q`: Quiet mode. Reduces output verbosity.
 - `-v`: Validate mode. Performs additional validation checks.
@@ -171,21 +171,21 @@ The `recordtests.sh` script supports the following options:
 Example usage:
 
 ```bash
-./recordtests.sh -v -t=10
+./record_tests.sh -v -t=10
 ```
 
 This command records test number 5 in quiet and validate mode.
 
 This command will record test number 10 with validation enabled.
 
-When running `recordtests.sh`:
+When running `record_tests.sh`:
 
 1. The script will prompt you to enter test commands for each test case.
 2. After entering the commands, you'll be asked to provide a brief description of the test.
 3. You can specify any necessary arguments for the test.
 4. The script will generate a new `.test` file for each recorded test in the `tests/` directory.
 
-Using `recordtests.sh` is particularly useful when you need to create multiple related tests or when you want to quickly generate a series of test cases for a new feature or bug fix.
+Using `record_tests.sh` is particularly useful when you need to create multiple related tests or when you want to quickly generate a series of test cases for a new feature or bug fix.
 
 ### Exporting and Importing Tests
 

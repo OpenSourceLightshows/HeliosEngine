@@ -1,6 +1,6 @@
 #!/bin/bash
 
-HELIOS="../HeliosCLI/helios"
+HELIOS="./output/helios_cli"
 OUTPUT_FILE="recorded_input.txt"
 
 # Color definitions
@@ -61,7 +61,8 @@ function insert_w10_w100() {
   echo "300w${output_string}300wq"
 }
 
-TESTDIR=tests
+# Test directory relative to CWD (HeliosCLI)
+TESTDIR=../tests/tests
 
 mkdir -p $TESTDIR
 
@@ -142,14 +143,14 @@ while true; do
   # replace spaces with underscores
   TEST_NAME="${TEST_NAME// /_}"
 
-  # cd to test dir
-  cd $TESTDIR
-
-  # Create the test file with an incremented prefix number
+  # Determine test file path relative to CWD (HeliosCLI)
   PREFIX=0
   MAX_PREFIX=0
-  for file in [0-9][0-9][0-9][0-9]*.test; do
+  for file in $TESTDIR/[0-9][0-9][0-9][0-9]*.test; do
+    # Check if file exists
+    [ -e "$file" ] || continue
     PREFIX_NUM="${file%%_*}"
+    PREFIX_NUM="${PREFIX_NUM##*/}"
     if [[ "$PREFIX_NUM" =~ ^[0-9]+$ ]]; then
       if ((10#$PREFIX_NUM > 10#$MAX_PREFIX)); then
         MAX_PREFIX=$PREFIX_NUM
@@ -160,7 +161,7 @@ while true; do
   if [ "$TODO" != "" ]; then
     NEXT_PREFIX=$TODO
   fi
-  TEST_FILE="$(printf "%04d" $NEXT_PREFIX)_${TEST_NAME}.test"
+  TEST_FILE="$TESTDIR/$(printf "%04d" $NEXT_PREFIX)_${TEST_NAME}.test"
 
   # Write the test information to the test file
   echo "Input=${NEW_INPUT}" > "$TEST_FILE"
@@ -168,14 +169,11 @@ while true; do
   echo "Args=${ARGS}" >> "$TEST_FILE"
   echo "--------------------------------------------------------------------------------" >> "$TEST_FILE"
 
-  # generate the history for the test and append it to the test file
-  echo "${NEW_INPUT}" | ../$HELIOS $ARGS --hex --no-timestep >> "$TEST_FILE"
+  # generate the history for the test and append it to the test file (run Helios from CWD: HeliosCLI)
+  echo "${NEW_INPUT}" | $HELIOS $ARGS --hex --no-timestep >> "$TEST_FILE"
 
   # strip any \r in case this was run on windows
   sed -i 's/\r//g' $TEST_FILE
-
-  # cd back
-  cd -
 
   # done
   echo "Test file created: ${TEST_FILE}"
