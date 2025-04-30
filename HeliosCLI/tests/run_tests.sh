@@ -1,7 +1,7 @@
 #!/bin/bash
 
 VALGRIND=
-HELIOS="../HeliosCLI/helios"
+HELIOS="../output/helios_cli"
 DIFF="diff --strip-trailing-cr"
 
 # select the target repo to create a test for
@@ -34,7 +34,7 @@ do
 done
 
 function run_tests() {
-  PROJECT="tests"
+  PROJECT="HeliosCLI/tests/tests"
 
   ALLSUCCES=1
 
@@ -53,10 +53,10 @@ function run_tests() {
     # Iterate through the test files
     for file in "$PROJECT"/*.test; do
       # Check if the file exists
-      if [ -e "$file" ]; then
+      # if [ -e "$file" ]; then  # <-- Remove this check
         NUMFILES=$((NUMFILES + 1))
         FILES="${FILES} $file"
-      fi
+      # fi # <-- Remove this check
     done
     if [ $NUMFILES -eq 0 ]; then
       echo -e "\e[31mNo tests found in $PROJECT folder\e[0m"
