@@ -1,4 +1,8 @@
 #!/bin/bash
+
+# Helios path relative to HeliosCLI CWD
+HELIOS="./output/helios_cli"
+
 parse_csv() {
   tail -n +2 "$1" | while IFS=, read -r input brief file_name
 do
@@ -19,30 +23,29 @@ create_test() {
     # Format the file name with prefix and replace spaces with underscores
     local test_file="$(printf "%04d" $next_prefix)_${file_name// /_}.test"
 
-    # Create test file
-    cd $TESTDIR
+    # Create test file inside TESTDIR (relative to CWD: HeliosCLI)
+    # No need to cd, paths are relative
+    echo "Input=${input}" > "$TESTDIR/$test_file"
+    echo "Brief=${brief}" >> "$TESTDIR/$test_file"
+    echo "Args=" >> "$TESTDIR/$test_file"
+    echo "--------------------------------------------------------------------------------" >> "$TESTDIR/$test_file"
 
-    echo "Input=${input}" > "$test_file"
-    echo "Brief=${brief}" >> "$test_file"
-    echo "Args="
-    echo "--------------------------------------------------------------------------------" >> "$test_file"
-
-    # Append history to the test file
-    echo "$input" | ../../output/helios_cli --hex --no-timestep >> "$test_file"
+    # Append history to the test file (run Helios from CWD: HeliosCLI)
+    echo "$input" | $HELIOS --hex --no-timestep >> "$TESTDIR/$test_file"
 
     # Strip any \r in case this was run on windows
-    sed -i 's/\r//g' $test_file
+    sed -i 's/\r//g' "$TESTDIR/$test_file"
 
-    # Return to previous directory
-    cd -
-
-    echo "Test file created: ${test_file}"
+    echo "Test file created: $TESTDIR/${test_file}"
 }
 
 # Function to get the next available prefix number
 get_next_prefix() {
     local max_prefix=0
+    # Look for files in TESTDIR (relative to CWD: HeliosCLI)
     for file in $TESTDIR/[0-9][0-9][0-9][0-9]*.test; do
+        # Check if file exists to avoid errors on empty dir
+        [ -e "$file" ] || continue
         local prefix_num="${file%%_*}"
         prefix_num="${prefix_num##*/}"
         prefix_num="${prefix_num%%.*}"
@@ -63,12 +66,9 @@ fi
 
 CSV_FILE="$1"
 
-# Set the directory for test files
-TESTDIR="tests/tests"
+# Set the directory for test files relative to CWD (HeliosCLI)
+TESTDIR="../tests/tests"
 mkdir -p $TESTDIR
-
-# Helios command path - Not used directly, adjusted above
-# HELIOS="HeliosCLI/output/helios_cli"
 
 # Check if the CSV file exists
 if [ ! -f "$CSV_FILE" ]; then

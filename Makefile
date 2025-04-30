@@ -65,11 +65,23 @@ svgs:
 # Run tests
 run_tests: cli
 	@echo "Running tests for Helios CLI..."
-	@$(MAKE) -C $(HELIOS_CLI_DIR) run_tests ARCH=x64
+	@(cd $(HELIOS_CLI_DIR) && ../tests/run_tests.sh)
 
 record_tests: cli
 	@echo "Recording tests for Helios CLI..."
-	@$(MAKE) -C $(HELIOS_CLI_DIR) record_tests ARCH=x64
+	@(cd $(HELIOS_CLI_DIR) && ../tests/record_tests.sh)
+
+create_tests: cli
+	@echo "Creating tests for Helios CLI..."
+	@(cd $(HELIOS_CLI_DIR) && ../tests/create_test.sh)
+
+export_tests: cli
+	@echo "Exporting tests for Helios CLI..."
+	@(cd $(HELIOS_CLI_DIR) && ../tests/export_tests.sh)
+
+import_tests: cli
+	@echo "Importing tests for Helios CLI..."
+	@(cd $(HELIOS_CLI_DIR) && ../tests/import_tests.sh "$$@") # Pass arguments like CSV file path
 
 # Clean all build artifacts and storage files
 clean:
@@ -106,7 +118,12 @@ help:
 	@echo "  lib            - Build library (output in HeliosLib/output & ./output)"
 	@echo "  wasm           - Build WebAssembly (output in HeliosLib/output & ./output)"
 	@echo "  upload         - Upload firmware from HeliosEmbedded/output/helios_firmware.hex"
-	@echo "  tests          - Run all tests"
+	@echo "  run_tests      - Run all tests"
+	@echo "  record_tests   - Record test outputs"
+	@echo "  create_tests   - Create a new test interactively"
+	@echo "  export_tests   - Export tests to CSV"
+	@echo "  import_tests   - Import tests from CSV"
+	@echo "  svgs           - Generate SVG documentation files"
 	@echo "  pngs           - Generate PNG documentation files and copy to ./assets"
 	@echo "  bmps           - Generate BMP files and copy to ./assets"
 	@echo "  clean          - Clean all build artifacts, output files, and storage files"

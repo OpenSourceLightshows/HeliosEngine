@@ -1,7 +1,7 @@
 #!/bin/bash
 
 VALGRIND="valgrind --quiet --leak-check=full --show-leak-kinds=all"
-HELIOS="HeliosCLI/output/helios_cli"
+HELIOS="./output/helios_cli"
 
 VALIDATE=0
 QUIET=0
@@ -42,16 +42,17 @@ fi
 echo -e "\e[32mSuccess\e[0m"
 
 function record_tests() {
-  # Directory where this script is located
-  SCRIPT_DIR="$(dirname "$0")"
+  # Directory where this script is located relative to CWD (HeliosCLI)
+  SCRIPT_DIR="../tests"
 
-  # Full path to the tests directory
+  # Full path to the tests directory relative to CWD (HeliosCLI)
   PROJECT="$SCRIPT_DIR/tests"
 
   FILES=()
 
-  rm -rf "$SCRIPT_DIR"/tmp/$PROJECT
-  mkdir -p "$SCRIPT_DIR"/tmp/$PROJECT
+  # Temp dir relative to CWD (HeliosCLI)
+  rm -rf tmp/$PROJECT
+  mkdir -p tmp/$PROJECT
 
 
   if [ "$TODO" != "" ]; then
@@ -74,7 +75,7 @@ function record_tests() {
   TESTCOUNT=0
 
   for FILE in "${FILES[@]}"; do
-    # Call the record_test.sh using its relative path
+    # Call the record_test.sh using its relative path from CWD (HeliosCLI)
     "$SCRIPT_DIR"/record_test.sh "$FILE" $VALIDATE $TESTCOUNT "$NUMFILES" $QUIET
     TESTCOUNT=$((TESTCOUNT + 1))
   done
