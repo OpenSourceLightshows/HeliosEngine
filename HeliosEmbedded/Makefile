@@ -96,6 +96,7 @@ DEFINES=\
 
 CFLAGS = -g \
 	 -Os \
+	 -MMD \
 	 -Wall \
 	 -flto \
 	 -mrelax \
