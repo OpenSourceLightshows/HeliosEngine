@@ -34,7 +34,7 @@ do
 done
 
 function run_tests() {
-  PROJECT="HeliosCLI/tests/tests"
+  PROJECT="tests/tests"
 
   ALLSUCCES=1
 
@@ -53,10 +53,10 @@ function run_tests() {
     # Iterate through the test files
     for file in "$PROJECT"/*.test; do
       # Check if the file exists
-      # if [ -e "$file" ]; then  # <-- Remove this check
+      if [ -e "$file" ]; then
         NUMFILES=$((NUMFILES + 1))
         FILES="${FILES} $file"
-      # fi # <-- Remove this check
+      fi
     done
     if [ $NUMFILES -eq 0 ]; then
       echo -e "\e[31mNo tests found in $PROJECT folder\e[0m"
@@ -76,8 +76,10 @@ function run_tests() {
     INPUT="$(grep "Input=" $FILE | cut -d= -f2 | tr -d '\n' | tr -d '\r')"
     BRIEF="$(grep "Brief=" $FILE | cut -d= -f2 | tr -d '\n' | tr -d '\r')"
     ARGS="$(grep "Args=" $FILE | cut -d= -f2 | tr -d '\n' | tr -d '\r')"
-    TESTNUM="$(echo $FILE | cut -d/ -f2 | cut -d_ -f1 | cut -d/ -f2)"
-    TESTNUM=$((10#$TESTNUM))
+    # Extract Test number correctly from basename
+    TESTNUM_FILENAME_PART=$(basename "$FILE")
+    TESTNUM_PREFIX=$(echo "$TESTNUM_FILENAME_PART" | cut -d_ -f1)
+    TESTNUM=$((10#$TESTNUM_PREFIX)) # Use the extracted prefix
     TESTCOUNT=$((TESTCOUNT + 1))
     echo -e -n "\e[33mRunning test ($TESTCOUNT/$NUMFILES) [\e[97m$BRIEF\e[33m] "
     if [ "$ARGS" != "" ]; then
