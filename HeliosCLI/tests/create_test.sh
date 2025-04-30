@@ -1,6 +1,6 @@
 #!/bin/bash
 
-HELIOS="../HeliosCLI/helios"
+HELIOS="../output/helios_cli"
 OUTPUT_FILE="recorded_input.txt"
 
 # Color definitions
@@ -61,7 +61,7 @@ function insert_w10_w100() {
   echo "300w${output_string}300wq"
 }
 
-TESTDIR=tests
+TESTDIR=tests/tests
 
 mkdir -p $TESTDIR
 
@@ -169,7 +169,7 @@ while true; do
   echo "--------------------------------------------------------------------------------" >> "$TEST_FILE"
 
   # generate the history for the test and append it to the test file
-  echo "${NEW_INPUT}" | ../$HELIOS $ARGS --hex --no-timestep >> "$TEST_FILE"
+  echo "${NEW_INPUT}" | $HELIOS $ARGS --hex --no-timestep >> "$TEST_FILE"
 
   # strip any \r in case this was run on windows
   sed -i 's/\r//g' $TEST_FILE

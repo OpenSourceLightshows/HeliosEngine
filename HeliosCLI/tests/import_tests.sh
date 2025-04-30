@@ -28,7 +28,7 @@ create_test() {
     echo "--------------------------------------------------------------------------------" >> "$test_file"
 
     # Append history to the test file
-    echo "$input" | $HELIOS --hex --no-timestep >> "$test_file"
+    echo "$input" | ../../output/helios_cli --hex --no-timestep >> "$test_file"
 
     # Strip any \r in case this was run on windows
     sed -i 's/\r//g' $test_file
@@ -64,11 +64,11 @@ fi
 CSV_FILE="$1"
 
 # Set the directory for test files
-TESTDIR="tests"
+TESTDIR="tests/tests"
 mkdir -p $TESTDIR
 
-# Helios command path
-HELIOS="../HeliosCLI/helios"
+# Helios command path - Not used directly, adjusted above
+# HELIOS="../output/helios_cli"
 
 # Check if the CSV file exists
 if [ ! -f "$CSV_FILE" ]; then

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Directory containing test files
-TEST_DIR="./tests"
+TEST_DIR="./tests/tests"
 
 # Output CSV file
 OUTPUT_CSV="output.csv"
