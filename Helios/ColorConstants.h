@@ -36,6 +36,8 @@
 #define RGB_CORAL_ORANGE (uint32_t)0xFF1E00 // 255, 30, 0
 #define RGB_ORANGE       (uint32_t)0xFF3C00 // 255, 60, 0
 #define RGB_YELLOW       (uint32_t)0xFF7800 // 255, 120, 0
+#define RGB_AMBER        (uint32_t)0xFF9D00 // 255, 157, 0
+#define RGB_CHARTREUSE   (uint32_t)0xC4FF00 // 196, 255, 0
 #define RGB_LIME_GREEN   (uint32_t)0x59FF00 // 89, 255, 0
 #define RGB_GREEN        (uint32_t)0x00FF00 // 0, 255, 0
 #define RGB_SEAFOAM      (uint32_t)0x00FF3C // 0, 255, 60
@@ -48,6 +50,7 @@
 #define RGB_PINK         (uint32_t)0xD200FF // 210, 0, 255
 #define RGB_HOT_PINK     (uint32_t)0xFF00B4 // 255, 0, 180
 #define RGB_MAGENTA      (uint32_t)0xFF003C // 255, 0, 60
+
 
 // Helios Medium Brightness Colors
 #define RGB_WHITE_BRI_MEDIUM         (uint32_t)0x787878 // 120 120 120
