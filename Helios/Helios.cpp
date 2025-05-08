@@ -300,6 +300,12 @@ void Helios::handle_state_modes()
   // whether they have released the button since turning on
   bool hasReleased = (Button::releaseCount() > 0);
 
+  // ESD protection: Ignore button clicks that occur faster than a single tick
+  if (hasReleased && Time::getCurtime() < 2) {
+    enter_sleep();
+    return;
+  }
+
   if (Button::releaseCount() > 1 && Button::onShortClick()) {
     if (has_flag(FLAG_CONJURE)) {
       enter_sleep();
