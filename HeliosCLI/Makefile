@@ -1,116 +1,50 @@
-# clear out all default make targets
 .SUFFIXES:
+.PHONY: all clean compute_version
 
-# List all make targets which are not filenames
-.PHONY: all tests clean pngs bmps clean_storage
+TARGET = desktop
+BUILD_DIR = build/$(TARGET)
+CORE_LIB = ../Helios/build/$(TARGET)/helios.a
+BIN = $(BUILD_DIR)/helios
 
-# compiler tool definitions
-CC=g++
-AR=ar cru
+CC = g++
+CFLAGS = -O2 -Wall -std=c++11 -g -MMD \
+	-DHELIOS_CLI \
+	-DHELIOS_VERSION_MAJOR=$(HELIOS_VERSION_MAJOR) \
+	-DHELIOS_VERSION_MINOR=$(HELIOS_VERSION_MINOR) \
+	-DHELIOS_BUILD_NUMBER=$(HELIOS_BUILD_NUMBER) \
+	-DHELIOS_VERSION_NUMBER=$(HELIOS_VERSION_NUMBER) \
+	-I ../Helios
 
-MAKE=make
-RM=rm -rf
-RANLIB=ranlib
+SRCS = $(wildcard *.cpp)
+OBJS = $(SRCS:%.cpp=$(BUILD_DIR)/%.o)
+DEPS = $(OBJS:.o=.d)
 
-CFLAGS=-O2 -g -Wall -std=c++11
+# Final executable depends on obj + helios
+all: compute_version $(BIN)
+	@echo "== Success building HeliosCLI v$(HELIOS_VERSION_NUMBER) =="
 
-# compiler defines
-DEFINES=\
-	-D HELIOS_CLI \
-	-D HELIOS_VERSION_MAJOR=$(HELIOS_VERSION_MAJOR) \
-	-D HELIOS_VERSION_MINOR=$(HELIOS_VERSION_MINOR) \
-	-D HELIOS_BUILD_NUMBER=$(HELIOS_BUILD_NUMBER) \
-	-D HELIOS_VERSION_NUMBER=$(HELIOS_VERSION_NUMBER)
+$(BIN): $(OBJS) $(CORE_LIB)
+	$(CC) $(CFLAGS) $(OBJS) -o $@ $(CORE_LIB)
 
-# compiler include paths
-INCLUDES=\
-	-I ../Helios \
+$(BUILD_DIR):
+	mkdir -p $(BUILD_DIR)
 
-# only set them if they're not empty to prevent unnecessary whitespace
-ifneq ($(DEFINES),)
-    CFLAGS+=$(DEFINES)
-endif
-ifneq ($(INCLUDES),)
-    CFLAGS+=$(INCLUDES)
-endif
+$(BUILD_DIR)/%.o: %.cpp | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
 
-# local NONSTANDARD libraries to link with
-# these MUST be exact filenames, cannot be -l syntax
-# for example:
-#   ../path/to/libname.a
-# NOT THIS:
-#   -L../path/to -lname
-# You should NOT need to add a make target to build
-# this library if you have added it correctly.
-LLIBS=\
+$(CORE_LIB):
+	$(MAKE) -C ../Helios TARGET=$(TARGET) \
+		HELIOS_VERSION_MAJOR=$(HELIOS_VERSION_MAJOR) \
+		HELIOS_VERSION_MINOR=$(HELIOS_VERSION_MINOR) \
+		HELIOS_BUILD_NUMBER=$(HELIOS_BUILD_NUMBER) \
+		HELIOS_VERSION_NUMBER=$(HELIOS_VERSION_NUMBER)
 
-# STANDARD libraries to link with (-l is fine here)
-# MUST have LLIBS BEFORE the standard libraries
-LIBS=\
-	$(LLIBS) \
-
-# source files
-# local source files first, other sources after
-ifeq ($(OS),Windows_NT)
-	SRC = $(shell find ../Helios -type f -name \\*.cpp) \
-        $(shell find . -type f -name \\*.cpp)
-else
-	SRC = $(shell find ../Helios -type f -name '*.cpp') \
-        $(shell find . -type f -name '*.cpp')
-endif
-
-# object files are source files with .c replaced with .o
-OBJS=\
-	$(SRC:.cpp=.o) \
-
-# dependency files are source files with .c replaced with .d
-DFILES=\
-	$(SRC:.cpp=.d) \
-
-# target dependencies
-# this includes any script generated c/h files,
-# the $(LLIBS) list, and the $(OBJS) list
-DEPS=\
-	$(LLIBS) \
-	$(OBJS) \
-
-# unit tests
-TESTS=\
-
-# target files
-TARGETS=\
-    helios \
-
-# Default target for 'make' command
-all: $(TARGETS)
-
-# unit test target
-tests: $(TESTS)
-
-# target for vortex lib
-helios: compute_version $(DEPS)
-	$(CC) $(CFLAGS) $(DEPS) -o $@ $(LLIBS)
-
-# catch-all make target to generate .o and .d files
-%.o: %.cpp
-	$(CC) $(CFLAGS) -MMD -c $< -o $@
-
-# catch-all for static libraries in the form of:
-# <directory>/<library.a>
-# this expects that the makefile in <directory> has a
-# make target named <library>
-%.a: FORCE
-	$(MAKE) -C $(dir $@) $(notdir $@)
-
-# Empty rule that forces %.a to run all the time
-FORCE:
-
-# generic clean target
-clean:
-	@$(RM) $(DFILES) $(OBJS) $(TARGETS) $(TESTS)
-
+# Compute version variables
 compute_version:
-	$(eval LATEST_TAG ?= $(shell git fetch --depth=1 origin +refs/tags/*:refs/tags/* &> /dev/null && git tag --list | sort -V | tail -n1))
+	$(eval LATEST_TAG ?= $(shell \
+		git fetch --depth=1 origin +refs/tags/*:refs/tags/* &> /dev/null 2>&1 && \
+		git tag --list | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$$' | sort -V | tail -n1 \
+	))
 	$(eval HELIOS_VERSION_MAJOR ?= $(shell echo $(LATEST_TAG) | cut -d. -f1))
 	$(eval HELIOS_VERSION_MINOR ?= $(shell echo $(LATEST_TAG) | cut -d. -f2))
 	$(eval LAST_HELIOS_BUILD_NUMBER ?= $(shell echo $(LATEST_TAG) | cut -d. -f3))
@@ -121,24 +55,7 @@ compute_version:
 	$(eval HELIOS_BUILD_NUMBER := $(if $(HELIOS_BUILD_NUMBER),$(HELIOS_BUILD_NUMBER),0))
 	$(eval HELIOS_VERSION_NUMBER := $(HELIOS_VERSION_MAJOR).$(HELIOS_VERSION_MINOR).$(HELIOS_BUILD_NUMBER))
 
-# generate svg
-svgs: bmps
-	./generate_svgs.sh
+clean:
+	rm -rf build
 
-# generate pngs
-pngs: bmps
-	./generate_pngs.sh
-
-# generate pngs
-bmps:
-	./generate_bmps.sh -c
-
-clean_storage:
-	@echo "Cleaning Helios storage file..."
-	@$(RM) Helios.storage
-	@$(RM) ../tests/Helios.storage
-	@echo "Helios storage file cleaned."
-
-# Now include our target dependency files
-# the hyphen means ignore non-existent files
--include $(DFILES)
+-include $(DEPS)

@@ -3,11 +3,11 @@
 # need megatinycore installed for this
 
 if [ "$OS" == "Windows_NT" ]; then
-	AVR_SIZE="C:/Program Files (x86)/Atmel/Studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/avr-size.exe"
+  AVR_SIZE="C:/Program Files (x86)/Atmel/Studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/avr-size.exe"
 elif [ "$(uname -s)" == "Linux" ]; then
   AVR_SIZE="${HOME}/atmel_setup/avr8-gnu-toolchain-linux_x86_64/bin/avr-size"
 else
-	AVR_SIZE="/Applications/Arduino.app/Contents/Java/hardware/tools/avr/bin/avr-size"
+  AVR_SIZE="/Applications/Arduino.app/Contents/Java/hardware/tools/avr/bin/avr-size"
 fi
 
 if [ ! -x "$AVR_SIZE" ]; then
@@ -29,9 +29,9 @@ DYNAMIC_MEMORY=512
 
 # Run avr-size and parse the output
 if [ "$(uname -o)" == "Msys" ]; then
-	OUTPUT=$("$AVR_SIZE" -A $ELF_FILE)
+  OUTPUT=$("$AVR_SIZE" -A $ELF_FILE)
 else
-	OUTPUT=$($AVR_SIZE -A $ELF_FILE)
+  OUTPUT=$($AVR_SIZE -A $ELF_FILE)
 fi
 
 # Extract sizes of .text, .data, .rodata, and .bss sections
