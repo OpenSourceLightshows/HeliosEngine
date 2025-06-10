@@ -1,5 +1,9 @@
+#====================
+### CONFIGURATION ###
+#====================
+
 .SUFFIXES:
-.PHONY: all clean compute_version
+.PHONY: all clean compute_version svgs pngs bmps clean_storage
 
 TARGET = desktop
 BUILD_DIR = build/$(TARGET)
@@ -19,7 +23,10 @@ SRCS = $(wildcard *.cpp)
 OBJS = $(SRCS:%.cpp=$(BUILD_DIR)/%.o)
 DEPS = $(OBJS:.o=.d)
 
-# Final executable depends on obj + helios
+#====================
+### BUILD TARGETS ###
+#====================
+
 all: compute_version $(BIN)
 	@echo "== Success building HeliosCLI v$(HELIOS_VERSION_NUMBER) =="
 
@@ -39,7 +46,10 @@ $(CORE_LIB):
 		HELIOS_BUILD_NUMBER=$(HELIOS_BUILD_NUMBER) \
 		HELIOS_VERSION_NUMBER=$(HELIOS_VERSION_NUMBER)
 
-# Compute version variables
+#=========================
+### VERSION MANAGEMENT ###
+#=========================
+
 compute_version:
 	$(eval LATEST_TAG ?= $(shell \
 		git fetch --depth=1 origin +refs/tags/*:refs/tags/* &> /dev/null 2>&1 && \
@@ -55,7 +65,35 @@ compute_version:
 	$(eval HELIOS_BUILD_NUMBER := $(if $(HELIOS_BUILD_NUMBER),$(HELIOS_BUILD_NUMBER),0))
 	$(eval HELIOS_VERSION_NUMBER := $(HELIOS_VERSION_MAJOR).$(HELIOS_VERSION_MINOR).$(HELIOS_BUILD_NUMBER))
 
+#========================
+### VISUAL GENERATION ###
+#========================
+
+svgs: bmps
+	./generate_svgs.sh
+
+pngs: bmps
+	./generate_pngs.sh
+
+bmps:
+	./generate_bmps.sh -c
+
+#===========================
+### STORAGE FILE CLEANUP ###
+#===========================
+
+clean_storage:
+	@echo "Cleaning Helios storage file..."
+	@rm -f Helios.storage
+	@rm -f ../tests/Helios.storage
+	@echo "Helios storage file cleaned."
+
+#=====================
+### CLEANING RULES ###
+#=====================
+
 clean:
 	rm -rf build
 
 -include $(DEPS)
+

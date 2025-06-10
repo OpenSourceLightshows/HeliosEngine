@@ -1,5 +1,9 @@
 .SUFFIXES:
-.PHONY: all clean upload set_fuses extract_hex compute_version
+.PHONY: all upload set_fuses set_default_fuses set_16mhz_fuses set_8mhz_fuses set_1mhz_fuses get_fuses extract_hex upload_hex extract_eeprom upload_eeprom clean compute_version extract_version
+
+#####################
+### CONFIGURATION ###
+#####################
 
 TARGET = avr
 BUILD_DIR = build/$(TARGET)
@@ -26,6 +30,10 @@ EEP = $(FIRMWARE).eep
 LST = $(FIRMWARE).lst
 MAP = $(FIRMWARE).map
 
+#######################
+### COMPILER FLAGS ####
+#######################
+
 CFLAGS = -Os -Wall -std=gnu++17 -MMD \
 	-mmcu=$(AVR_CHIP) -DF_CPU=$(CPU_SPEED) \
 	-flto -fno-exceptions -fdata-sections -ffunction-sections \
@@ -38,9 +46,17 @@ CFLAGS = -Os -Wall -std=gnu++17 -MMD \
 
 LDFLAGS = -Os -mmcu=$(AVR_CHIP) -flto -Wl,--gc-sections
 
+#######################
+### SOURCE FILES ######
+#######################
+
 SRCS = $(wildcard *.cpp)
 OBJS = $(SRCS:%.cpp=$(BUILD_DIR)/%.o)
 DEPS = $(OBJS:.o=.d)
+
+#######################
+### BUILD TARGETS #####
+#######################
 
 all: compute_version $(HEX)
 	@chmod +x ../HeliosEmbedded/avrsize.sh
@@ -64,14 +80,15 @@ $(BUILD_DIR)/%.o: %.cpp | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(CORE_LIB):
-	$(MAKE) -C ../Helios TARGET=$(TARGET) \
+	$(MAKE) -C ../Helios TARGET=$(TARGET)
 		HELIOS_VERSION_MAJOR=$(HELIOS_VERSION_MAJOR) \
 		HELIOS_VERSION_MINOR=$(HELIOS_VERSION_MINOR) \
 		HELIOS_BUILD_NUMBER=$(HELIOS_BUILD_NUMBER) \
 		HELIOS_VERSION_NUMBER=$(HELIOS_VERSION_NUMBER)
 
-upload: $(HEX)
-	$(AVRDUDE) $(AVRDUDE_FLAGS) -Uflash:w:$(HEX):i
+#####################
+####### FUSES #######
+#####################
 
 set_fuses:
 	@echo "Setting fuses for $(CPU_SPEED)..."
@@ -85,8 +102,59 @@ else
 	@echo "Unsupported CPU_SPEED for fuse settings."
 endif
 
+set_16mhz_fuses:
+	$(AVRDUDE) $(AVRDUDE_FLAGS) -U lfuse:w:0xe1:m -U hfuse:w:0xdf:m -U efuse:w:0xff:m
+
+set_8mhz_fuses:
+	$(AVRDUDE) $(AVRDUDE_FLAGS) -U lfuse:w:0xE2:m -U hfuse:w:0xdf:m -U efuse:w:0xff:m
+
+set_1mhz_fuses:
+	$(AVRDUDE) $(AVRDUDE_FLAGS) -U lfuse:w:0x62:m -U hfuse:w:0xdf:m -U efuse:w:0xff:m
+
+set_8mhz_fuses_bod_on:
+	$(AVRDUDE) $(AVRDUDE_FLAGS) -U lfuse:w:0xE2:m -U hfuse:w:0xde:m -U efuse:w:0xff:m
+
+get_fuses:
+	$(AVRDUDE) $(AVRDUDE_FLAGS) -U lfuse:r:-:h -U hfuse:r:-:h -U efuse:r:-:h
+
+######################
+####### EEPROM #######
+######################
+
+upload_with_default_eeprom: upload eeprom_data.eep
+	$(AVRDUDE) $(AVRDUDE_FLAGS) -U eeprom:w:eeprom_data.eep:i
+
+extract_eeprom:
+	$(AVRDUDE) $(AVRDUDE_FLAGS) -U eeprom:r:eeprom_data.eep:i
+
+upload_eeprom: eeprom_data.eep
+	$(AVRDUDE) $(AVRDUDE_FLAGS) -U eeprom:w:eeprom_data.eep:i
+
+extract_eeprom_thumbs:
+	$(AVRDUDE) $(AVRDUDE_FLAGS) -U eeprom:r:eeprom_thumbs.eep:i
+
+upload_eeprom_thumbs: eeprom_thumbs.eep
+	$(AVRDUDE) $(AVRDUDE_FLAGS) -U eeprom:w:eeprom_thumbs.eep:i
+
+extract_eeprom_fingers:
+	$(AVRDUDE) $(AVRDUDE_FLAGS) -U eeprom:r:eeprom_fingers.eep:i
+
+upload_eeprom_fingers: eeprom_fingers.eep
+	$(AVRDUDE) $(AVRDUDE_FLAGS) -U eeprom:w:eeprom_fingers.eep:i
+
+###################
+####### HEX #######
+###################
+
+upload_hex:
+	$(AVRDUDE) $(AVRDUDE_FLAGS) -U flash:w:$(HEX):i
+
 extract_hex:
 	$(AVRDUDE) $(AVRDUDE_FLAGS) -U flash:r:firmware_extracted.hex:i
+
+##########################
+### VERSION MANAGEMENT ###
+##########################
 
 compute_version:
 	$(eval LATEST_TAG ?= $(shell \
@@ -103,7 +171,19 @@ compute_version:
 	$(eval HELIOS_BUILD_NUMBER := $(if $(HELIOS_BUILD_NUMBER),$(HELIOS_BUILD_NUMBER),0))
 	$(eval HELIOS_VERSION_NUMBER := $(HELIOS_VERSION_MAJOR).$(HELIOS_VERSION_MINOR).$(HELIOS_BUILD_NUMBER))
 
+extract_version:
+	@echo "Reading firmware version..."
+	$(eval TEMP_HEX := $(shell mktemp))
+	$(AVRDUDE) $(AVRDUDE_FLAGS) -U flash:r:$(TEMP_HEX):i > /dev/null 2>&1
+	python ./find_version.py $(TEMP_HEX)
+	@rm $(TEMP_HEX)
+
+#####################
+####### CLEAN #######
+#####################
+
 clean:
 	rm -rf build
 
 -include $(DEPS)
+
