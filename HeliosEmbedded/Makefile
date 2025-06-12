@@ -11,7 +11,26 @@ CORE_LIB = ../Helios/build/$(TARGET)/helios.a
 
 AVR_CHIP = attiny85
 CPU_SPEED = 8000000L
-BINDIR = $(HOME)/atmel_setup/avr8-gnu-toolchain-linux_x86_64/bin/
+
+# OS Detection and toolchain paths
+ifeq ($(OS),Windows_NT) # Windows
+    BINDIR = "C:/Program Files (x86)/Atmel/Studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/"
+    AVRDUDEDIR = "$(shell echo "$$LOCALAPPDATA")/Arduino15/packages/DxCore/tools/avrdude/6.3.0-arduino17or18/bin/"
+    PYTHON = "$(shell echo "$$LOCALAPPDATA")/Arduino15/packages/megaTinyCore/tools/python3/3.7.2-post1/python3"
+    PYPROG = "$(shell echo "$$LOCALAPPDATA")/Arduino15/packages/megaTinyCore/hardware/megaavr/2.6.5/tools/prog.py"
+    DEVICE_DIR = "C:/Program Files (x86)/Atmel/Studio/7.0/Packs/atmel/ATtiny_DFP/1.10.348/gcc/dev/attiny85/"
+    INCLUDE_DIR = "C:/Program Files (x86)/Atmel/Studio/7.0/Packs/atmel/ATtiny_DFP/1.10.348/include/"
+else ifeq ($(shell uname),Linux)
+    BINDIR = $(HOME)/atmel_setup/avr8-gnu-toolchain-linux_x86_64/bin/
+    DEVICE_DIR = $(HOME)/atmel_setup/gcc/dev/attiny85
+    INCLUDE_DIR = $(HOME)/atmel_setup/include/
+else ifeq ($(shell uname),Darwin)
+    BINDIR = /Applications/Arduino.app/Contents/Java/hardware/tools/avr/bin/
+    AVRDUDEDIR = /Applications/Arduino.app/Contents/Java/hardware/tools/avr/bin/
+    INCLUDE_DIR =
+else
+    $(error Unknown operating system)
+endif
 
 CC = $(BINDIR)avr-g++
 LD = $(CC)
@@ -80,7 +99,7 @@ $(BUILD_DIR)/%.o: %.cpp | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(CORE_LIB):
-	$(MAKE) -C ../Helios TARGET=$(TARGET)
+	$(MAKE) -C ../Helios TARGET=$(TARGET) \
 		HELIOS_VERSION_MAJOR=$(HELIOS_VERSION_MAJOR) \
 		HELIOS_VERSION_MINOR=$(HELIOS_VERSION_MINOR) \
 		HELIOS_BUILD_NUMBER=$(HELIOS_BUILD_NUMBER) \

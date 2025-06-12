@@ -10,10 +10,19 @@ ifeq ($(TARGET),desktop)
 	DEFINES = -D HELIOS_CLI
 else ifeq ($(TARGET),avr)
 	AVR_CHIP = attiny85
-	BINDIR ?= $(HOME)/atmel_setup/avr8-gnu-toolchain-linux_x86_64/bin/
+	# OS Detection for AVR toolchain paths
+	ifeq ($(OS),Windows_NT) # Windows
+		BINDIR = "C:/Program Files (x86)/Atmel/Studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/"
+	else ifeq ($(shell uname),Linux)
+		BINDIR = $(HOME)/atmel_setup/avr8-gnu-toolchain-linux_x86_64/bin/
+	else ifeq ($(shell uname),Darwin)
+		BINDIR = /Applications/Arduino.app/Contents/Java/hardware/tools/avr/bin/
+	else
+		$(error Unknown operating system for AVR build)
+	endif
 	CC = $(BINDIR)avr-g++
 	AR = $(BINDIR)avr-gcc-ar rcs
-	CFLAGS = -Os -Wall -std=gnu++17 -MMD -mmcu=$(AVR_CHIP) -flto -fno-exceptions 
+	CFLAGS = -Os -Wall -std=gnu++17 -MMD -mmcu=$(AVR_CHIP) -flto -fno-exceptions
 	DEFINES = -DHELIOS_EMBEDDED -D__AVR_ATtiny85__ -DF_CPU=8000000L
 else ifeq ($(TARGET),wasm)
 	CC = em++
