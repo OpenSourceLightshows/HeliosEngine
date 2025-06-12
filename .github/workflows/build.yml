@@ -59,7 +59,7 @@ jobs:
         run: make -j
         working-directory: HeliosCLI
       - name: Archive HeliosCLI artifacts
-        run: zip -r "helioscli.zip" .
+        run: zip -r "helioscli.zip" build/
         working-directory: HeliosCLI
       - name: Upload HeliosCLI Artifact
         uses: actions/upload-artifact@v4
@@ -79,10 +79,10 @@ jobs:
           name: helioscli-artifacts
           path: ./HeliosCLI
       - name: Set execute permissions for test script
-        run: chmod +x ./runtests.sh
+        run: chmod +x ./run_tests.sh
         working-directory: tests
       - name: Run general tests
-        run: ./runtests.sh
+        run: ./run_tests.sh
         working-directory: tests
 
   embedded:
@@ -104,16 +104,16 @@ jobs:
           export HELIOS_VERSION_MINOR=${{ needs.setup.outputs.helios_version_minor }}
           export HELIOS_BUILD_NUMBER=${{ needs.setup.outputs.helios_build_number }}
           export HELIOS_VERSION_NUMBER=${{ needs.setup.outputs.helios_version_number }}
-          make -j build
+          make embedded
         working-directory: HeliosEmbedded
       - name: Archive HeliosEmbedded artifacts
-        run: zip -r "embedded-firmware.zip" .
+        run: zip -r "embedded-firmware.zip" HeliosEmbedded/build/
         working-directory: HeliosEmbedded
       - name: Upload HeliosEmbedded Artifact
         uses: actions/upload-artifact@v4
         with:
           name: embedded-firmware
-          path: HeliosEmbedded/embedded-firmware.zip
+          path: embedded-firmware.zip
 
   wasm:
     needs: [setup, build, tests, embedded]
@@ -131,12 +131,12 @@ jobs:
           ./emsdk install latest
           ./emsdk activate latest
         working-directory: HeliosLib
-      - name: Build Webassembly
+      - name: Build WebAssembly
         run: |
           source ./emsdk/emsdk_env.sh
           export HELIOS_VERSION_MAJOR=${{ needs.setup.outputs.helios_version_major }}
           export HELIOS_VERSION_MINOR=${{ needs.setup.outputs.helios_version_minor }}
           export HELIOS_BUILD_NUMBER=${{ needs.setup.outputs.helios_build_number }}
           export HELIOS_VERSION_NUMBER=${{ needs.setup.outputs.helios_version_number }}
-          make -j wasm
+          make wasm
         working-directory: HeliosLib

@@ -17,7 +17,7 @@ jobs:
         run: make -j
         working-directory: HeliosCLI
       - name: Archive HeliosCLI artifacts
-        run: zip -r "helioscli.zip" .
+        run: zip -r "helioscli.zip" build/
         working-directory: HeliosCLI
       - name: Upload HeliosCLI Artifact
         uses: actions/upload-artifact@v4
@@ -37,10 +37,10 @@ jobs:
           name: helioscli-artifacts
           path: ./HeliosCLI
       - name: Set execute permissions for test script
-        run: chmod +x ./runtests.sh
+        run: chmod +x ./run_tests.sh
         working-directory: tests
       - name: Run general tests
-        run: ./runtests.sh
+        run: ./run_tests.sh
         working-directory: tests
 
   embedded:
@@ -57,16 +57,15 @@ jobs:
         run: make install
         working-directory: HeliosEmbedded
       - name: Build Binary
-        run: make build
+        run: make embedded
         working-directory: HeliosEmbedded
       - name: Archive HeliosEmbedded artifacts
-        run: zip -r "embedded-firmware.zip" .
-        working-directory: HeliosEmbedded
+        run: zip -r "embedded-firmware.zip" HeliosEmbedded/build/
       - name: Upload HeliosEmbedded Artifact
         uses: actions/upload-artifact@v4
         with:
           name: embedded-firmware
-          path: HeliosEmbedded/embedded-firmware.zip
+          path: embedded-firmware.zip
 
   release:
     needs: embedded
@@ -163,7 +162,7 @@ jobs:
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./artifact/unzipped/embedded/helios.bin
+          asset_path: ./artifact/unzipped/embedded/HeliosEmbedded/build/avr/helios.bin
           asset_name: helios.bin
           asset_content_type: application/octet-stream
         env:
@@ -173,7 +172,7 @@ jobs:
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./artifact/unzipped/embedded/helios.elf
+          asset_path: ./artifact/unzipped/embedded/HeliosEmbedded/build/avr/helios.elf
           asset_name: helios.elf
           asset_content_type: application/octet-stream
         env:
@@ -183,7 +182,7 @@ jobs:
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./artifact/unzipped/embedded/helios.map
+          asset_path: ./artifact/unzipped/embedded/HeliosEmbedded/build/avr/helios.map
           asset_name: helios.map
           asset_content_type: application/octet-stream
         env:
@@ -193,7 +192,7 @@ jobs:
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./artifact/unzipped/embedded/helios.hex
+          asset_path: ./artifact/unzipped/embedded/HeliosEmbedded/build/avr/helios.hex
           asset_name: helios.hex
           asset_content_type: application/octet-stream
         env:
@@ -203,7 +202,7 @@ jobs:
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./artifact/unzipped/helioscli/helios
+          asset_path: ./artifact/unzipped/helioscli/build/desktop/helios
           asset_name: helios
           asset_content_type: application/octet-stream
         env:
