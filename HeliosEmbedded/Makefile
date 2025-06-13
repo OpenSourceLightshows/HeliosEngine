@@ -21,9 +21,10 @@ ifeq ($(OS),Windows_NT) # Windows
     DEVICE_DIR = "C:/Program Files (x86)/Atmel/Studio/7.0/Packs/atmel/ATtiny_DFP/1.10.348/gcc/dev/attiny85/"
     INCLUDE_DIR = "C:/Program Files (x86)/Atmel/Studio/7.0/Packs/atmel/ATtiny_DFP/1.10.348/include/"
 else ifeq ($(shell uname),Linux)
-    BINDIR = $(HOME)/atmel_setup/avr8-gnu-toolchain-linux_x86_64/bin/
-    DEVICE_DIR = $(HOME)/atmel_setup/gcc/dev/attiny85
-    INCLUDE_DIR = $(HOME)/atmel_setup/include/
+    # Use system-installed AVR toolchain (from apt-get install gcc-avr avr-libc)
+    BINDIR =
+    DEVICE_DIR =
+    INCLUDE_DIR =
 else ifeq ($(shell uname),Darwin)
     BINDIR = /Applications/Arduino.app/Contents/Java/hardware/tools/avr/bin/
     AVRDUDEDIR = /Applications/Arduino.app/Contents/Java/hardware/tools/avr/bin/

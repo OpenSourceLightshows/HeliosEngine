@@ -86,7 +86,7 @@ jobs:
         working-directory: tests
 
   embedded:
-    needs: [setup, build, tests]
+    needs: [setup, tests]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout current repository
@@ -95,20 +95,17 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: "3.x"
-      - name: Install Dependencies
-        run: make install
-        working-directory: HeliosEmbedded
-      - name: Build Binary
+      - name: Install AVR toolchain
+        run: sudo apt-get install gcc-avr avr-libc
+      - name: Build Embedded using unified Makefile
         run: |
           export HELIOS_VERSION_MAJOR=${{ needs.setup.outputs.helios_version_major }}
           export HELIOS_VERSION_MINOR=${{ needs.setup.outputs.helios_version_minor }}
           export HELIOS_BUILD_NUMBER=${{ needs.setup.outputs.helios_build_number }}
           export HELIOS_VERSION_NUMBER=${{ needs.setup.outputs.helios_version_number }}
           make embedded
-        working-directory: HeliosEmbedded
       - name: Archive HeliosEmbedded artifacts
         run: zip -r "embedded-firmware.zip" HeliosEmbedded/build/
-        working-directory: HeliosEmbedded
       - name: Upload HeliosEmbedded Artifact
         uses: actions/upload-artifact@v4
         with:

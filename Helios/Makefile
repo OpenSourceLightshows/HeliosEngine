@@ -14,7 +14,8 @@ else ifeq ($(TARGET),avr)
 	ifeq ($(OS),Windows_NT) # Windows
 		BINDIR = "C:/Program Files (x86)/Atmel/Studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/"
 	else ifeq ($(shell uname),Linux)
-		BINDIR = $(HOME)/atmel_setup/avr8-gnu-toolchain-linux_x86_64/bin/
+		# Use system-installed AVR toolchain (from apt-get install gcc-avr avr-libc)
+		BINDIR =
 	else ifeq ($(shell uname),Darwin)
 		BINDIR = /Applications/Arduino.app/Contents/Java/hardware/tools/avr/bin/
 	else
