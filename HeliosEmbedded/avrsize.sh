@@ -5,14 +5,29 @@
 if [ "$OS" == "Windows_NT" ]; then
   AVR_SIZE="C:/Program Files (x86)/Atmel/Studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/avr-size.exe"
 elif [ "$(uname -s)" == "Linux" ]; then
-  AVR_SIZE="${HOME}/atmel_setup/avr8-gnu-toolchain-linux_x86_64/bin/avr-size"
+  # Try system-installed avr-size first, then fall back to custom path
+  if command -v avr-size >/dev/null 2>&1; then
+    AVR_SIZE="avr-size"
+  else
+    AVR_SIZE="${HOME}/atmel_setup/avr8-gnu-toolchain-linux_x86_64/bin/avr-size"
+  fi
 else
   AVR_SIZE="/Applications/Arduino.app/Contents/Java/hardware/tools/avr/bin/avr-size"
 fi
 
-if [ ! -x "$AVR_SIZE" ]; then
-  echo "Could not find avr-size program"
-  exit 1
+# Check if avr-size is available
+if [ "$AVR_SIZE" == "avr-size" ]; then
+  # System command, check if it exists
+  if ! command -v avr-size >/dev/null 2>&1; then
+    echo "Could not find avr-size program"
+    exit 1
+  fi
+else
+  # Specific path, check if file exists and is executable
+  if [ ! -x "$AVR_SIZE" ]; then
+    echo "Could not find avr-size program"
+    exit 1
+  fi
 fi
 
 # Replace this with the path to your .elf file

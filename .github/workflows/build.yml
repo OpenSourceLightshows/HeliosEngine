@@ -54,7 +54,7 @@ jobs:
       - name: Update Package Lists
         run: sudo apt-get update
       - name: Install Dependencies
-        run: sudo apt-get install valgrind g++ make --fix-missing
+        run: sudo apt-get install valgrind g++ make gcc-avr avr-libc binutils-avr --fix-missing
       - name: Build HeliosCLI
         run: make -j
         working-directory: HeliosCLI
@@ -96,7 +96,7 @@ jobs:
         with:
           python-version: "3.x"
       - name: Install AVR toolchain
-        run: sudo apt-get install gcc-avr avr-libc
+        run: sudo apt-get install gcc-avr avr-libc binutils-avr
       - name: Build Embedded using unified Makefile
         run: |
           export HELIOS_VERSION_MAJOR=${{ needs.setup.outputs.helios_version_major }}

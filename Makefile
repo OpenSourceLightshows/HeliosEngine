@@ -44,7 +44,6 @@ package: all
 	@mkdir -p $(PACKAGE_DIR)/cli
 	@mkdir -p $(PACKAGE_DIR)/embedded
 	@mkdir -p $(PACKAGE_DIR)/wasm
-	@mkdir -p $(PACKAGE_DIR)/docs
 
 	# Copy CLI binary and related files
 	@if [ -f $(CLI_DIR)/build/desktop/helios ]; then \
@@ -73,13 +72,6 @@ package: all
 	else \
 		echo "✗ WASM library not found"; \
 	fi
-
-	# Copy documentation and important files
-	@cp README.md $(PACKAGE_DIR)/docs/ 2>/dev/null || echo "README.md not found"
-	@cp LICENSE $(PACKAGE_DIR)/docs/ 2>/dev/null || echo "LICENSE not found"
-	@cp $(CLI_DIR)/README.md $(PACKAGE_DIR)/docs/CLI-README.md 2>/dev/null || true
-	@cp $(EMBEDDED_DIR)/README.md $(PACKAGE_DIR)/docs/EMBEDDED-README.md 2>/dev/null || true
-	@cp $(LIB_DIR)/README.md $(PACKAGE_DIR)/docs/LIB-README.md 2>/dev/null || true
 
 	# Create version info file
 	@echo "Helios Engine Release Package" > $(PACKAGE_DIR)/VERSION.txt
