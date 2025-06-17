@@ -1,5 +1,5 @@
 .SUFFIXES:
-.PHONY: all lib cli embedded wasm clean package
+.PHONY: all lib cli embedded wasm install clean package
 
 ######################
 ### CONFIGURATION ###
@@ -10,6 +10,32 @@ CLI_DIR      = HeliosCLI
 EMBEDDED_DIR = HeliosEmbedded
 PACKAGE_DIR  = release_package
 VERSION     ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
+
+######################
+### INSTALL TARGET ###
+######################
+
+install:
+	@echo "== Installing dependencies =="
+	@if command -v apt-get >/dev/null 2>&1; then \
+		echo "Installing AVR toolchain via apt-get..."; \
+		sudo apt-get update; \
+		sudo apt-get install -y gcc-avr avr-libc binutils-avr; \
+	elif command -v brew >/dev/null 2>&1; then \
+		echo "Installing AVR toolchain via brew..."; \
+		brew tap osx-cross/avr; \
+		brew install avr-gcc; \
+	elif command -v pacman >/dev/null 2>&1; then \
+		echo "Installing AVR toolchain via pacman..."; \
+		sudo pacman -S --noconfirm avr-gcc avr-libc; \
+	else \
+		echo "No supported package manager found. Please install AVR toolchain manually:"; \
+		echo "  - gcc-avr"; \
+		echo "  - avr-libc"; \
+		echo "  - binutils-avr"; \
+		exit 1; \
+	fi
+	@echo "== Dependencies installed successfully =="
 
 ######################
 ### BUILD TARGETS ###

@@ -13,8 +13,10 @@ jobs:
           fetch-depth: 0 # Fetch all history for version calculation
       - name: Update Package Lists
         run: sudo apt-get update
-      - name: Install Dependencies
-        run: sudo apt-get install valgrind g++ make gcc-avr avr-libc binutils-avr --fix-missing
+      - name: Install Base Dependencies
+        run: sudo apt-get install valgrind g++ make --fix-missing
+      - name: Install Project Dependencies
+        run: make install
       - name: Install Emscripten
         run: |
           sudo apt install -y cmake python3
