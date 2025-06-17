@@ -97,6 +97,12 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: "3.x"
+      - name: Update Package Lists
+        run: sudo apt-get update
+      - name: Install Base Dependencies
+        run: sudo apt-get install make --fix-missing
+      - name: Install Project Dependencies
+        run: make install
       - name: Build Embedded using unified Makefile
         run: |
           export HELIOS_VERSION_MAJOR=${{ needs.setup.outputs.helios_version_major }}
