@@ -55,6 +55,10 @@ embedded:
 	@echo "== Building HeliosEmbedded =="
 	$(MAKE) -C $(EMBEDDED_DIR)
 
+upload:
+	@echo "== Uploading HeliosEmbedded =="
+	$(MAKE) -C $(EMBEDDED_DIR) upload
+
 wasm:
 	@echo "== Building WASM target =="
 	$(MAKE) -C $(LIB_DIR) TARGET=wasm
