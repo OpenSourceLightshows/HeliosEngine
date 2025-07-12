@@ -6,9 +6,9 @@
 // define arrays of colors, you can reuse these if you have multiple
 // modes that use the same colorset -- these demonstrate the max amount
 // of colors in each set but you can absolutely list a lesser amount
-static const uint32_t color_codes0[] = {RGB_RED, RGB_GREEN, RGB_BLUE}; // Rainbow Flow
-static const uint32_t color_codes1[] = {RGB_LUNA, RGB_CORAL_ORANGE, RGB_ROYAL_BLUE}; // Ghostly
-static const uint32_t color_codes2[] = {RGB_MINT, RGB_RED}; // Photo Copy
+static const uint32_t color_codes0[] = {RGB_RED, RGB_CORAL, RGB_CREAM}; // Rainbow Flow
+static const uint32_t color_codes1[] = {RGB_SEAFOAM, RGB_ICE_BLUE, RGB_GREEN}; // Ghostly
+static const uint32_t color_codes2[] = {RGB_PURPLE, RGB_BLUE}; // Photo Copy
 
 // Define Colorset configurations for each slot
 struct default_colorset {
@@ -32,21 +32,22 @@ void Patterns::make_default(uint8_t index, Pattern &pat)
   PatternArgs args;
   switch (index) {
     case 0:  // Rainbow Flow
-      args.on_dur = 3;
-      args.off_dur = 23;
-      args.blend_speed = 10;
+      args.on_dur = 1;
+      args.off_dur = 15;
+      args.fade_dur = 15;
+      args.blend_speed = 2;
       break;
     case 1:  // Ghostly
-      args.on_dur = 1;
-      args.off_dur = 10;
-      args.fade_dur = 30;
-      args.gap_dur = 30;
+    args.on_dur = 2;
+    args.off_dur = 30;
+
       break;
     case 2:  // Photo Copy
-      args.on_dur = 1;
-      args.off_dur = 9;
-      args.gap_dur = 6;
-      args.dash_dur = 15;
+    args.on_dur = 1;
+    args.off_dur = 9;
+    args.gap_dur = 6;
+    args.dash_dur = 15;
+
       break;
   }
   // assign default args
@@ -84,11 +85,9 @@ void Patterns::make_pattern(PatternID id, Pattern &pat)
     args.off_dur = 23;
     break;
 
-
-
-  case PATTERN_FLICKER:
-    args.on_dur = 1;
-    args.off_dur = 50;
+  case PATTERN_FLARE:
+    args.on_dur = 2;
+    args.off_dur = 30;
     break;
 
   case PATTERN_MORPH_STROBIE:
@@ -120,8 +119,8 @@ void Patterns::make_pattern(PatternID id, Pattern &pat)
   case PATTERN_GLITCH_FADE:
     args.on_dur = 1;
     args.off_dur = 10;
-    args.fade_dur = 10;
     args.gap_dur = 30;
+    args.fade_dur = 5;
     break;
   }
 
