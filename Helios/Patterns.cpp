@@ -38,7 +38,9 @@ void Patterns::make_default(uint8_t index, Pattern &pat)
       break;
     case 1:  // Ghostly
       args.on_dur = 1;
-      args.off_dur = 9;
+      args.off_dur = 10;
+      args.fade_dur = 30;
+      args.gap_dur = 30;
       break;
     case 2:  // Photo Copy
       args.on_dur = 1;
@@ -82,20 +84,9 @@ void Patterns::make_pattern(PatternID id, Pattern &pat)
     args.off_dur = 23;
     break;
 
-  case PATTERN_GLOW:
-    args.on_dur = 2;
-    args.gap_dur = 40;
-    break;
-
   case PATTERN_FLICKER:
     args.on_dur = 1;
     args.off_dur = 50;
-    break;
-
-  case PATTERN_MORPH_STROBE:
-    args.on_dur = 5;
-    args.off_dur = 8;
-    args.blend_speed = 10;
     break;
 
   case PATTERN_MORPH_STROBIE:
@@ -109,12 +100,6 @@ void Patterns::make_pattern(PatternID id, Pattern &pat)
     args.off_dur = 9;
     args.gap_dur = 6;
     args.dash_dur = 15;
-    break;
-
-  case PATTERN_DASH_DOT:
-    args.on_dur = 2;
-    args.off_dur = 3;
-    args.dash_dur = 24;
     break;
 
   case PATTERN_FADE:
@@ -132,10 +117,11 @@ void Patterns::make_pattern(PatternID id, Pattern &pat)
 
   case PATTERN_GLITCH_FADE:
     args.on_dur = 1;
-    args.off_dur = 9;
-    args.fade_dur = 10;
+    args.off_dur = 10;
+    args.fade_dur = 30;
     args.gap_dur = 30;
     break;
+
   }
 
   pat.setArgs(args);
