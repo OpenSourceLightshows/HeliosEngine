@@ -1,19 +1,19 @@
-name: Aeos Build
+name: Nyx Build
 
 on:
   push:
-    branches: ["aeos"]
+    branches: ["nyx"]
   pull_request:
-    branches: ["aeos"]
+    branches: ["nyx"]
 
 jobs:
   setup:
     runs-on: ubuntu-latest
     outputs:
-      aeos_version_major: ${{ steps.set_version.outputs.aeos_version_major }}
-      aeos_version_minor: ${{ steps.set_version.outputs.aeos_version_minor }}
-      aeos_build_number: ${{ steps.set_version.outputs.aeos_build_number }}
-      aeos_version_number: ${{ steps.set_version.outputs.aeos_version_number }}
+      nyx_version_major: ${{ steps.set_version.outputs.nyx_version_major }}
+      nyx_version_minor: ${{ steps.set_version.outputs.nyx_version_minor }}
+      nyx_build_number: ${{ steps.set_version.outputs.nyx_build_number }}
+      nyx_version_number: ${{ steps.set_version.outputs.nyx_version_number }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -23,8 +23,8 @@ jobs:
         run: |
           # Fetch all tags
           git fetch --depth=1 origin +refs/tags/*:refs/tags/*
-          # Get the latest tag that matches the aeos prefix
-          TAG_PREFIX="aeos-"
+          # Get the latest tag that matches the nyx prefix
+          TAG_PREFIX="nyx-"
           LATEST_TAG=$(git tag --list "${TAG_PREFIX}*" | sort -V | tail -n1)
           if [ -z "$LATEST_TAG" ]; then
             echo "No matching tags found. Setting default version."
@@ -33,7 +33,7 @@ jobs:
             BUILD_NUMBER="0"
           else
             echo "Found latest tag: $LATEST_TAG"
-            VERSION_NUMBER=$(echo $LATEST_TAG | sed "s/aeos-//g")
+            VERSION_NUMBER=$(echo $LATEST_TAG | sed "s/nyx-//g")
             VERSION_MAJOR=$(echo $VERSION_NUMBER | cut -d. -f1)
             VERSION_MINOR=$(echo $VERSION_NUMBER | cut -d. -f2)
             LAST_BUILD_NUMBER=$(echo $VERSION_NUMBER | cut -d. -f3)
@@ -41,10 +41,10 @@ jobs:
             BUILD_NUMBER=$(( $LAST_BUILD_NUMBER + $COMMITS_SINCE_TAG ))
           fi
           FULL_VERSION="$VERSION_MAJOR.$VERSION_MINOR.$BUILD_NUMBER"
-          echo "aeos_version_major=$VERSION_MAJOR" >> $GITHUB_OUTPUT
-          echo "aeos_version_minor=$VERSION_MINOR" >> $GITHUB_OUTPUT
-          echo "aeos_build_number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
-          echo "aeos_version_number=$FULL_VERSION" >> $GITHUB_OUTPUT
+          echo "nyx_version_major=$VERSION_MAJOR" >> $GITHUB_OUTPUT
+          echo "nyx_version_minor=$VERSION_MINOR" >> $GITHUB_OUTPUT
+          echo "nyx_build_number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
+          echo "nyx_version_number=$FULL_VERSION" >> $GITHUB_OUTPUT
           echo "Version Number: $FULL_VERSION"
 
   build:
@@ -102,10 +102,10 @@ jobs:
         working-directory: HeliosEmbedded
       - name: Build Binary
         run: |
-          export HELIOS_VERSION_MAJOR=${{ needs.setup.outputs.aeos_version_major }}
-          export HELIOS_VERSION_MINOR=${{ needs.setup.outputs.aeos_version_minor }}
-          export HELIOS_BUILD_NUMBER=${{ needs.setup.outputs.aeos_build_number }}
-          export HELIOS_VERSION_NUMBER=${{ needs.setup.outputs.aeos_version_number }}
+          export HELIOS_VERSION_MAJOR=${{ needs.setup.outputs.nyx_version_major }}
+          export HELIOS_VERSION_MINOR=${{ needs.setup.outputs.nyx_version_minor }}
+          export HELIOS_BUILD_NUMBER=${{ needs.setup.outputs.nyx_build_number }}
+          export HELIOS_VERSION_NUMBER=${{ needs.setup.outputs.nyx_version_number }}
           make -j build
         working-directory: HeliosEmbedded
       - name: Archive HeliosEmbedded artifacts
