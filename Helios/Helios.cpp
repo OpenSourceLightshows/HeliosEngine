@@ -337,7 +337,6 @@ void Helios::handle_state_modes()
           case 0: Led::clear(); break;         // nothing
           case 1: Led::set(RGB_RED_BRI_LOW); break; // Enter Glow Lock
           case 2: Led::set(RGB_BLUE_BRI_LOW); break; // Master Reset
-          case 3: Led::set(has_flag(FLAG_AUTOPLAY) ? RGB_ORANGE_BRI_LOW : RGB_PINK_BRI_LOW); break; // Autoplay Toggle
         }
       }
     }
@@ -380,12 +379,6 @@ void Helios::handle_off_menu(uint8_t mag, bool past)
       return; // RETURN HERE
     case 2:  // blue reset defaults
       cur_state = STATE_SET_DEFAULTS;
-      return; //RETURN HERE
-    case 3:  // autoplay toggle
-      toggle_flag(FLAG_AUTOPLAY);
-      save_global_flags();
-      last_mode_switch_time = Time::getCurtime(); // Reset the timer when enabling autoplay
-      cur_state = STATE_MODES;
       return; //RETURN HERE
     default:
       // just go back to sleep in hold-past off menu

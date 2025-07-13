@@ -32,7 +32,6 @@ public:
     FLAG_NONE = 0,
     FLAG_LOCKED = (1 << 0),
     FLAG_CONJURE = (1 << 1),
-    FLAG_AUTOPLAY = (1 << 2),
   };
 
   // get/set global flags
