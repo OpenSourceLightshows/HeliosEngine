@@ -6,9 +6,9 @@
 // define arrays of colors, you can reuse these if you have multiple
 // modes that use the same colorset -- these demonstrate the max amount
 // of colors in each set but you can absolutely list a lesser amount
-static const uint32_t color_codes0[] = {RGB_RED, RGB_CORAL, RGB_CREAM}; // Rainbow Flow
-static const uint32_t color_codes1[] = {RGB_SEAFOAM, RGB_ICE_BLUE, RGB_GREEN}; // Ghostly
-static const uint32_t color_codes2[] = {RGB_PURPLE, RGB_BLUE}; // Photo Copy
+static const uint32_t color_codes0[] = {RGB_RED, RGB_ORANGE, RGB_WHITE}; // Rainbow Flow
+static const uint32_t color_codes1[] = {RGB_SEAFOAM, RGB_LIGHT_BLUE, RGB_WHITE}; // Ghostly
+static const uint32_t color_codes2[] = {RGB_PURPLE, RGB_MAGENTA, RGB_WHITE}; // Photo Copy
 
 // Define Colorset configurations for each slot
 struct default_colorset {
@@ -21,7 +21,7 @@ struct default_colorset {
 static const default_colorset default_colorsets[] = {
   { 3, color_codes0 },  // 0 Rainbow Flow
   { 3, color_codes1 },  // 1 Ghostly
-  { 2, color_codes2 },  // 2 Photo Copy
+  { 3, color_codes2 },  // 2 Photo Copy
 };
 
 void Patterns::make_default(uint8_t index, Pattern &pat)
@@ -33,20 +33,18 @@ void Patterns::make_default(uint8_t index, Pattern &pat)
   switch (index) {
     case 0:  // Rainbow Flow
       args.on_dur = 1;
-      args.off_dur = 15;
-      args.fade_dur = 15;
-      args.blend_speed = 2;
+      args.off_dur = 9;
       break;
     case 1:  // Ghostly
-    args.on_dur = 2;
-    args.off_dur = 30;
-
+      args.on_dur = 3;
+      args.off_dur = 23;
+      args.blend_speed = 10;
       break;
     case 2:  // Photo Copy
-    args.on_dur = 1;
-    args.off_dur = 9;
-    args.gap_dur = 6;
-    args.dash_dur = 15;
+      args.on_dur = 1;
+      args.off_dur = 10;
+      args.gap_dur = 30;
+      args.fade_dur = 5;
 
       break;
   }
