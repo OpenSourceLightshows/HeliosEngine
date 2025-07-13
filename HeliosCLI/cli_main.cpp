@@ -738,12 +738,11 @@ static void dump_eeprom(const std::string& filename)
 
   uint8_t flags = (uint8_t)memory[CONFIG_START_INDEX - STORAGE_GLOBAL_FLAG_INDEX];
   bool locked = (flags & Helios::FLAG_LOCKED) != 0;
-  bool conjure = (flags & Helios::FLAG_CONJURE) != 0;
   uint8_t modeIdx = (uint8_t)memory[CONFIG_START_INDEX - STORAGE_CURRENT_MODE_INDEX];
   uint8_t brightness = (uint8_t)memory[CONFIG_START_INDEX - STORAGE_BRIGHTNESS_INDEX];
 
   printf("Brightness: %u\n", brightness);
   printf("Mode Index: %u\n", modeIdx);
-  printf("Flags: 0x%02X (locked=%u conjure=%u)\n", flags, locked, conjure);
+  printf("Flags: 0x%02X (locked=%u)\n", flags, locked);
 }
 
