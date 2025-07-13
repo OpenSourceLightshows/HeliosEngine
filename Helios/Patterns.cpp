@@ -62,9 +62,10 @@ void Patterns::make_pattern(PatternID id, Pattern &pat)
     args.off_dur = 23;
     break;
 
-  case PATTERN_FLARE:
-    args.on_dur = 2;
-    args.off_dur = 30;
+  case PATTERN_RAZOR:
+    args.on_dur = 3;
+    args.off_dur = 1;
+    args.gap_dur = 30; // 29 for flashing pattern circles
     break;
 
   case PATTERN_DASH_DOPS:
