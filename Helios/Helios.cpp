@@ -25,6 +25,8 @@
 // some internal macros that shouldn't change
 // The number of menus in hue/sat/val selection
 #define NUM_COLORS_PER_GROUP 4
+// the number of color groups in the color selection menu
+#define NUM_COLOR_GROUPS 4
 // the number of menus in group selection
 #define NUM_MENUS_GROUP 8
 
@@ -288,20 +290,6 @@ void Helios::handle_state_modes()
     return;
   }
 
-  // This handles iterating the mode forward when the autoplay feature is
-  // enabled. The modes automatically cycle forward every AUTOPLAY_DURATION ticks
-  // but only if the button isn't pressed to avoid iterating while opening menus
-  if (has_flag(FLAG_AUTOPLAY) && !Button::isPressed()) {
-    uint32_t current_time = Time::getCurtime();
-    if (current_time - last_mode_switch_time >= AUTOPLAY_DURATION) {
-      // If a pattern has a single cycle that is longer than the autoplay duration,
-      // prevent the mode switch from interrupting the pattern so the full cycle can be seen.
-      if (pat.colorset().numColors() <= 1 || pat.colorset().onStart()) {
-        load_next_mode();
-      }
-    }
-  }
-
   // check for lock and go back to sleep
   if (has_flag(FLAG_LOCKED) && hasReleased && !Button::onRelease()) {
     enter_sleep();
@@ -474,14 +462,13 @@ struct ColorsMenuData {
 };
 
 // array of colors for selection
-static const ColorsMenuData color_menu_data[5] = {
+static const ColorsMenuData color_menu_data[NUM_COLOR_GROUPS] = {
   // color0           color1              color2          color3
   // ===================================================================
   { RGB_RED,        RGB_CORAL_ORANGE, RGB_ORANGE,   RGB_YELLOW },
   { RGB_LIME_GREEN, RGB_GREEN,        RGB_SEAFOAM,  RGB_TURQUOISE },
   { RGB_ICE_BLUE,   RGB_LIGHT_BLUE,   RGB_BLUE,     RGB_ROYAL_BLUE },
   { RGB_PURPLE,     RGB_PINK,         RGB_HOT_PINK, RGB_MAGENTA },
-  { RGB_CORAL,      RGB_CREAM,        RGB_MINT,     RGB_LUNA },
 };
 
 void Helios::handle_state_color_group_selection()
@@ -490,7 +477,7 @@ void Helios::handle_state_color_group_selection()
     menu_selection = (menu_selection + 1) % NUM_MENUS_GROUP;
   }
 
-  uint8_t color_quad = (menu_selection - 2) % 5;  // Now using 5 groups
+  uint8_t color_quad = (menu_selection - 2) % NUM_COLOR_GROUPS;  // Now using 4 groups
   if (menu_selection > 6) {
     menu_selection = 0;
   }
