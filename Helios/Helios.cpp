@@ -619,7 +619,7 @@ void Helios::handle_state_color_brightness_selection()
   if (Button::onShortClick()) {
     menu_selection = (menu_selection + 1) % 4;
   }
-  static const uint8_t brightness_values[4] = {255, 128, 64, 32};
+  static const uint8_t brightness_values[4] = {HSV_VAL_HIGH, HSV_VAL_MEDIUM, HSV_VAL_LOW, HSV_VAL_LOWEST};
   selected_brightness = brightness_values[menu_selection];
   HSVColor hsv = rgb_to_hsv_generic(selected_color);
   hsv.val = selected_brightness;
