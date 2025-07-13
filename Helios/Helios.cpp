@@ -99,12 +99,7 @@ bool Helios::init_components()
 #ifdef HELIOS_CLI
   sleeping = false;
 #endif
-  // load global flags, this includes for example conjure mode
-  // and the mode index of the conjure mode if it is enabled
   load_global_flags();
-  // finally load whatever current mode index is selected
-  // this might be mode 0, or for example a separate index
-  // if conjure mode is enabled
   load_cur_mode();
   return true;
 }
@@ -209,10 +204,7 @@ void Helios::load_global_flags()
 {
   // read the global flags from index 0 config
   global_flags = (Flags)Storage::read_global_flags();
-  if (has_flag(FLAG_CONJURE)) {
-    // if conjure is enabled then load the current mode index from storage
-    cur_mode = Storage::read_current_mode();
-  }
+  cur_mode = Storage::read_current_mode();
 }
 
 void Helios::save_global_flags()
@@ -256,9 +248,6 @@ void Helios::handle_state()
     case STATE_PATTERN_SELECT:
       handle_state_pat_select();
       break;
-    case STATE_TOGGLE_CONJURE:
-      handle_state_toggle_flag(FLAG_CONJURE);
-      break;
     case STATE_TOGGLE_LOCK:
       handle_state_toggle_flag(FLAG_LOCKED);
       break;
@@ -282,11 +271,7 @@ void Helios::handle_state_modes()
   bool hasReleased = (Button::releaseCount() > 0);
 
   if (Button::releaseCount() > 1 && Button::onShortClick()) {
-    if (has_flag(FLAG_CONJURE)) {
-      enter_sleep();
-    } else {
-      load_next_mode();
-    }
+    enter_sleep();
     return;
   }
 
@@ -322,7 +307,6 @@ void Helios::handle_state_modes()
         case 0: Led::clear(); break;                                     // Turn off
         case 1: Led::set(RGB_TURQUOISE_BRI_LOW); break;                 // Color Selection
         case 2: Led::set(RGB_MAGENTA_BRI_LOW); break;                   // Pattern Selection
-        case 3: Led::set(RGB_YELLOW_BRI_LOW); break;                    // Conjure Mode
       }
     } else {
       if (has_flag(FLAG_LOCKED)) {
@@ -417,10 +401,6 @@ void Helios::handle_on_menu(uint8_t mag, bool past)
       cur_state = STATE_PATTERN_SELECT;
       // reset the menu selection
       menu_selection = 0;
-      break;
-    case 3:  // conjure mode
-      cur_state = STATE_TOGGLE_CONJURE;
-      Led::clear();
       break;
     default:  // hold past
       break;
@@ -619,7 +599,6 @@ void Helios::handle_state_pat_select()
 
 void Helios::handle_state_toggle_flag(Flags flag)
 {
-  // toggle the conjure flag
   toggle_flag(flag);
   // write out the new global flags and the current mode
   save_global_flags();
