@@ -504,19 +504,17 @@ void Helios::handle_state_color_group_selection()
   }
 
   if (Button::onLongClick()) {
-    // select color
     switch (menu_selection) {
       case 0:  // selected blank
-        // add blank to set
         new_colorset.addColor(RGB_OFF);
         num_colors_selected++;
         break;
       case 1:  // selected white
-        // adds white
-        new_colorset.addColor(RGB_WHITE);
-        num_colors_selected++;
-        break;
-      default:  // 2-6 (color groups)
+        selected_color = RGB_WHITE;
+        cur_state = STATE_COLOR_SELECT_BRIGHTNESS;
+        menu_selection = 0;
+        return;
+      default:  // 2-6
         selected_base_group = color_quad;
         cur_state = STATE_COLOR_VARIANT_SELECTION;
         menu_selection = 0;
