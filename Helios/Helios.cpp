@@ -44,6 +44,8 @@ bool Helios::sleeping;
 #endif
 
 volatile char helios_version[] = HELIOS_VERSION_STR;
+RGBColor Helios::selected_color;
+uint8_t Helios::selected_brightness;
 
 bool Helios::init()
 {
@@ -92,6 +94,8 @@ bool Helios::init_components()
   cur_mode = 0;
   num_colors_selected = 0;
   selected_base_group = 0;
+  selected_color.clear();
+  selected_brightness = 255;
   keepgoing = true;
   last_mode_switch_time = 0;
 #ifdef HELIOS_CLI
@@ -249,6 +253,7 @@ void Helios::handle_state()
       break;
     case STATE_COLOR_GROUP_SELECTION:
     case STATE_COLOR_VARIANT_SELECTION:
+    case STATE_COLOR_SELECT_BRIGHTNESS:
       handle_state_color_selection();
       break;
     case STATE_PATTERN_SELECT:
@@ -457,6 +462,9 @@ void Helios::handle_state_color_selection()
       // pick the hue
       handle_state_color_variant_selection();
       break;
+    case STATE_COLOR_SELECT_BRIGHTNESS:
+      handle_state_color_brightness_selection();
+      break;
     default:
       break;
   }
@@ -594,28 +602,44 @@ void Helios::handle_state_color_variant_selection()
   }
 
   // Get the color directly from the color menu data
-  RGBColor selected_color = color_menu_data[selected_base_group].colors[menu_selection];
+  selected_color = color_menu_data[selected_base_group].colors[menu_selection];
 
   // render current selection
   Led::set(selected_color);
 
   if (Button::onLongClick()) {
-    // Save the color and increment counter
-    new_colorset.addColor(selected_color);
-    num_colors_selected++;
+    cur_state = STATE_COLOR_SELECT_BRIGHTNESS;
+    menu_selection = 0;
+    return;
+  }
+}
 
-    // If we've selected enough colors, save and exit
+void Helios::handle_state_color_brightness_selection()
+{
+  if (Button::onShortClick()) {
+    menu_selection = (menu_selection + 1) % 4;
+  }
+  static const uint8_t brightness_values[4] = {255, 128, 64, 32};
+  selected_brightness = brightness_values[menu_selection];
+  HSVColor hsv = rgb_to_hsv_generic(selected_color);
+  hsv.val = selected_brightness;
+  RGBColor adjusted = hsv_to_rgb_generic(hsv);
+  Led::set(adjusted);
+  if (Button::holdPressing()) {
+    Led::strobe(150, 150, RGB_CORAL_ORANGE_SAT_LOWEST, adjusted);
+  }
+  bool saveAndFinish = Button::onLongClick() || Button::onHoldClick();
+  if (saveAndFinish) {
+    new_colorset.addColor(adjusted);
+    num_colors_selected++;
     if (num_colors_selected >= NUM_COLOR_SLOTS) {
-      // Restore original colorset if no colors were selected
       pat.setColorset(new_colorset);
       save_cur_mode();
 #if ALTERNATIVE_HSV_RGB == 1
-      // restore hsv to rgb algorithm type, done color selection
       g_hsv_rgb_alg = HSV_TO_RGB_GENERIC;
 #endif
       cur_state = STATE_MODES;
     } else {
-      // Go back to group selection for next color
       cur_state = STATE_COLOR_GROUP_SELECTION;
       menu_selection = 0;
     }

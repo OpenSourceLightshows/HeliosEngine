@@ -62,6 +62,7 @@ private:
   static void handle_state_color_selection();
   static void handle_state_color_group_selection();
   static void handle_state_color_variant_selection();
+  static void handle_state_color_brightness_selection();
   static void handle_state_pat_select();
   static void handle_state_toggle_flag(Flags flag);
   static void handle_state_set_defaults();
@@ -72,6 +73,7 @@ private:
     STATE_MODES,
     STATE_COLOR_GROUP_SELECTION,
     STATE_COLOR_VARIANT_SELECTION,
+    STATE_COLOR_SELECT_BRIGHTNESS,
     STATE_PATTERN_SELECT,
     STATE_TOGGLE_CONJURE,
     STATE_TOGGLE_LOCK,
@@ -89,6 +91,8 @@ private:
   static uint8_t cur_mode;
   // the group that was selected in color select
   static uint8_t selected_base_group;
+  static RGBColor selected_color;
+  static uint8_t selected_brightness;
   static uint8_t num_colors_selected;  // Track number of colors selected in current session
   static Pattern pat;
   static bool keepgoing;
