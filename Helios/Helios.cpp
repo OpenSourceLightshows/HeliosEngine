@@ -535,6 +535,19 @@ void Helios::handle_state_color_group_selection()
     }
     // Otherwise reset menu selection to continue selecting colors
     menu_selection = 0;
+  } else if (Button::onHoldClick() && menu_selection == 1) {
+    new_colorset.addColor(RGB_WHITE);
+    num_colors_selected++;
+    if (num_colors_selected >= NUM_COLOR_SLOTS) {
+      pat.setColorset(new_colorset);
+      save_cur_mode();
+#if ALTERNATIVE_HSV_RGB == 1
+      g_hsv_rgb_alg = HSV_TO_RGB_GENERIC;
+#endif
+      cur_state = STATE_MODES;
+    } else {
+      menu_selection = 0;
+    }
   }
 
   // default col1/col2 to off and white for the first two options
@@ -610,6 +623,32 @@ void Helios::handle_state_color_variant_selection()
     menu_selection = 0;
     return;
   }
+  HSVColor hsv = rgb_to_hsv_generic(selected_color);
+  hsv.val = selected_brightness;
+  RGBColor adjusted = hsv_to_rgb_generic(hsv);
+  Led::set(adjusted);
+  if (Button::holdPressing()) {
+    Led::strobe(150, 150, RGB_CORAL_ORANGE_SAT_LOWEST, adjusted);
+  }
+  if (Button::onHoldClick()) {
+    selected_brightness = 255;
+    HSVColor hsv = rgb_to_hsv_generic(selected_color);
+    hsv.val = selected_brightness;
+    RGBColor adjusted = hsv_to_rgb_generic(hsv);
+    new_colorset.addColor(adjusted);
+    num_colors_selected++;
+    if (num_colors_selected >= NUM_COLOR_SLOTS) {
+      pat.setColorset(new_colorset);
+      save_cur_mode();
+#if ALTERNATIVE_HSV_RGB == 1
+      g_hsv_rgb_alg = HSV_TO_RGB_GENERIC;
+#endif
+      cur_state = STATE_MODES;
+    } else {
+      cur_state = STATE_COLOR_GROUP_SELECTION;
+      menu_selection = 0;
+    }
+  }
 }
 
 void Helios::handle_state_color_brightness_selection()
@@ -623,9 +662,6 @@ void Helios::handle_state_color_brightness_selection()
   hsv.val = selected_brightness;
   RGBColor adjusted = hsv_to_rgb_generic(hsv);
   Led::set(adjusted);
-  if (Button::holdPressing()) {
-    Led::strobe(150, 150, RGB_CORAL_ORANGE_SAT_LOWEST, adjusted);
-  }
   bool saveAndFinish = Button::onLongClick() || Button::onHoldClick();
   if (saveAndFinish) {
     new_colorset.addColor(adjusted);
