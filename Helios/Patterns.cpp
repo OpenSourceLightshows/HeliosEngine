@@ -7,7 +7,7 @@
 // modes that use the same colorset -- these demonstrate the max amount
 // of colors in each set but you can absolutely list a lesser amount
 static const uint32_t color_codes0[] = {RGB_RED, RGB_ORANGE, RGB_WHITE}; // Rainbow Flow
-static const uint32_t color_codes1[] = {RGB_SEAFOAM, RGB_LIGHT_BLUE, RGB_WHITE}; // Ghostly
+static const uint32_t color_codes1[] = {RGB_SEAFOAM, RGB_BLUE, RGB_WHITE}; // Ghostly
 static const uint32_t color_codes2[] = {RGB_PURPLE, RGB_MAGENTA, RGB_WHITE}; // Photo Copy
 
 // Define Colorset configurations for each slot
