@@ -25,6 +25,8 @@
 // some internal macros that shouldn't change
 // The number of menus in hue/sat/val selection
 #define NUM_COLORS_PER_GROUP 4
+// the number of color groups in the color selection menu
+#define NUM_COLOR_GROUPS 4
 // the number of menus in group selection
 #define NUM_MENUS_GROUP 8
 
@@ -97,12 +99,7 @@ bool Helios::init_components()
 #ifdef HELIOS_CLI
   sleeping = false;
 #endif
-  // load global flags, this includes for example conjure mode
-  // and the mode index of the conjure mode if it is enabled
   load_global_flags();
-  // finally load whatever current mode index is selected
-  // this might be mode 0, or for example a separate index
-  // if conjure mode is enabled
   load_cur_mode();
   return true;
 }
@@ -207,10 +204,7 @@ void Helios::load_global_flags()
 {
   // read the global flags from index 0 config
   global_flags = (Flags)Storage::read_global_flags();
-  if (has_flag(FLAG_CONJURE)) {
-    // if conjure is enabled then load the current mode index from storage
-    cur_mode = Storage::read_current_mode();
-  }
+  cur_mode = Storage::read_current_mode();
 }
 
 void Helios::save_global_flags()
@@ -254,9 +248,6 @@ void Helios::handle_state()
     case STATE_PATTERN_SELECT:
       handle_state_pat_select();
       break;
-    case STATE_TOGGLE_CONJURE:
-      handle_state_toggle_flag(FLAG_CONJURE);
-      break;
     case STATE_TOGGLE_LOCK:
       handle_state_toggle_flag(FLAG_LOCKED);
       break;
@@ -280,26 +271,8 @@ void Helios::handle_state_modes()
   bool hasReleased = (Button::releaseCount() > 0);
 
   if (Button::releaseCount() > 1 && Button::onShortClick()) {
-    if (has_flag(FLAG_CONJURE)) {
-      enter_sleep();
-    } else {
-      load_next_mode();
-    }
+    enter_sleep();
     return;
-  }
-
-  // This handles iterating the mode forward when the autoplay feature is
-  // enabled. The modes automatically cycle forward every AUTOPLAY_DURATION ticks
-  // but only if the button isn't pressed to avoid iterating while opening menus
-  if (has_flag(FLAG_AUTOPLAY) && !Button::isPressed()) {
-    uint32_t current_time = Time::getCurtime();
-    if (current_time - last_mode_switch_time >= AUTOPLAY_DURATION) {
-      // If a pattern has a single cycle that is longer than the autoplay duration,
-      // prevent the mode switch from interrupting the pattern so the full cycle can be seen.
-      if (pat.colorset().numColors() <= 1 || pat.colorset().onStart()) {
-        load_next_mode();
-      }
-    }
   }
 
   // check for lock and go back to sleep
@@ -334,7 +307,6 @@ void Helios::handle_state_modes()
         case 0: Led::clear(); break;                                     // Turn off
         case 1: Led::set(RGB_TURQUOISE_BRI_LOW); break;                 // Color Selection
         case 2: Led::set(RGB_MAGENTA_BRI_LOW); break;                   // Pattern Selection
-        case 3: Led::set(RGB_YELLOW_BRI_LOW); break;                    // Conjure Mode
       }
     } else {
       if (has_flag(FLAG_LOCKED)) {
@@ -349,7 +321,6 @@ void Helios::handle_state_modes()
           case 0: Led::clear(); break;         // nothing
           case 1: Led::set(RGB_RED_BRI_LOW); break; // Enter Glow Lock
           case 2: Led::set(RGB_BLUE_BRI_LOW); break; // Master Reset
-          case 3: Led::set(has_flag(FLAG_AUTOPLAY) ? RGB_ORANGE_BRI_LOW : RGB_PINK_BRI_LOW); break; // Autoplay Toggle
         }
       }
     }
@@ -393,12 +364,6 @@ void Helios::handle_off_menu(uint8_t mag, bool past)
     case 2:  // blue reset defaults
       cur_state = STATE_SET_DEFAULTS;
       return; //RETURN HERE
-    case 3:  // autoplay toggle
-      toggle_flag(FLAG_AUTOPLAY);
-      save_global_flags();
-      last_mode_switch_time = Time::getCurtime(); // Reset the timer when enabling autoplay
-      cur_state = STATE_MODES;
-      return; //RETURN HERE
     default:
       // just go back to sleep in hold-past off menu
       enter_sleep();
@@ -437,10 +402,6 @@ void Helios::handle_on_menu(uint8_t mag, bool past)
       // reset the menu selection
       menu_selection = 0;
       break;
-    case 3:  // conjure mode
-      cur_state = STATE_TOGGLE_CONJURE;
-      Led::clear();
-      break;
     default:  // hold past
       break;
   }
@@ -474,14 +435,13 @@ struct ColorsMenuData {
 };
 
 // array of colors for selection
-static const ColorsMenuData color_menu_data[5] = {
+static const ColorsMenuData color_menu_data[NUM_COLOR_GROUPS] = {
   // color0           color1              color2          color3
   // ===================================================================
   { RGB_RED,        RGB_CORAL_ORANGE, RGB_ORANGE,   RGB_YELLOW },
   { RGB_LIME_GREEN, RGB_GREEN,        RGB_SEAFOAM,  RGB_TURQUOISE },
   { RGB_ICE_BLUE,   RGB_LIGHT_BLUE,   RGB_BLUE,     RGB_ROYAL_BLUE },
   { RGB_PURPLE,     RGB_PINK,         RGB_HOT_PINK, RGB_MAGENTA },
-  { RGB_CORAL,      RGB_CREAM,        RGB_MINT,     RGB_LUNA },
 };
 
 void Helios::handle_state_color_group_selection()
@@ -490,7 +450,7 @@ void Helios::handle_state_color_group_selection()
     menu_selection = (menu_selection + 1) % NUM_MENUS_GROUP;
   }
 
-  uint8_t color_quad = (menu_selection - 2) % 5;  // Now using 5 groups
+  uint8_t color_quad = (menu_selection - 2) % NUM_COLOR_GROUPS;  // Now using 4 groups
   if (menu_selection > 6) {
     menu_selection = 0;
   }
@@ -639,7 +599,6 @@ void Helios::handle_state_pat_select()
 
 void Helios::handle_state_toggle_flag(Flags flag)
 {
-  // toggle the conjure flag
   toggle_flag(flag);
   // write out the new global flags and the current mode
   save_global_flags();

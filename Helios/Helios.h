@@ -31,8 +31,6 @@ public:
   enum Flags : uint8_t {
     FLAG_NONE = 0,
     FLAG_LOCKED = (1 << 0),
-    FLAG_CONJURE = (1 << 1),
-    FLAG_AUTOPLAY = (1 << 2),
   };
 
   // get/set global flags
@@ -73,7 +71,6 @@ private:
     STATE_COLOR_GROUP_SELECTION,
     STATE_COLOR_VARIANT_SELECTION,
     STATE_PATTERN_SELECT,
-    STATE_TOGGLE_CONJURE,
     STATE_TOGGLE_LOCK,
     STATE_SET_DEFAULTS,
 #ifdef HELIOS_CLI

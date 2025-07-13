@@ -72,8 +72,7 @@
 // Mode Slots
 //
 // The number of modes on the device
-#define NUM_MODE_SLOTS 3
-
+#define NUM_MODE_SLOTS 1
 
 // Default Brightness
 //
@@ -98,10 +97,6 @@
 // sleep at any location in the menus
 #define FORCE_SLEEP_TIME 7000
 
-// Autoplay Duration
-//
-// The duration in ms/ticks before switching to the next mode in autoplay
-#define AUTOPLAY_DURATION 10000
 
 // Alternative HSV to RGB
 //
