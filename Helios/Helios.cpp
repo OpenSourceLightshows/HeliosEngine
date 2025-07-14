@@ -35,6 +35,8 @@ Helios::Flags Helios::global_flags;
 uint8_t Helios::menu_selection;
 uint8_t Helios::cur_mode;
 uint8_t Helios::selected_base_group;
+uint8_t Helios::selected_hue;
+uint8_t Helios::selected_val;
 uint8_t Helios::num_colors_selected;
 Pattern Helios::pat;
 bool Helios::keepgoing;
@@ -46,8 +48,7 @@ bool Helios::sleeping;
 #endif
 
 volatile char helios_version[] = HELIOS_VERSION_STR;
-RGBColor Helios::selected_color;
-uint8_t Helios::selected_brightness;
+
 
 bool Helios::init()
 {
@@ -96,8 +97,6 @@ bool Helios::init_components()
   cur_mode = 0;
   num_colors_selected = 0;
   selected_base_group = 0;
-  selected_color.clear();
-  selected_brightness = 255;
   keepgoing = true;
   last_mode_switch_time = 0;
 #ifdef HELIOS_CLI
@@ -480,17 +479,17 @@ void Helios::handle_state_color_selection()
 }
 
 struct ColorsMenuData {
-  RGBColor colors[4];
+  uint8_t hues[4];
 };
 
 // array of colors for selection
 static const ColorsMenuData color_menu_data[NUM_COLOR_GROUPS] = {
   // color0           color1              color2          color3
   // ===================================================================
-  { RGB_RED,        RGB_CORAL_ORANGE, RGB_ORANGE,   RGB_YELLOW },
-  { RGB_LIME_GREEN, RGB_GREEN,        RGB_SEAFOAM,  RGB_TURQUOISE },
-  { RGB_ICE_BLUE,   RGB_LIGHT_BLUE,   RGB_BLUE,     RGB_ROYAL_BLUE },
-  { RGB_PURPLE,     RGB_PINK,         RGB_HOT_PINK, RGB_MAGENTA },
+  { HUE_RED,        HUE_CORAL_ORANGE, HUE_ORANGE,   HUE_YELLOW },
+  { HUE_LIME_GREEN, HUE_GREEN,        HUE_SEAFOAM,  HUE_TURQUOISE },
+  { HUE_ICE_BLUE,   HUE_LIGHT_BLUE,   HUE_BLUE,     HUE_ROYAL_BLUE },
+  { HUE_PURPLE,     HUE_PINK,         HUE_HOT_PINK, HUE_MAGENTA },
 };
 
 void Helios::handle_state_color_group_selection()
@@ -498,39 +497,32 @@ void Helios::handle_state_color_group_selection()
   if (Button::onShortClick()) {
     menu_selection = (menu_selection + 1) % NUM_MENUS_GROUP;
   }
-  uint8_t color_quad = (menu_selection - 2) % NUM_COLOR_GROUPS;
+  uint8_t color_group = (menu_selection - 2) % NUM_COLOR_GROUPS;
   if (menu_selection > 5) {
     menu_selection = 0;
-  }
-  if (Button::holdPressing()) {
-    Led::strobe(150, 150, RGB_CORAL_ORANGE_BRI_LOWEST, RGB_WHITE);
-  }
-  if (Button::onHoldClick() && menu_selection == 1) {
-    addColorAndSave(RGB_WHITE, false);
-    return;
   }
   if (Button::onLongClick()) {
     switch (menu_selection) {
       case 0:
-        addColorAndSave(RGB_OFF, false);
+        addColorAndSave(HSVColor(0, 255, 0), false); // blank as val=0
         break;
       case 1:
-        selected_color = RGB_WHITE;
+        selected_hue = 0; // arbitrary hue for white
+        selected_val = 255;
         cur_state = STATE_COLOR_SELECT_BRIGHTNESS;
         menu_selection = 0;
         return;
       default:
-        selected_base_group = color_quad;
+        selected_base_group = color_group;
         cur_state = STATE_COLOR_VARIANT_SELECTION;
         menu_selection = 0;
         return;
     }
-    // no need for the if check here, it's in the function
     menu_selection = 0;
   }
   // default col1/col2 to off and white for the first two options
-  RGBColor col1 = RGB_OFF;
-  RGBColor col2;
+  HSVColor col1 = RGB_OFF;
+  HSVColor col2;
   uint16_t on_dur, off_dur;
 
   switch (menu_selection) {
@@ -545,8 +537,8 @@ void Helios::handle_state_color_group_selection()
       off_dur = 0;
       break;
     default: // Color options
-      col1 = color_menu_data[color_quad].colors[0];
-      col2 = color_menu_data[color_quad].colors[2];
+      col1 = HSVColor(color_menu_data[color_group].hues[0], 255, 255);
+      col2 = HSVColor(color_menu_data[color_group].hues[2], 255, 255);
       on_dur = 500;
       off_dur = 500;
       break;
@@ -589,36 +581,22 @@ void Helios::handle_state_color_group_selection()
 
 void Helios::handle_state_color_variant_selection()
 {
-  // handle iterating to the next option
   if (Button::onShortClick()) {
     menu_selection = (menu_selection + 1) % NUM_COLORS_PER_GROUP;
   }
-
-  // Get the color directly from the color menu data
-  selected_color = color_menu_data[selected_base_group].colors[menu_selection];
-
-  // render current selection
-  Led::set(selected_color);
-
+  selected_hue = color_menu_data[selected_base_group].hues[menu_selection];
+  Led::set(HSVColor(selected_hue, 255, selected_val));
   if (Button::onLongClick()) {
     cur_state = STATE_COLOR_SELECT_BRIGHTNESS;
     menu_selection = 0;
     return;
   }
-  HSVColor hsv = rgb_to_hsv_generic(selected_color);
-  hsv.val = selected_brightness;
-  RGBColor adjusted = hsv_to_rgb_generic(hsv);
-  Led::set(adjusted);
   if (Button::holdPressing()) {
-    hsv.val = 255;
-    adjusted = hsv_to_rgb_generic(hsv);
-    Led::strobe(150, 150, RGB_CORAL_ORANGE_BRI_LOWEST, adjusted);
+    Led::strobe(150, 150, RGB_CORAL_ORANGE_BRI_LOWEST, HSVColor(selected_hue, 255, 255));
   }
   if (Button::onHoldClick()) {
-    selected_brightness = 255;
-    hsv.val = selected_brightness;
-    adjusted = hsv_to_rgb_generic(hsv);
-    addColorAndSave(adjusted, true);
+    selected_val = 255;
+    addColorAndSave(HSVColor(selected_hue, 255, selected_val), true);
   }
 }
 
@@ -628,14 +606,11 @@ void Helios::handle_state_color_brightness_selection()
     menu_selection = (menu_selection + 1) % 4;
   }
   static const uint8_t brightness_values[4] = {HSV_VAL_HIGH, HSV_VAL_MEDIUM, HSV_VAL_LOW, HSV_VAL_LOWEST};
-  selected_brightness = brightness_values[menu_selection];
-  HSVColor hsv = rgb_to_hsv_generic(selected_color);
-  hsv.val = selected_brightness;
-  RGBColor adjusted = hsv_to_rgb_generic(hsv);
-  Led::set(adjusted);
+  selected_val = brightness_values[menu_selection];
+  Led::set(HSVColor(selected_hue, (menu_selection == 1 ? 0 : 255), selected_val)); // sat=0 for white
   bool saveAndFinish = Button::onLongClick() || Button::onHoldClick();
   if (saveAndFinish) {
-    addColorAndSave(adjusted, true);
+    addColorAndSave(HSVColor(selected_hue, (menu_selection == 1 ? 0 : 255), selected_val), true);
   }
 }
 
@@ -701,9 +676,9 @@ void Helios::factory_reset()
   load_cur_mode();
 }
 
-void Helios::addColorAndSave(const RGBColor &color, bool returnToGroup)
+void Helios::addColorAndSave(const HSVColor &hsv, bool returnToGroup)
 {
-  new_colorset.addColor(color);
+  new_colorset.addColor(hsv_to_rgb_generic(hsv)); // if needed, or if Colorset takes HSV, adjust
   num_colors_selected++;
   if (num_colors_selected >= NUM_COLOR_SLOTS) {
     pat.setColorset(new_colorset);

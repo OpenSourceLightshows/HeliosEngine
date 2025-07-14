@@ -69,7 +69,7 @@ private:
   static void show_selection(RGBColor color);
   static void factory_reset();
 
-  static void addColorAndSave(const RGBColor &color, bool returnToGroup = false);
+  static void addColorAndSave(const HSVColor &hsv, bool returnToGroup = false);
 
   enum State : uint8_t {
     STATE_MODES,
@@ -91,10 +91,9 @@ private:
   static Flags global_flags;
   static uint8_t menu_selection;
   static uint8_t cur_mode;
-  // the group that was selected in color select
   static uint8_t selected_base_group;
-  static RGBColor selected_color;
-  static uint8_t selected_brightness;
+  static uint8_t selected_hue;
+  static uint8_t selected_val;
   static uint8_t num_colors_selected;  // Track number of colors selected in current session
   static Pattern pat;
   static bool keepgoing;
