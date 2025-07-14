@@ -506,26 +506,13 @@ void Helios::handle_state_color_group_selection()
     Led::strobe(150, 150, RGB_CORAL_ORANGE_BRI_LOWEST, RGB_WHITE);
   }
   if (Button::onHoldClick() && menu_selection == 1) {
-    new_colorset.addColor(RGB_WHITE);
-    num_colors_selected++;
-    if (num_colors_selected >= NUM_COLOR_SLOTS) {
-      pat.setColorset(new_colorset);
-      save_cur_mode();
-#if ALTERNATIVE_HSV_RGB == 1
-      g_hsv_rgb_alg = HSV_TO_RGB_GENERIC;
-#endif
-      cur_state = STATE_MODES;
-      return;
-    } else {
-      menu_selection = 0;
-    }
+    addColorAndSave(RGB_WHITE, false);
     return;
   }
   if (Button::onLongClick()) {
     switch (menu_selection) {
       case 0:
-        new_colorset.addColor(RGB_OFF);
-        num_colors_selected++;
+        addColorAndSave(RGB_OFF, false);
         break;
       case 1:
         selected_color = RGB_WHITE;
@@ -538,15 +525,7 @@ void Helios::handle_state_color_group_selection()
         menu_selection = 0;
         return;
     }
-    if (num_colors_selected >= NUM_COLOR_SLOTS) {
-      pat.setColorset(new_colorset);
-      save_cur_mode();
-#if ALTERNATIVE_HSV_RGB == 1
-      g_hsv_rgb_alg = HSV_TO_RGB_GENERIC;
-#endif
-      cur_state = STATE_MODES;
-      return;
-    }
+    // no need for the if check here, it's in the function
     menu_selection = 0;
   }
   // default col1/col2 to off and white for the first two options
@@ -598,6 +577,14 @@ void Helios::handle_state_color_group_selection()
       num_colors_selected = 0;
     }
   }
+  if (menu_selection == 1) {
+    if (Button::holdPressing()) {
+      Led::strobe(150, 150, RGB_CORAL_ORANGE_BRI_LOWEST, RGB_WHITE);
+    }
+    if (Button::onHoldClick()) {
+      addColorAndSave(RGB_WHITE, false);
+    }
+  }
 }
 
 void Helios::handle_state_color_variant_selection()
@@ -623,29 +610,15 @@ void Helios::handle_state_color_variant_selection()
   RGBColor adjusted = hsv_to_rgb_generic(hsv);
   Led::set(adjusted);
   if (Button::holdPressing()) {
-    HSVColor hsv = rgb_to_hsv_generic(selected_color);
     hsv.val = 255;
-    RGBColor adjusted = hsv_to_rgb_generic(hsv);
+    adjusted = hsv_to_rgb_generic(hsv);
     Led::strobe(150, 150, RGB_CORAL_ORANGE_BRI_LOWEST, adjusted);
   }
   if (Button::onHoldClick()) {
     selected_brightness = 255;
-    HSVColor hsv = rgb_to_hsv_generic(selected_color);
     hsv.val = selected_brightness;
-    RGBColor adjusted = hsv_to_rgb_generic(hsv);
-    new_colorset.addColor(adjusted);
-    num_colors_selected++;
-    if (num_colors_selected >= NUM_COLOR_SLOTS) {
-      pat.setColorset(new_colorset);
-      save_cur_mode();
-#if ALTERNATIVE_HSV_RGB == 1
-      g_hsv_rgb_alg = HSV_TO_RGB_GENERIC;
-#endif
-      cur_state = STATE_MODES;
-    } else {
-      cur_state = STATE_COLOR_GROUP_SELECTION;
-      menu_selection = 0;
-    }
+    adjusted = hsv_to_rgb_generic(hsv);
+    addColorAndSave(adjusted, true);
   }
 }
 
@@ -662,19 +635,7 @@ void Helios::handle_state_color_brightness_selection()
   Led::set(adjusted);
   bool saveAndFinish = Button::onLongClick() || Button::onHoldClick();
   if (saveAndFinish) {
-    new_colorset.addColor(adjusted);
-    num_colors_selected++;
-    if (num_colors_selected >= NUM_COLOR_SLOTS) {
-      pat.setColorset(new_colorset);
-      save_cur_mode();
-#if ALTERNATIVE_HSV_RGB == 1
-      g_hsv_rgb_alg = HSV_TO_RGB_GENERIC;
-#endif
-      cur_state = STATE_MODES;
-    } else {
-      cur_state = STATE_COLOR_GROUP_SELECTION;
-      menu_selection = 0;
-    }
+    addColorAndSave(adjusted, true);
   }
 }
 
@@ -738,6 +699,26 @@ void Helios::factory_reset()
   save_global_flags();
   // re-load current mode
   load_cur_mode();
+}
+
+void Helios::addColorAndSave(const RGBColor &color, bool returnToGroup)
+{
+  new_colorset.addColor(color);
+  num_colors_selected++;
+  if (num_colors_selected >= NUM_COLOR_SLOTS) {
+    pat.setColorset(new_colorset);
+    save_cur_mode();
+#if ALTERNATIVE_HSV_RGB == 1
+    g_hsv_rgb_alg = HSV_TO_RGB_GENERIC;
+#endif
+    cur_state = STATE_MODES;
+    return;
+  } else {
+    menu_selection = 0;
+    if (returnToGroup) {
+      cur_state = STATE_COLOR_GROUP_SELECTION;
+    }
+  }
 }
 
 

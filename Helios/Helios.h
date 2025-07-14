@@ -69,6 +69,8 @@ private:
   static void show_selection(RGBColor color);
   static void factory_reset();
 
+  static void addColorAndSave(const RGBColor &color, bool returnToGroup = false);
+
   enum State : uint8_t {
     STATE_MODES,
     STATE_COLOR_GROUP_SELECTION,
