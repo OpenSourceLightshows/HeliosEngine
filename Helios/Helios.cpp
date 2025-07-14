@@ -209,8 +209,7 @@ void Helios::load_global_flags()
   global_flags = (Flags)Storage::read_global_flags();
   // if the flags are uninitialized (aka 0xff) then set the defaults
   if (global_flags == 0xFF) {
-    global_flags = FLAG_NONE;
-    set_flag(FLAG_AUTOPLAY);
+    global_flags = FLAG_AUTOPLAY;
     save_global_flags();
   }
   if (has_flag(FLAG_CONJURE)) {
@@ -681,9 +680,8 @@ void Helios::factory_reset()
     Patterns::make_default(i, pat);
     Storage::write_pattern(i, pat);
   }
-  // reset global flags
-  global_flags = FLAG_NONE;
-  set_flag(FLAG_AUTOPLAY);
+  // set global flags to autoplay
+  global_flags = FLAG_AUTOPLAY;
   cur_mode = 0;
   // save global flags
   save_global_flags();
