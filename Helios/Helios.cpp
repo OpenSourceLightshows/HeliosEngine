@@ -25,10 +25,10 @@
 // some internal macros that shouldn't change
 // The number of menus in hue/sat/val selection
 #define NUM_COLORS_PER_GROUP 4
-
+// the number of color groups
 #define NUM_COLOR_GROUPS 4
 // the number of menus in group selection
-#define NUM_MENUS_GROUP 8
+#define NUM_MENUS_GROUP 7
 
 Helios::State Helios::cur_state;
 Helios::Flags Helios::global_flags;
@@ -253,8 +253,8 @@ void Helios::handle_state()
       handle_state_modes();
       break;
     case STATE_COLOR_GROUP_SELECTION:
-    case STATE_COLOR_VARIANT_SELECTION:
-    case STATE_COLOR_SELECT_BRIGHTNESS:
+    case STATE_COLOR_SELECT_HUE:
+    case STATE_COLOR_SELECT_VAL:
       handle_state_color_selection();
       break;
     case STATE_PATTERN_SELECT:
@@ -459,14 +459,11 @@ void Helios::handle_state_color_selection()
       // pick the hue group
       handle_state_color_group_selection();
       break;
-    case STATE_COLOR_VARIANT_SELECTION:
-      // pick the hue
-      handle_state_color_variant_selection();
-      break;
-    case STATE_COLOR_SELECT_BRIGHTNESS:
-      handle_state_color_brightness_selection();
-      break;
+    case STATE_COLOR_SELECT_HUE:
+    case STATE_COLOR_SELECT_VAL:
     default:
+      // pick the hue and val
+      handle_state_col_select_hue_val();
       break;
   }
   // get the current color
@@ -479,7 +476,7 @@ void Helios::handle_state_color_selection()
 }
 
 struct ColorsMenuData {
-  uint8_t hues[4];
+  uint8_t hues[NUM_COLOR_GROUPS];
 };
 
 // array of colors for selection
@@ -502,27 +499,33 @@ void Helios::handle_state_color_group_selection()
     menu_selection = 0;
   }
   if (Button::onLongClick()) {
+    // select hue/val
     switch (menu_selection) {
-      case 0:
-        addColorAndSave(HSVColor(0, 255, 0), false); // blank as val=0
-        break;
-      case 1:
-        selected_hue = 0; // arbitrary hue for white
-        selected_val = 255;
-        cur_state = STATE_COLOR_SELECT_BRIGHTNESS;
-        menu_selection = 0;
+      case 0:  // selected blank
+        // add blank to set
+        new_colorset.addColor(RGB_OFF);
+        num_colors_selected++;
+        cur_state = STATE_COLOR_GROUP_SELECTION;
+        // RETURN HERE
         return;
-      default:
+      case 1:  // selected white
+        // adds white, skip hue/sat to brightness
+        selected_val = 0;
+        menu_selection = 0;
+        cur_state = STATE_COLOR_SELECT_VAL;
+        // RETURN HERE
+        return;
+      default:  // 2-5
         selected_base_group = color_group;
-        cur_state = STATE_COLOR_VARIANT_SELECTION;
+        cur_state = STATE_COLOR_SELECT_HUE;
         menu_selection = 0;
         return;
     }
     menu_selection = 0;
   }
   // default col1/col2 to off and white for the first two options
-  HSVColor col1 = RGB_OFF;
-  HSVColor col2;
+  RGBColor col1 = RGB_OFF;
+  RGBColor col2;
   uint16_t on_dur, off_dur;
 
   switch (menu_selection) {
@@ -574,43 +577,58 @@ void Helios::handle_state_color_group_selection()
       Led::strobe(150, 150, RGB_CORAL_ORANGE_BRI_LOWEST, RGB_WHITE);
     }
     if (Button::onHoldClick()) {
-      addColorAndSave(RGB_WHITE, false);
+      new_colorset.addColor(RGB_WHITE);
+      num_colors_selected++;
+      cur_state = STATE_COLOR_GROUP_SELECTION;
+      menu_selection = 0;
+      return;
     }
   }
+
 }
 
-void Helios::handle_state_color_variant_selection()
+
+
+void Helios::handle_state_col_select_hue_val()
 {
+  // handle iterating to the next option
   if (Button::onShortClick()) {
     menu_selection = (menu_selection + 1) % NUM_COLORS_PER_GROUP;
   }
-  selected_hue = color_menu_data[selected_base_group].hues[menu_selection];
+  // in the sat/val selection a longclick is next and hold is save but in
+  // the final val selection a longclick is save and there's no next
+  bool gotoNextMenu = Button::onLongClick();
+  bool saveAndFinish = Button::onHoldClick();
+  switch (cur_state) {
+    default:
+    case STATE_COLOR_SELECT_HUE:
+      selected_hue = color_menu_data[selected_base_group].hues[menu_selection];
+      break;
+    case STATE_COLOR_SELECT_VAL:
+      static const uint8_t hsv_values[4] = {HSV_VAL_HIGH, HSV_VAL_MEDIUM, HSV_VAL_LOW, HSV_VAL_LOWEST};
+      selected_val = hsv_values[menu_selection];
+      // longclick becomes save and there is no next
+      saveAndFinish = gotoNextMenu;
+      break;
+  }
+  // render current selection
   Led::set(HSVColor(selected_hue, 255, selected_val));
-  if (Button::onLongClick()) {
-    cur_state = STATE_COLOR_SELECT_BRIGHTNESS;
+  // show the long selection flash
+  if (Button::holdPressing()) {
+    Led::strobe(150, 150, RGB_CORAL_ORANGE_SAT_LOWEST, Led::get());
+  }
+  // check to see if we are holding to save and skip
+  if (saveAndFinish) {
+    new_colorset.addColor(HSVColor(selected_hue, 255, selected_val));
+    save_cur_mode();
     menu_selection = 0;
+    cur_state = STATE_COLOR_GROUP_SELECTION;
     return;
   }
-  if (Button::holdPressing()) {
-    Led::strobe(150, 150, RGB_CORAL_ORANGE_BRI_LOWEST, HSVColor(selected_hue, 255, 255));
-  }
-  if (Button::onHoldClick()) {
-    selected_val = 255;
-    addColorAndSave(HSVColor(selected_hue, 255, selected_val), true);
-  }
-}
-
-void Helios::handle_state_color_brightness_selection()
-{
-  if (Button::onShortClick()) {
-    menu_selection = (menu_selection + 1) % 4;
-  }
-  static const uint8_t brightness_values[4] = {HSV_VAL_HIGH, HSV_VAL_MEDIUM, HSV_VAL_LOW, HSV_VAL_LOWEST};
-  selected_val = brightness_values[menu_selection];
-  Led::set(HSVColor(selected_hue, (menu_selection == 1 ? 0 : 255), selected_val)); // sat=0 for white
-  bool saveAndFinish = Button::onLongClick() || Button::onHoldClick();
-  if (saveAndFinish) {
-    addColorAndSave(HSVColor(selected_hue, (menu_selection == 1 ? 0 : 255), selected_val), true);
+  if (gotoNextMenu) {
+    cur_state = (State)(cur_state + 1);
+    // reset the menu selection
+    menu_selection = 0;
   }
 }
 
@@ -674,26 +692,6 @@ void Helios::factory_reset()
   save_global_flags();
   // re-load current mode
   load_cur_mode();
-}
-
-void Helios::addColorAndSave(const HSVColor &hsv, bool returnToGroup)
-{
-  new_colorset.addColor(hsv_to_rgb_generic(hsv)); // if needed, or if Colorset takes HSV, adjust
-  num_colors_selected++;
-  if (num_colors_selected >= NUM_COLOR_SLOTS) {
-    pat.setColorset(new_colorset);
-    save_cur_mode();
-#if ALTERNATIVE_HSV_RGB == 1
-    g_hsv_rgb_alg = HSV_TO_RGB_GENERIC;
-#endif
-    cur_state = STATE_MODES;
-    return;
-  } else {
-    menu_selection = 0;
-    if (returnToGroup) {
-      cur_state = STATE_COLOR_GROUP_SELECTION;
-    }
-  }
 }
 
 

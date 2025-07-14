@@ -61,21 +61,19 @@ private:
   static void handle_on_menu(uint8_t mag, bool past);
   static void handle_state_color_selection();
   static void handle_state_color_group_selection();
-  static void handle_state_color_variant_selection();
-  static void handle_state_color_brightness_selection();
+  static void handle_state_col_select_hue_val();
   static void handle_state_pat_select();
   static void handle_state_toggle_flag(Flags flag);
   static void handle_state_set_defaults();
   static void show_selection(RGBColor color);
   static void factory_reset();
 
-  static void addColorAndSave(const HSVColor &hsv, bool returnToGroup = false);
 
   enum State : uint8_t {
     STATE_MODES,
     STATE_COLOR_GROUP_SELECTION,
-    STATE_COLOR_VARIANT_SELECTION,
-    STATE_COLOR_SELECT_BRIGHTNESS,
+    STATE_COLOR_SELECT_HUE,
+    STATE_COLOR_SELECT_VAL,
     STATE_PATTERN_SELECT,
     STATE_TOGGLE_CONJURE,
     STATE_TOGGLE_LOCK,
