@@ -92,6 +92,7 @@ private:
   static uint8_t selected_base_group;
   static uint8_t selected_hue;
   static uint8_t selected_val;
+  static uint8_t selected_sat;
   static uint8_t num_colors_selected;  // Track number of colors selected in current session
   static Pattern pat;
   static bool keepgoing;

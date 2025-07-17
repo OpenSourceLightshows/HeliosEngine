@@ -97,6 +97,9 @@ bool Helios::init_components()
   cur_mode = 0;
   num_colors_selected = 0;
   selected_base_group = 0;
+  selected_hue = 0;
+  selected_val = 255;
+  selected_sat = 255; // if readded
   keepgoing = true;
   last_mode_switch_time = 0;
 #ifdef HELIOS_CLI
@@ -510,10 +513,11 @@ void Helios::handle_state_color_group_selection()
         return;
       case 1:  // selected white
         // adds white, skip hue/sat to brightness
-        selected_val = 0;
+        selected_hue = 0;
+        selected_sat = 0;
+        selected_val = 255;
         menu_selection = 0;
         cur_state = STATE_COLOR_SELECT_VAL;
-        // RETURN HERE
         return;
       default:  // 2-5
         selected_base_group = color_group;
