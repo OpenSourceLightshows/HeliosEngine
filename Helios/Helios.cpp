@@ -206,19 +206,13 @@ void Helios::load_global_flags()
 {
   // read the global flags from index 0 config
   global_flags = (Flags)Storage::read_global_flags();
+  if (global_flags & FLAGS_INVALID) {
+    factory_reset();
+    return;
+  }
   if (has_flag(FLAG_CONJURE)) {
     // if conjure is enabled then load the current mode index from storage
     cur_mode = Storage::read_current_mode();
-  }
-  // read the global brightness from index 2 config
-  uint8_t saved_brightness = Storage::read_brightness();
-  // If brightness is set in storage, use it
-  if (saved_brightness > 0) {
-    Led::setBrightness(saved_brightness);
-  } else {
-    // if the brightness was 0 then the storage was likely
-    // uninitialized or corrupt so write out the defaults
-    factory_reset();
   }
 }
 
@@ -327,6 +321,11 @@ void Helios::handle_state_modes()
   uint8_t magnitude = (uint8_t)(holdDur / MENU_HOLD_TIME);
   // whether the user has held the button longer than a short click
   bool heldPast = (holdDur > SHORT_CLICK_THRESHOLD);
+
+  // flash red briefly when locked and short clicked
+  if (has_flag(FLAG_LOCKED) && holdDur < SHORT_CLICK_THRESHOLD) {
+    Led::set(RGB_RED_BRI_LOW);
+  }
   // if the button is held for at least 1 second
   if (Button::isPressed() && heldPast) {
     // if the button has been released before then show the on menu
