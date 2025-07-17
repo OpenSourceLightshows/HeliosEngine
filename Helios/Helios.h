@@ -30,11 +30,11 @@ public:
 
   enum Flags : uint8_t {
     FLAG_NONE      = 0,
-    FLAG_LOCKED    = (1 << 0),   // 0b00000001
-    FLAG_CONJURE   = (1 << 1),   // 0b00000010
-    FLAG_AUTOPLAY  = (1 << 2),   // 0b00000100
+    FLAG_LOCKED    = (1 << 0),
+    FLAG_CONJURE   = (1 << 1),
+    FLAG_AUTOPLAY  = (1 << 2),
 
-    FLAG_END,                    // 5 (auto-increment: count of flags)
+    FLAG_END,
     FLAG_INVALID   = (uint8_t)(~((1 << (FLAG_END - 1)) - 1))
   };
 
