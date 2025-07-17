@@ -208,7 +208,7 @@ void Helios::load_global_flags()
   // read the global flags from index 0 config
   global_flags = (Flags)Storage::read_global_flags();
   // if the flags are uninitialized (aka 0xff) then run factory reset
-  if (global_flags == 0xFF) {
+  if (global_flags & FLAG_INVALID) {
     factory_reset();
     return;
   }
