@@ -206,13 +206,21 @@ void Helios::load_global_flags()
 {
   // read the global flags from index 0 config
   global_flags = (Flags)Storage::read_global_flags();
-  if (global_flags & FLAGS_INVALID) {
-    factory_reset();
-    return;
-  }
   if (has_flag(FLAG_CONJURE)) {
     // if conjure is enabled then load the current mode index from storage
     cur_mode = Storage::read_current_mode();
+  }
+  // read the global brightness from index 2 config
+  uint8_t saved_brightness = Storage::read_brightness();
+  // If brightness is set in storage, use it
+  bool is_valid = (global_flags & FLAGS_INVALID) == 0 || saved_brightness > 0;
+  if (is_valid) {
+    Led::setBrightness(saved_brightness);
+  }
+
+
+   if (!is_valid) {
+    factory_reset();
   }
 }
 
