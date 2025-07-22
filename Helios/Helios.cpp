@@ -511,6 +511,14 @@ void Helios::handle_state_color_group_selection()
         // add blank to set
         new_colorset.addColor(RGB_OFF);
         num_colors_selected++;
+        // Check if we've reached the maximum number of colors
+        if (num_colors_selected >= NUM_COLOR_SLOTS) {
+          pat.setColorset(new_colorset);
+          save_cur_mode();
+          num_colors_selected = 0;
+          cur_state = STATE_MODES;
+          return;
+        }
         cur_state = STATE_COLOR_GROUP_SELECTION;
         // RETURN HERE
         return;
@@ -576,6 +584,9 @@ void Helios::handle_state_color_group_selection()
       if (num_colors_selected > 0) {
         pat.setColorset(new_colorset);
         save_cur_mode();
+        num_colors_selected = 0;
+        cur_state = STATE_MODES;
+        return;
       }
       num_colors_selected = 0;
     }
@@ -587,6 +598,14 @@ void Helios::handle_state_color_group_selection()
     if (Button::onHoldClick()) {
       new_colorset.addColor(RGB_WHITE);
       num_colors_selected++;
+      // Check if we've reached the maximum number of colors
+      if (num_colors_selected >= NUM_COLOR_SLOTS) {
+        pat.setColorset(new_colorset);
+        save_cur_mode();
+        num_colors_selected = 0;
+        cur_state = STATE_MODES;
+        return;
+      }
       cur_state = STATE_COLOR_GROUP_SELECTION;
       menu_selection = 0;
       return;
@@ -628,7 +647,15 @@ void Helios::handle_state_col_select_hue_val()
   // check to see if we are holding to save and skip
   if (saveAndFinish) {
     new_colorset.addColor(HSVColor(selected_hue, 255, selected_val));
-    save_cur_mode();
+    num_colors_selected++;
+    // Check if we've reached the maximum number of colors
+    if (num_colors_selected >= NUM_COLOR_SLOTS) {
+      pat.setColorset(new_colorset);
+      save_cur_mode();
+      num_colors_selected = 0;
+      cur_state = STATE_MODES;
+      return;
+    }
     menu_selection = 0;
     cur_state = STATE_COLOR_GROUP_SELECTION;
     return;
