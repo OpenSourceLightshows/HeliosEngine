@@ -1,4 +1,4 @@
-name: Helios Release
+name: Aeos Release
 
 on:
   workflow_dispatch: # manual trigger
@@ -13,17 +13,17 @@ jobs:
         run: sudo apt-get update
       - name: Install Dependencies
         run: sudo apt-get install valgrind g++ make --fix-missing
-      - name: Build HeliosCLI
+      - name: Build AeosCLI
         run: make -j
-        working-directory: HeliosCLI
-      - name: Archive HeliosCLI artifacts
-        run: zip -r "helioscli.zip" .
-        working-directory: HeliosCLI
-      - name: Upload HeliosCLI Artifact
+        working-directory: AeosCLI
+      - name: Archive AeosCLI artifacts
+        run: zip -r "aeoscli.zip" .
+        working-directory: AeosCLI
+      - name: Upload AeosCLI Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: helioscli-artifacts
-          path: HeliosCLI/helioscli.zip
+          name: aeoscli-artifacts
+          path: AeosCLI/aeoscli.zip
 
   tests:
     needs: build
@@ -31,11 +31,11 @@ jobs:
     steps:
       - name: Checkout current repository
         uses: actions/checkout@v4
-      - name: Download HeliosCLI Artifact
+      - name: Download AeosCLI Artifact
         uses: actions/download-artifact@v4
         with:
-          name: helioscli-artifacts
-          path: ./HeliosCLI
+          name: aeoscli-artifacts
+          path: ./AeosCLI
       - name: Set execute permissions for test script
         run: chmod +x ./runtests.sh
         working-directory: tests
@@ -55,18 +55,18 @@ jobs:
           python-version: "3.x"
       - name: Install Dependencies
         run: make install
-        working-directory: HeliosEmbedded
+        working-directory: AeosEmbedded
       - name: Build Binary
         run: make build
-        working-directory: HeliosEmbedded
-      - name: Archive HeliosEmbedded artifacts
+        working-directory: AeosEmbedded
+      - name: Archive AeosEmbedded artifacts
         run: zip -r "embedded-firmware.zip" .
-        working-directory: HeliosEmbedded
-      - name: Upload HeliosEmbedded Artifact
+        working-directory: AeosEmbedded
+      - name: Upload AeosEmbedded Artifact
         uses: actions/upload-artifact@v4
         with:
           name: embedded-firmware
-          path: HeliosEmbedded/embedded-firmware.zip
+          path: AeosEmbedded/embedded-firmware.zip
 
   release:
     needs: embedded
@@ -125,25 +125,25 @@ jobs:
           git tag ${{ env.new_tag }}
           git push origin ${{ env.new_tag }}
 
-      - name: Download HeliosCLI Artifact
+      - name: Download AeosCLI Artifact
         uses: actions/download-artifact@v4
         with:
-          name: helioscli-artifacts
-          path: ./artifact/helioscli
+          name: aeoscli-artifacts
+          path: ./artifact/aeoscli
 
-      - name: Download HeliosEmbedded Artifact
+      - name: Download AeosEmbedded Artifact
         uses: actions/download-artifact@v4
         with:
           name: embedded-firmware
           path: ./artifact/embedded
 
       - name: Create directories for unzipping
-        run: mkdir -p ./artifact/unzipped/helioscli ./artifact/unzipped/embedded
+        run: mkdir -p ./artifact/unzipped/aeoscli ./artifact/unzipped/embedded
 
-      - name: Unzip HeliosCLI Artifact
-        run: unzip ./artifact/helioscli/helioscli.zip -d ./artifact/unzipped/helioscli
+      - name: Unzip AeosCLI Artifact
+        run: unzip ./artifact/aeoscli/aeoscli.zip -d ./artifact/unzipped/aeoscli
 
-      - name: Unzip HeliosEmbedded Artifact
+      - name: Unzip AeosEmbedded Artifact
         run: unzip ./artifact/embedded/embedded-firmware.zip -d ./artifact/unzipped/embedded
 
       - name: Create GitHub Release
@@ -151,60 +151,60 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ env.new_tag }}
-          name: Helios ${{ env.new_version }}
+          name: Aeos ${{ env.new_version }}
           body: |
-            Release of Helios version ${{ env.new_version }}
+            Release of Aeos version ${{ env.new_version }}
           draft: false
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload Release Assets (helios.bin)
+      - name: Upload Release Assets (aeos.bin)
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./artifact/unzipped/embedded/helios.bin
-          asset_name: helios.bin
+          asset_path: ./artifact/unzipped/embedded/aeos.bin
+          asset_name: aeos.bin
           asset_content_type: application/octet-stream
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload Release Assets (helios.elf)
+      - name: Upload Release Assets (aeos.elf)
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./artifact/unzipped/embedded/helios.elf
-          asset_name: helios.elf
+          asset_path: ./artifact/unzipped/embedded/aeos.elf
+          asset_name: aeos.elf
           asset_content_type: application/octet-stream
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload Release Assets (helios.map)
+      - name: Upload Release Assets (aeos.map)
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./artifact/unzipped/embedded/helios.map
-          asset_name: helios.map
+          asset_path: ./artifact/unzipped/embedded/aeos.map
+          asset_name: aeos.map
           asset_content_type: application/octet-stream
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload Release Assets (helios.hex)
+      - name: Upload Release Assets (aeos.hex)
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./artifact/unzipped/embedded/helios.hex
-          asset_name: helios.hex
+          asset_path: ./artifact/unzipped/embedded/aeos.hex
+          asset_name: aeos.hex
           asset_content_type: application/octet-stream
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload Release Assets (Helios CLI)
+      - name: Upload Release Assets (Aeos CLI)
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./artifact/unzipped/helioscli/helios
-          asset_name: helios
+          asset_path: ./artifact/unzipped/aeoscli/aeos
+          asset_name: aeos
           asset_content_type: application/octet-stream
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

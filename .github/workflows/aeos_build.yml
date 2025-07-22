@@ -1,0 +1,116 @@
+name: Aeos Build
+
+on:
+  push:
+    branches: ["master"]
+  pull_request:
+    branches: ["master"]
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      aeos_version_major: ${{ steps.set_version.outputs.aeos_version_major }}
+      aeos_version_minor: ${{ steps.set_version.outputs.aeos_version_minor }}
+      aeos_build_number: ${{ steps.set_version.outputs.aeos_build_number }}
+      aeos_version_number: ${{ steps.set_version.outputs.aeos_version_number }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetches all history for all branches and tags
+      - name: Determine Version and Build Number
+        id: set_version
+        run: |
+          # Fetch all tags
+          git fetch --depth=1 origin +refs/tags/*:refs/tags/*
+          # Get the latest tag that starts with a number (no prefix)
+          LATEST_TAG=$(git tag --list | grep "^[0-9]" | sort -V | tail -n1)
+          if [ -z "$LATEST_TAG" ]; then
+            echo "No matching tags found. Setting default version."
+            VERSION_MAJOR="0"
+            VERSION_MINOR="1"
+            BUILD_NUMBER="0"
+          else
+            echo "Found latest tag: $LATEST_TAG"
+            VERSION_MAJOR=$(echo $LATEST_TAG | cut -d. -f1)
+            VERSION_MINOR=$(echo $LATEST_TAG | cut -d. -f2)
+            LAST_AEOS_BUILD_NUMBER=$(echo $LATEST_TAG | cut -d. -f3)
+            COMMITS_SINCE_TAG=$(git rev-list --count $LATEST_TAG..HEAD)
+            BUILD_NUMBER=$(( $LAST_AEOS_BUILD_NUMBER + $COMMITS_SINCE_TAG ))
+          fi
+          FULL_VERSION="$VERSION_MAJOR.$VERSION_MINOR.$BUILD_NUMBER"
+          echo "aeos_version_major=$VERSION_MAJOR" >> $GITHUB_OUTPUT
+          echo "aeos_version_minor=$VERSION_MINOR" >> $GITHUB_OUTPUT
+          echo "aeos_build_number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
+          echo "aeos_version_number=$FULL_VERSION" >> $GITHUB_OUTPUT
+          echo "Version Number: $FULL_VERSION"
+
+  build:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout current repository
+        uses: actions/checkout@v4
+      - name: Update Package Lists
+        run: sudo apt-get update
+      - name: Install Dependencies
+        run: sudo apt-get install valgrind g++ make --fix-missing
+      - name: Build AeosCLI
+        run: make -j
+        working-directory: AeosCLI
+      - name: Archive AeosCLI artifacts
+        run: zip -r "aeoscli.zip" .
+        working-directory: AeosCLI
+      - name: Upload AeosCLI Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: aeoscli-artifacts
+          path: AeosCLI/aeoscli.zip
+
+  tests:
+    needs: [setup, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout current repository
+        uses: actions/checkout@v4
+      - name: Download AeosCLI Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: aeoscli-artifacts
+          path: ./AeosCLI
+      - name: Set execute permissions for test script
+        run: chmod +x ./runtests.sh
+        working-directory: tests
+      - name: Run general tests
+        run: ./runtests.sh
+        working-directory: tests
+
+  embedded:
+    needs: [setup, build, tests]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout current repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
+      - name: Install Dependencies
+        run: make install
+        working-directory: AeosEmbedded
+      - name: Build Binary
+        run: |
+          export AEOS_VERSION_MAJOR=${{ needs.setup.outputs.aeos_version_major }}
+          export AEOS_VERSION_MINOR=${{ needs.setup.outputs.aeos_version_minor }}
+          export AEOS_BUILD_NUMBER=${{ needs.setup.outputs.aeos_build_number }}
+          export AEOS_VERSION_NUMBER=${{ needs.setup.outputs.aeos_version_number }}
+          make -j build
+        working-directory: AeosEmbedded
+      - name: Archive AeosEmbedded artifacts
+        run: zip -r "embedded-firmware.zip" .
+        working-directory: AeosEmbedded
+      - name: Upload AeosEmbedded Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: embedded-firmware
+          path: AeosEmbedded/embedded-firmware.zip
