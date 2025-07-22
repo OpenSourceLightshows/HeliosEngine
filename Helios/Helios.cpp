@@ -259,7 +259,6 @@ void Helios::handle_state()
     case STATE_COLOR_SELECT_SLOT:
     case STATE_COLOR_SELECT_QUADRANT:
     case STATE_COLOR_SELECT_HUE:
-    case STATE_COLOR_SELECT_SAT:
     case STATE_COLOR_SELECT_VAL:
       handle_state_col_select();
       break;
@@ -461,7 +460,6 @@ void Helios::handle_state_col_select()
       handle_state_col_select_quadrant();
       break;
     case STATE_COLOR_SELECT_HUE:
-    case STATE_COLOR_SELECT_SAT:
     case STATE_COLOR_SELECT_VAL:
     default:
       // pick the hue sat or val
@@ -657,10 +655,6 @@ void Helios::handle_state_col_select_hue_sat_val()
     default:
     case STATE_COLOR_SELECT_HUE:
       selected_hue = color_menu_data[selected_base_quad].hues[menu_selection];
-      break;
-    case STATE_COLOR_SELECT_SAT:
-      static const uint8_t saturation_values[4] = {HSV_SAT_HIGH, HSV_SAT_MEDIUM, HSV_SAT_LOW, HSV_SAT_LOWEST};
-      selected_sat = saturation_values[menu_selection];
       break;
     case STATE_COLOR_SELECT_VAL:
       static const uint8_t hsv_values[4] = {HSV_VAL_HIGH, HSV_VAL_MEDIUM, HSV_VAL_LOW, HSV_VAL_LOWEST};
