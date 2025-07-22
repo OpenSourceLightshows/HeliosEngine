@@ -213,11 +213,10 @@ void Helios::load_global_flags()
   // read the global brightness from index 2 config
   uint8_t saved_brightness = Storage::read_brightness();
   // If brightness is set in storage, use it
-  bool is_valid = (global_flags & FLAGS_INVALID) == 0 || saved_brightness > 0;
+  bool is_valid = (global_flags & FLAGS_INVALID) || saved_brightness > 0;
   if (is_valid) {
     Led::setBrightness(saved_brightness);
   }
-
 
    if (!is_valid) {
     factory_reset();
@@ -598,6 +597,7 @@ void Helios::handle_state_col_select_quadrant()
       case 1:  // selected white
         // adds white, skip hue/sat to brightness
         selected_sat = 0;
+        selected_val = 255;
         menu_selection = 0;
         cur_state = STATE_COLOR_SELECT_VAL;
         // RETURN HERE
@@ -643,6 +643,24 @@ void Helios::handle_state_col_select_quadrant()
     cur.blue /= 2;
     show_selection(RGB_WHITE_BRI_LOW);
   }
+
+  // Handle hold actions for white option
+  if (menu_selection == 1) {
+    if (Button::holdPressing()) {
+      // flash coral orange to indicate hold action is available (same as hue selection)
+      Led::strobe(150, 150, RGB_CORAL_ORANGE_BRI_LOW, RGB_WHITE);
+    }
+    if (Button::onHoldClick()) {
+      // add white with current brightness selection directly to the colorset
+      pat.updateColor(selected_slot, HSVColor(selected_hue, 0, 255));
+      save_cur_mode();
+      // Return to the slot you were editing
+      menu_selection = selected_slot;
+      cur_state = STATE_COLOR_SELECT_SLOT;
+      return;
+    }
+  }
+
   if (Button::onLongClick()) {
     cur_state = (State)(cur_state + 1);
     // reset the menu selection
@@ -680,7 +698,7 @@ void Helios::handle_state_col_select_hue_sat_val()
   Led::set(HSVColor(selected_hue, selected_sat, selected_val));
   // show the long selection flash
   if (Button::holdPressing()) {
-    Led::strobe(150, 150, RGB_CORAL_ORANGE_SAT_LOWEST, Led::get());
+    Led::strobe(150, 150, RGB_CORAL_ORANGE_BRI_LOW, Led::get());
   }
   // check to see if we are holding to save and skip
   if (saveAndFinish) {
@@ -814,20 +832,20 @@ void Helios::handle_state_shift_mode()
 
 void Helios::handle_state_randomize()
 {
-  if (Button::onShortClick()) {
-    Colorset &cur_set = pat.colorset();
-    Random ctx(pat.crc32());
-    uint8_t randVal = ctx.next8();
-    cur_set.randomizeColors(ctx, (randVal + 1) % NUM_COLOR_SLOTS, Colorset::COLOR_MODE_RANDOMLY_PICK);
-    Patterns::make_pattern((PatternID)(randVal % PATTERN_COUNT), pat);
-    pat.init();
-  }
-  if (Button::onLongClick()) {
-    save_cur_mode();
-    cur_state = STATE_MODES;
-  }
-  pat.play();
-  show_selection(RGB_WHITE_BRI_LOW);
+  // if (Button::onShortClick()) {
+  //   Colorset &cur_set = pat.colorset();
+  //   Random ctx(pat.crc32());
+  //   uint8_t randVal = ctx.next8();
+  //   cur_set.randomizeColors(ctx, (randVal + 1) % NUM_COLOR_SLOTS, Colorset::COLOR_MODE_RANDOMLY_PICK);
+  //   Patterns::make_pattern((PatternID)(randVal % PATTERN_COUNT), pat);
+  //   pat.init();
+  // }
+  // if (Button::onLongClick()) {
+  //   save_cur_mode();
+  //   cur_state = STATE_MODES;
+  // }
+  // pat.play();
+  // show_selection(RGB_WHITE_BRI_LOW);
 }
 
 void Helios::show_selection(RGBColor color)
