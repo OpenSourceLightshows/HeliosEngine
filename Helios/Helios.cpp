@@ -578,17 +578,21 @@ void Helios::handle_state_color_group_selection()
   }
 
   if (menu_selection == 0) {
+    // If the user is on the blank option (menu_selection == 0) and holding, flash red to indicate they can save with current colors
     if (Button::holdPressing()) {
+      // flash red to indicate save action is available
       Led::strobe(150, 150, RGB_RED_BRI_LOW, RGB_OFF);
     }
+
     if (Button::onHoldClick()) {
+      cur_state = STATE_MODES;
       if (num_colors_selected > 0) {
         pat.setColorset(new_colorset);
+        // Save with current colors if at least one color is selected
         save_cur_mode();
       }
       num_colors_selected = 0;
       last_mode_switch_time = Time::getCurtime(); // Reset autoplay timer
-      cur_state = STATE_MODES;
     }
   }
   if (menu_selection == 1) {
@@ -614,8 +618,6 @@ void Helios::handle_state_color_group_selection()
   }
 
 }
-
-
 
 void Helios::handle_state_col_select_hue_val()
 {
@@ -748,4 +750,3 @@ void Helios::show_selection(RGBColor color)
   }
   Led::set(color);
 }
-
