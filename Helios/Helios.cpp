@@ -25,14 +25,19 @@
 // some internal macros that shouldn't change
 // The number of menus in hue/sat/val selection
 #define NUM_COLORS_PER_GROUP 4
+// the number of color groups
+#define NUM_COLOR_GROUPS 4
 // the number of menus in group selection
-#define NUM_MENUS_GROUP 8
+#define NUM_MENUS_GROUP 7
 
 Helios::State Helios::cur_state;
 Helios::Flags Helios::global_flags;
 uint8_t Helios::menu_selection;
 uint8_t Helios::cur_mode;
 uint8_t Helios::selected_base_group;
+uint8_t Helios::selected_hue;
+uint8_t Helios::selected_val;
+uint8_t Helios::selected_sat;
 uint8_t Helios::num_colors_selected;
 Pattern Helios::pat;
 bool Helios::keepgoing;
@@ -44,6 +49,7 @@ bool Helios::sleeping;
 #endif
 
 volatile char helios_version[] = HELIOS_VERSION_STR;
+
 
 bool Helios::init()
 {
@@ -207,6 +213,11 @@ void Helios::load_global_flags()
 {
   // read the global flags from index 0 config
   global_flags = (Flags)Storage::read_global_flags();
+  // if flags are uninitialized (0xff) or invalid then run factory reset
+  if (global_flags & FLAGS_INVALID) {
+    factory_reset();
+    return;
+  }
   if (has_flag(FLAG_CONJURE)) {
     // if conjure is enabled then load the current mode index from storage
     cur_mode = Storage::read_current_mode();
@@ -248,7 +259,8 @@ void Helios::handle_state()
       handle_state_modes();
       break;
     case STATE_COLOR_GROUP_SELECTION:
-    case STATE_COLOR_VARIANT_SELECTION:
+    case STATE_COLOR_SELECT_HUE:
+    case STATE_COLOR_SELECT_VAL:
       handle_state_color_selection();
       break;
     case STATE_PATTERN_SELECT:
@@ -453,11 +465,11 @@ void Helios::handle_state_color_selection()
       // pick the hue group
       handle_state_color_group_selection();
       break;
-    case STATE_COLOR_VARIANT_SELECTION:
-      // pick the hue
-      handle_state_color_variant_selection();
-      break;
+    case STATE_COLOR_SELECT_HUE:
+    case STATE_COLOR_SELECT_VAL:
     default:
+      // pick the hue and val
+      handle_state_col_select_hue_val();
       break;
   }
   // get the current color
@@ -470,18 +482,17 @@ void Helios::handle_state_color_selection()
 }
 
 struct ColorsMenuData {
-  RGBColor colors[4];
+  uint8_t hues[NUM_COLOR_GROUPS];
 };
 
 // array of colors for selection
-static const ColorsMenuData color_menu_data[5] = {
-  // color0           color1              color2          color3
-  // ===================================================================
-  { RGB_RED,        RGB_CORAL_ORANGE, RGB_ORANGE,   RGB_YELLOW },
-  { RGB_LIME_GREEN, RGB_GREEN,        RGB_SEAFOAM,  RGB_TURQUOISE },
-  { RGB_ICE_BLUE,   RGB_LIGHT_BLUE,   RGB_BLUE,     RGB_ROYAL_BLUE },
-  { RGB_PURPLE,     RGB_PINK,         RGB_HOT_PINK, RGB_MAGENTA },
-  { RGB_CORAL,      RGB_CREAM,        RGB_MINT,     RGB_LUNA },
+static const ColorsMenuData color_menu_data[NUM_COLOR_GROUPS] = {
+  // hue0           hue1              hue2          hue3
+  // ==================================================================================
+  { HUE_RED,        HUE_CORAL_ORANGE, HUE_ORANGE,   HUE_YELLOW },
+  { HUE_LIME_GREEN, HUE_GREEN,        HUE_SEAFOAM,  HUE_TURQUOISE },
+  { HUE_ICE_BLUE,   HUE_LIGHT_BLUE,   HUE_BLUE,     HUE_ROYAL_BLUE },
+  { HUE_PURPLE,     HUE_PINK,         HUE_HOT_PINK, HUE_MAGENTA },
 };
 
 void Helios::handle_state_color_group_selection()
@@ -489,48 +500,47 @@ void Helios::handle_state_color_group_selection()
   if (Button::onShortClick()) {
     menu_selection = (menu_selection + 1) % NUM_MENUS_GROUP;
   }
-
-  uint8_t color_quad = (menu_selection - 2) % 5;  // Now using 5 groups
-  if (menu_selection > 6) {
+  uint8_t color_group = (menu_selection - 2) % NUM_COLOR_GROUPS;
+  if (menu_selection > 5) {
     menu_selection = 0;
   }
-
   if (Button::onLongClick()) {
-    // select color
+    // select hue/val
     switch (menu_selection) {
       case 0:  // selected blank
         // add blank to set
         new_colorset.addColor(RGB_OFF);
         num_colors_selected++;
-        break;
+        // Check if we've reached the maximum number of colors
+        if (num_colors_selected >= NUM_COLOR_SLOTS) {
+          pat.setColorset(new_colorset);
+          save_cur_mode();
+          num_colors_selected = 0;
+          last_mode_switch_time = Time::getCurtime(); // Reset autoplay timer
+          cur_state = STATE_MODES;
+          return;
+        }
+        cur_state = STATE_COLOR_GROUP_SELECTION;
+        // RETURN HERE
+        return;
       case 1:  // selected white
-        // adds white
-        new_colorset.addColor(RGB_WHITE);
-        num_colors_selected++;
-        break;
-      default:  // 2-6 (color groups)
-        selected_base_group = color_quad;
-        cur_state = STATE_COLOR_VARIANT_SELECTION;
+        // adds white, skip hue/sat to brightness
+        selected_hue = 0;
+        selected_sat = 0;
+        selected_val = 255;
+        menu_selection = 0;
+        cur_state = STATE_COLOR_SELECT_VAL;
+        return;
+      default:  // 2-5
+        selected_base_group = color_group;
+        selected_sat = 255;
+        selected_val = 255;  // Reset brightness to full when starting new hue selection
+        cur_state = STATE_COLOR_SELECT_HUE;
         menu_selection = 0;
         return;
     }
-
-    // If we've selected enough colors, save and exit
-    if (num_colors_selected >= NUM_COLOR_SLOTS) {
-      // Restore original colorset if no colors were selected
-      pat.setColorset(new_colorset);
-      save_cur_mode();
-#if ALTERNATIVE_HSV_RGB == 1
-      // restore hsv to rgb algorithm type, done color selection
-      g_hsv_rgb_alg = HSV_TO_RGB_GENERIC;
-#endif
-      cur_state = STATE_MODES;
-      return;
-    }
-    // Otherwise reset menu selection to continue selecting colors
     menu_selection = 0;
   }
-
   // default col1/col2 to off and white for the first two options
   RGBColor col1 = RGB_OFF;
   RGBColor col2;
@@ -548,8 +558,8 @@ void Helios::handle_state_color_group_selection()
       off_dur = 0;
       break;
     default: // Color options
-      col1 = color_menu_data[color_quad].colors[0];
-      col2 = color_menu_data[color_quad].colors[2];
+      col1 = HSVColor(color_menu_data[color_group].hues[0], 255, 255);
+      col2 = HSVColor(color_menu_data[color_group].hues[2], 255, 255);
       on_dur = 500;
       off_dur = 500;
       break;
@@ -570,7 +580,7 @@ void Helios::handle_state_color_group_selection()
   if (menu_selection == 0) {
     // If the user is on the blank option (menu_selection == 0) and holding, flash red to indicate they can save with current colors
     if (Button::holdPressing()) {
-        // flash red to indicate save action is available
+      // flash red to indicate save action is available
       Led::strobe(150, 150, RGB_RED_BRI_LOW, RGB_OFF);
     }
 
@@ -582,43 +592,82 @@ void Helios::handle_state_color_group_selection()
         save_cur_mode();
       }
       num_colors_selected = 0;
+      last_mode_switch_time = Time::getCurtime(); // Reset autoplay timer
     }
   }
+  if (menu_selection == 1) {
+    if (Button::holdPressing()) {
+      Led::strobe(150, 150, RGB_CORAL_ORANGE_BRI_LOWEST, RGB_WHITE);
+    }
+    if (Button::onHoldClick()) {
+      new_colorset.addColor(RGB_WHITE);
+      num_colors_selected++;
+      // Check if we've reached the maximum number of colors
+      if (num_colors_selected >= NUM_COLOR_SLOTS) {
+        pat.setColorset(new_colorset);
+        save_cur_mode();
+        num_colors_selected = 0;
+        last_mode_switch_time = Time::getCurtime(); // Reset autoplay timer
+        cur_state = STATE_MODES;
+        return;
+      }
+      cur_state = STATE_COLOR_GROUP_SELECTION;
+      menu_selection = 0;
+      return;
+    }
+  }
+
 }
 
-void Helios::handle_state_color_variant_selection()
+void Helios::handle_state_col_select_hue_val()
 {
   // handle iterating to the next option
   if (Button::onShortClick()) {
     menu_selection = (menu_selection + 1) % NUM_COLORS_PER_GROUP;
   }
-
-  // Get the color directly from the color menu data
-  RGBColor selected_color = color_menu_data[selected_base_group].colors[menu_selection];
-
+  // in the sat/val selection a longclick is next and hold is save but in
+  // the final val selection a longclick is save and there's no next
+  bool gotoNextMenu = Button::onLongClick();
+  bool saveAndFinish = Button::onHoldClick();
+  switch (cur_state) {
+    default:
+    case STATE_COLOR_SELECT_HUE:
+      selected_hue = color_menu_data[selected_base_group].hues[menu_selection];
+      break;
+    case STATE_COLOR_SELECT_VAL:
+      static const uint8_t hsv_values[4] = {HSV_VAL_HIGH, HSV_VAL_MEDIUM, HSV_VAL_LOW, HSV_VAL_LOWEST};
+      selected_val = hsv_values[menu_selection];
+      // longclick becomes save and there is no next
+      saveAndFinish = gotoNextMenu;
+      break;
+  }
   // render current selection
-  Led::set(selected_color);
-
-  if (Button::onLongClick()) {
-    // Save the color and increment counter
-    new_colorset.addColor(selected_color);
+  Led::set(HSVColor(selected_hue, selected_sat, selected_val));
+  // show the long selection flash
+  if (Button::holdPressing()) {
+    Led::strobe(150, 150, RGB_CORAL_ORANGE_SAT_LOWEST, Led::get());
+  }
+  // check to see if we are holding to save and skip
+  if (saveAndFinish) {
+    new_colorset.addColor(HSVColor(selected_hue, selected_sat, selected_val));
     num_colors_selected++;
-
-    // If we've selected enough colors, save and exit
+    // Check if we've reached the maximum number of colors
     if (num_colors_selected >= NUM_COLOR_SLOTS) {
-      // Restore original colorset if no colors were selected
       pat.setColorset(new_colorset);
       save_cur_mode();
-#if ALTERNATIVE_HSV_RGB == 1
-      // restore hsv to rgb algorithm type, done color selection
-      g_hsv_rgb_alg = HSV_TO_RGB_GENERIC;
-#endif
+      num_colors_selected = 0;
+      last_mode_switch_time = Time::getCurtime(); // Reset autoplay timer
       cur_state = STATE_MODES;
-    } else {
-      // Go back to group selection for next color
-      cur_state = STATE_COLOR_GROUP_SELECTION;
-      menu_selection = 0;
+      return;
     }
+    menu_selection = 0;
+    cur_state = STATE_COLOR_GROUP_SELECTION;
+    return;
+  }
+  if (gotoNextMenu) {
+    cur_state = (State)(cur_state + 1);
+    // reset the menu selection
+    menu_selection = 0;
   }
 }
 
@@ -626,6 +675,7 @@ void Helios::handle_state_pat_select()
 {
   if (Button::onLongClick()) {
     save_cur_mode();
+    last_mode_switch_time = Time::getCurtime(); // Reset autoplay timer
     cur_state = STATE_MODES;
   }
   if (Button::onShortClick()) {
@@ -644,6 +694,7 @@ void Helios::handle_state_toggle_flag(Flags flag)
   // write out the new global flags and the current mode
   save_global_flags();
   // switch back to modes
+  last_mode_switch_time = Time::getCurtime(); // Reset autoplay timer
   cur_state = STATE_MODES;
 }
 
@@ -664,6 +715,7 @@ void Helios::handle_state_set_defaults()
     if (menu_selection == 1) {
       factory_reset();
     }
+    last_mode_switch_time = Time::getCurtime(); // Reset autoplay timer
     cur_state = STATE_MODES;
   }
   show_selection(RGB_WHITE_BRI_LOW);
@@ -675,8 +727,8 @@ void Helios::factory_reset()
     Patterns::make_default(i, pat);
     Storage::write_pattern(i, pat);
   }
-  // reset global flags
-  global_flags = FLAG_NONE;
+  // set global flags to autoplay
+  global_flags = FLAG_AUTOPLAY;
   cur_mode = 0;
   // save global flags
   save_global_flags();
