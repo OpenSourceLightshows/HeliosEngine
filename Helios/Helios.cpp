@@ -532,6 +532,7 @@ void Helios::handle_state_color_group_selection()
         return;
       default:  // 2-5
         selected_base_group = color_group;
+        selected_sat = 255;
         selected_val = 255;  // Reset brightness to full when starting new hue selection
         cur_state = STATE_COLOR_SELECT_HUE;
         menu_selection = 0;
@@ -639,14 +640,14 @@ void Helios::handle_state_col_select_hue_val()
       break;
   }
   // render current selection
-  Led::set(HSVColor(selected_hue, 255, selected_val));
+  Led::set(HSVColor(selected_hue, selected_sat, selected_val));
   // show the long selection flash
   if (Button::holdPressing()) {
     Led::strobe(150, 150, RGB_CORAL_ORANGE_SAT_LOWEST, Led::get());
   }
   // check to see if we are holding to save and skip
   if (saveAndFinish) {
-    new_colorset.addColor(HSVColor(selected_hue, 255, selected_val));
+    new_colorset.addColor(HSVColor(selected_hue, selected_sat, selected_val));
     num_colors_selected++;
     // Check if we've reached the maximum number of colors
     if (num_colors_selected >= NUM_COLOR_SLOTS) {
