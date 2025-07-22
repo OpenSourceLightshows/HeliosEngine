@@ -551,7 +551,6 @@ void Helios::handle_state_col_select_slot(ColorSelectOption &out_option)
     menu_selection = 0;
   }
 }
-
 struct ColorsMenuData {
   uint8_t hues[4];
 };
@@ -591,6 +590,7 @@ void Helios::handle_state_col_select_quadrant()
       case 1:  // selected white
         // adds white, skip hue/sat to brightness
         selected_sat = 0;
+        selected_val = 255;
         menu_selection = 0;
         cur_state = STATE_COLOR_SELECT_VAL;
         // RETURN HERE
@@ -636,6 +636,24 @@ void Helios::handle_state_col_select_quadrant()
     cur.blue /= 2;
     show_selection(RGB_WHITE_BRI_LOW);
   }
+
+  // Handle hold actions for white option
+  if (menu_selection == 1) {
+    if (Button::holdPressing()) {
+      // flash coral orange to indicate hold action is available (same as hue selection)
+      Led::strobe(150, 150, RGB_CORAL_ORANGE_BRI_LOW, RGB_WHITE);
+    }
+    if (Button::onHoldClick()) {
+      // add white with current brightness selection directly to the colorset
+      pat.updateColor(selected_slot, HSVColor(selected_hue, 0, 255));
+      save_cur_mode();
+      // Return to the slot you were editing
+      menu_selection = selected_slot;
+      cur_state = STATE_COLOR_SELECT_SLOT;
+      return;
+    }
+  }
+
   if (Button::onLongClick()) {
     cur_state = (State)(cur_state + 1);
     // reset the menu selection
