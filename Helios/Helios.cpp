@@ -215,6 +215,11 @@ void Helios::load_global_flags()
 {
   // read the global flags from index 0 config
   global_flags = (Flags)Storage::read_global_flags();
+  // if flags are uninitialized (0xff) or invalid then run factory reset
+  if (global_flags & FLAGS_INVALID) {
+    factory_reset();
+    return;
+  }
   if (has_flag(FLAG_CONJURE)) {
     // if conjure is enabled then load the current mode index from storage
     cur_mode = Storage::read_current_mode();
@@ -689,8 +694,8 @@ void Helios::factory_reset()
     Patterns::make_default(i, pat);
     Storage::write_pattern(i, pat);
   }
-  // reset global flags
-  global_flags = FLAG_NONE;
+  // set global flags to autoplay
+  global_flags = FLAG_AUTOPLAY;
   cur_mode = 0;
   // save global flags
   save_global_flags();
