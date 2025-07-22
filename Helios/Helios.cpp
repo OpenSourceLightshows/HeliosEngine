@@ -516,6 +516,7 @@ void Helios::handle_state_color_group_selection()
           pat.setColorset(new_colorset);
           save_cur_mode();
           num_colors_selected = 0;
+          last_mode_switch_time = Time::getCurtime(); // Reset autoplay timer
           cur_state = STATE_MODES;
           return;
         }
@@ -581,15 +582,13 @@ void Helios::handle_state_color_group_selection()
       Led::strobe(150, 150, RGB_RED_BRI_LOW, RGB_OFF);
     }
     if (Button::onHoldClick()) {
-      cur_state = STATE_MODES;
       if (num_colors_selected > 0) {
         pat.setColorset(new_colorset);
         save_cur_mode();
-        num_colors_selected = 0;
-        cur_state = STATE_MODES;
-        return;
       }
       num_colors_selected = 0;
+      last_mode_switch_time = Time::getCurtime(); // Reset autoplay timer
+      cur_state = STATE_MODES;
     }
   }
   if (menu_selection == 1) {
@@ -604,6 +603,7 @@ void Helios::handle_state_color_group_selection()
         pat.setColorset(new_colorset);
         save_cur_mode();
         num_colors_selected = 0;
+        last_mode_switch_time = Time::getCurtime(); // Reset autoplay timer
         cur_state = STATE_MODES;
         return;
       }
@@ -654,6 +654,7 @@ void Helios::handle_state_col_select_hue_val()
       pat.setColorset(new_colorset);
       save_cur_mode();
       num_colors_selected = 0;
+      last_mode_switch_time = Time::getCurtime(); // Reset autoplay timer
       cur_state = STATE_MODES;
       return;
     }
@@ -672,6 +673,7 @@ void Helios::handle_state_pat_select()
 {
   if (Button::onLongClick()) {
     save_cur_mode();
+    last_mode_switch_time = Time::getCurtime(); // Reset autoplay timer
     cur_state = STATE_MODES;
   }
   if (Button::onShortClick()) {
@@ -690,6 +692,7 @@ void Helios::handle_state_toggle_flag(Flags flag)
   // write out the new global flags and the current mode
   save_global_flags();
   // switch back to modes
+  last_mode_switch_time = Time::getCurtime(); // Reset autoplay timer
   cur_state = STATE_MODES;
 }
 
@@ -710,6 +713,7 @@ void Helios::handle_state_set_defaults()
     if (menu_selection == 1) {
       factory_reset();
     }
+    last_mode_switch_time = Time::getCurtime(); // Reset autoplay timer
     cur_state = STATE_MODES;
   }
   show_selection(RGB_WHITE_BRI_LOW);
