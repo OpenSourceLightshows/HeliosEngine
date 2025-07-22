@@ -832,20 +832,20 @@ void Helios::handle_state_shift_mode()
 
 void Helios::handle_state_randomize()
 {
-  // if (Button::onShortClick()) {
-  //   Colorset &cur_set = pat.colorset();
-  //   Random ctx(pat.crc32());
-  //   uint8_t randVal = ctx.next8();
-  //   cur_set.randomizeColors(ctx, (randVal + 1) % NUM_COLOR_SLOTS, Colorset::COLOR_MODE_RANDOMLY_PICK);
-  //   Patterns::make_pattern((PatternID)(randVal % PATTERN_COUNT), pat);
-  //   pat.init();
-  // }
-  // if (Button::onLongClick()) {
-  //   save_cur_mode();
-  //   cur_state = STATE_MODES;
-  // }
-  // pat.play();
-  // show_selection(RGB_WHITE_BRI_LOW);
+  if (Button::onShortClick()) {
+    Colorset &cur_set = pat.colorset();
+    Random ctx(pat.crc32());
+    uint8_t randVal = ctx.next8();
+    cur_set.randomizeColors(ctx, (randVal + 1) % NUM_COLOR_SLOTS, Colorset::COLOR_MODE_RANDOMLY_PICK);
+    Patterns::make_pattern((PatternID)(randVal % PATTERN_COUNT), pat);
+    pat.init();
+  }
+  if (Button::onLongClick()) {
+    save_cur_mode();
+    cur_state = STATE_MODES;
+  }
+  pat.play();
+  show_selection(RGB_WHITE_BRI_LOW);
 }
 
 void Helios::show_selection(RGBColor color)
