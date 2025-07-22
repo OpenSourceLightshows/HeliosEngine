@@ -37,6 +37,7 @@ uint8_t Helios::cur_mode;
 uint8_t Helios::selected_base_group;
 uint8_t Helios::selected_hue;
 uint8_t Helios::selected_val;
+uint8_t Helios::selected_sat;
 uint8_t Helios::num_colors_selected;
 Pattern Helios::pat;
 bool Helios::keepgoing;
@@ -97,9 +98,6 @@ bool Helios::init_components()
   cur_mode = 0;
   num_colors_selected = 0;
   selected_base_group = 0;
-  selected_hue = 0;
-  selected_val = 255;
-  selected_sat = 255; // if readded
   keepgoing = true;
   last_mode_switch_time = 0;
 #ifdef HELIOS_CLI
@@ -489,8 +487,8 @@ struct ColorsMenuData {
 
 // array of colors for selection
 static const ColorsMenuData color_menu_data[NUM_COLOR_GROUPS] = {
-  // color0           color1              color2          color3
-  // ===================================================================
+  // hue0           hue1              hue2          hue3
+  // ==================================================================================
   { HUE_RED,        HUE_CORAL_ORANGE, HUE_ORANGE,   HUE_YELLOW },
   { HUE_LIME_GREEN, HUE_GREEN,        HUE_SEAFOAM,  HUE_TURQUOISE },
   { HUE_ICE_BLUE,   HUE_LIGHT_BLUE,   HUE_BLUE,     HUE_ROYAL_BLUE },
@@ -526,6 +524,7 @@ void Helios::handle_state_color_group_selection()
         return;
       default:  // 2-5
         selected_base_group = color_group;
+        selected_val = 255;  // Reset brightness to full when starting new hue selection
         cur_state = STATE_COLOR_SELECT_HUE;
         menu_selection = 0;
         return;
