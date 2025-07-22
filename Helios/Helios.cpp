@@ -256,7 +256,6 @@ void Helios::handle_state()
     case STATE_MODES:
       handle_state_modes();
       break;
-    case STATE_COLOR_SELECT_SLOT:
     case STATE_COLOR_SELECT_QUADRANT:
     case STATE_COLOR_SELECT_HUE:
     case STATE_COLOR_SELECT_VAL:
@@ -419,7 +418,7 @@ void Helios::handle_on_menu(uint8_t mag, bool past)
       }
       break;
     case 1:  // color select
-      cur_state = STATE_COLOR_SELECT_SLOT;
+      cur_state = STATE_COLOR_SELECT_QUADRANT;
       // reset the menu selection
       menu_selection = 0;
 #if ALTERNATIVE_HSV_RGB == 1
@@ -451,10 +450,6 @@ void Helios::handle_state_col_select()
 {
   ColorSelectOption slot_option = OPTION_NONE;
   switch (cur_state) {
-    case STATE_COLOR_SELECT_SLOT:
-      // pick the target colorset slot
-      handle_state_col_select_slot(slot_option);
-      break;
     case STATE_COLOR_SELECT_QUADRANT:
       // pick the hue quadrant
       handle_state_col_select_quadrant();
@@ -583,7 +578,7 @@ void Helios::handle_state_col_select_quadrant()
         // Return to the slot you were editing
         menu_selection = selected_slot;
         // go to slot selection - 1 because we will increment outside here
-        cur_state = STATE_COLOR_SELECT_SLOT;
+        cur_state = STATE_COLOR_SELECT_QUADRANT;
         // RETURN HERE
         return;
       case 1:  // selected white
@@ -671,7 +666,7 @@ void Helios::handle_state_col_select_hue_sat_val()
   }
   // check to see if we are holding to save and skip
   if (saveAndFinish) {
-    cur_state = STATE_COLOR_SELECT_SLOT;
+    cur_state = STATE_COLOR_SELECT_QUADRANT;
     pat.updateColor(selected_slot, HSVColor(selected_hue, selected_sat, selected_val));
     save_cur_mode();
     // Return to the slot you were editing
