@@ -109,6 +109,12 @@
 // color selection menu and provide a slightly different range of colors
 #define ALTERNATIVE_HSV_RGB 0
 
+// Pre-defined brightness values
+#define HSV_VAL_HIGH      255
+#define HSV_VAL_MEDIUM    120
+#define HSV_VAL_LOW       60
+#define HSV_VAL_LOWEST    10
+
 // ============================================================================
 //  Storage Constants
 //
