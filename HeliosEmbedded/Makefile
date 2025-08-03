@@ -24,8 +24,8 @@ else ifeq ($(OS),Linux)
     DEVICE_DIR=~/atmel_setup/gcc/dev/attiny85
     INCLUDE_DIR=~/atmel_setup/include/
 else ifeq ($(OS),Darwin)
-    BINDIR=/Applications/Arduino.app/Contents/Java/hardware/tools/avr/bin/
-    AVRDUDEDIR=/Applications/Arduino.app/Contents/Java/hardware/tools/avr/bin/
+    BINDIR=/opt/homebrew/bin/
+    AVRDUDEDIR=/opt/homebrew/bin/
     INCLUDE_DIR=""
 else
     # ??? unknown OS
@@ -48,7 +48,7 @@ AVRDUDE = ${AVRDUDEDIR}avrdude
 ### AVRDUDE SETTINGS ###
 ########################
 
-AVRDUDE_CONF = avrdude.conf
+AVRDUDE_CONF = /opt/homebrew/etc/avrdude.conf
 AVRDUDE_CHIP = attiny85
 
 ifeq ($(OS),Windows_NT) # Windows
@@ -109,6 +109,8 @@ CFLAGS = -g \
 	 -ffunction-sections\
 	 -funsigned-bitfields \
 	 -fno-threadsafe-statics \
+	 -fno-rtti \                    # Disable C++ runtime type info (dynamic_cast/typeid) to save flash memory (Not necessary for embedded use)
+   -mcall-prologues \             # Use shared function prologue/epilogue subroutines to reduce code size (Not necessary for embedded use)
 	 -D__AVR_ATtiny85__ \
 	 -mmcu=$(AVRDUDE_CHIP) \
 	 -DF_CPU=$(CPU_SPEED) \
