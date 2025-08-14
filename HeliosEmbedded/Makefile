@@ -24,8 +24,8 @@ else ifeq ($(OS),Linux)
     DEVICE_DIR=~/atmel_setup/gcc/dev/attiny85
     INCLUDE_DIR=~/atmel_setup/include/
 else ifeq ($(OS),Darwin)
-    BINDIR=/Applications/Arduino.app/Contents/Java/hardware/tools/avr/bin/
-    AVRDUDEDIR=/Applications/Arduino.app/Contents/Java/hardware/tools/avr/bin/
+    BINDIR=/opt/homebrew/bin/
+    AVRDUDEDIR=/opt/homebrew/bin/
     INCLUDE_DIR=""
 else
     # ??? unknown OS
@@ -48,7 +48,7 @@ AVRDUDE = ${AVRDUDEDIR}avrdude
 ### AVRDUDE SETTINGS ###
 ########################
 
-AVRDUDE_CONF = avrdude.conf
+AVRDUDE_CONF = /opt/homebrew/etc/avrdude.conf
 AVRDUDE_CHIP = attiny85
 
 ifeq ($(OS),Windows_NT) # Windows
@@ -56,9 +56,9 @@ ifeq ($(OS),Windows_NT) # Windows
     AVRDUDE_BAUDRATE = 115200
     AVRDUDE_PORT = usb
 else ifeq ($(OS),Darwin)
-    AVRDUDE_PROGRAMMER = stk500v1
+    AVRDUDE_PROGRAMMER = usbtiny
     AVRDUDE_BAUDRATE = 19200
-    AVRDUDE_PORT = /dev/tty.usbmodem21301
+    AVRDUDE_PORT = usb
 endif
 
 AVRDUDE_FLAGS = -C$(AVRDUDE_CONF) \
@@ -109,6 +109,8 @@ CFLAGS = -g \
 	 -ffunction-sections\
 	 -funsigned-bitfields \
 	 -fno-threadsafe-statics \
+	 -fno-rtti \
+	 -mcall-prologues \
 	 -D__AVR_ATtiny85__ \
 	 -mmcu=$(AVRDUDE_CHIP) \
 	 -DF_CPU=$(CPU_SPEED) \
