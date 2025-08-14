@@ -212,8 +212,9 @@ void Helios::load_global_flags()
   }
   // read the global brightness from index 2 config
   uint8_t saved_brightness = Storage::read_brightness();
-  // If brightness is set in storage, use it
-  bool is_valid = (global_flags & FLAGS_INVALID) || saved_brightness > 0;
+  // Check if flags are valid (FLAGS_INVALID is inverse mask of valid flags)
+  // and brightness is set in storage
+  bool is_valid = !(global_flags & FLAGS_INVALID) == 0 && saved_brightness > 0;
   if (is_valid) {
     Led::setBrightness(saved_brightness);
   }
@@ -330,7 +331,7 @@ void Helios::handle_state_modes()
   bool heldPast = (holdDur > SHORT_CLICK_THRESHOLD);
 
   // flash red briefly when locked and short clicked
-  if (has_flag(FLAG_LOCKED) && holdDur < SHORT_CLICK_THRESHOLD) {
+  if (has_flag(FLAG_LOCKED) && !heldPast) {
     Led::set(RGB_RED_BRI_LOW);
   }
   // if the button is held for at least 1 second
