@@ -94,7 +94,6 @@ DEFINES=\
 	-DF_CPU=$(CPU_SPEED) \
 	-D HELIOS_EMBEDDED
 
-# -fno-rtti \                    Disable C++ runtime type info (dynamic_cast/typeid) to save flash memory (Not necessary for embedded use)
 # -mcall-prologues \             Use shared function prologue/epilogue subroutines to reduce code size (Not necessary for embedded use)
 
 CFLAGS = -g \
@@ -112,7 +111,6 @@ CFLAGS = -g \
 	 -ffunction-sections\
 	 -funsigned-bitfields \
 	 -fno-threadsafe-statics \
-	 -fno-rtti \
 	 -mcall-prologues \
 	 -D__AVR_ATtiny85__ \
 	 -mmcu=$(AVRDUDE_CHIP) \
