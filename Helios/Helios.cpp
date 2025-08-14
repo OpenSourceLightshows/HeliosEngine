@@ -350,8 +350,8 @@ void Helios::handle_state_modes()
   // whether the user has held the button longer than a short click
   bool heldPast = (holdDur > SHORT_CLICK_THRESHOLD);
 
-  // flash red briefly when locked and short clicked
-  if ((has_flag(FLAG_LOCKED) || has_flag(FLAG_LOCK_ON)) && holdDur < SHORT_CLICK_THRESHOLD) {
+  // flash red briefly when locked and short clicked (only for glow lock, not lock on)
+  if (has_flag(FLAG_LOCKED) && holdDur < SHORT_CLICK_THRESHOLD) {
     Led::set(RGB_RED_BRI_LOW);
   }
   // if the button is held for at least 1 second
