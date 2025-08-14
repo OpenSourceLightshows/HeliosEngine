@@ -329,15 +329,18 @@ void Helios::handle_state_modes()
   }
 
   // check for lock on - device stays on but locked
-  if (has_flag(FLAG_LOCK_ON) && hasReleased && !Button::onRelease()) {
-    // just play the current mode and don't allow sleep
+  if (has_flag(FLAG_LOCK_ON) && hasReleased && !Button::onRelease() && !Button::isPressed()) {
+    // just play the current mode and don't allow sleep, but only when button is not pressed
+    // (when button is pressed, we want to allow menu access)
     pat.play();
     return;
   }
 
-  if (!has_flag(FLAG_LOCKED) && !has_flag(FLAG_LOCK_ON) && hasReleased) {
-    // just play the current mode
-    pat.play();
+  if (!has_flag(FLAG_LOCKED) && hasReleased) {
+    // just play the current mode (include lock on case when not pressing button)
+    if (!has_flag(FLAG_LOCK_ON) || !Button::isPressed()) {
+      pat.play();
+    }
   }
   // check how long the button is held
   uint32_t holdDur = Button::holdDuration();
@@ -361,7 +364,7 @@ void Helios::handle_state_modes()
         case 1: Led::set(RGB_TURQUOISE_BRI_LOW); break;                 // Color Selection
         case 2: Led::set(RGB_MAGENTA_BRI_LOW); break;                   // Pattern Selection
         case 3: Led::set(RGB_YELLOW_BRI_LOW); break;                    // Conjure Mode
-        case 4: Led::set(RGB_LIME_GREEN_BRI_LOW); break;                // Lock On Mode
+        case 4: Led::set(RGB_WHITE_BRI_LOW); break;                // Lock On Mode
       }
       } else {
       if (has_flag(FLAG_LOCKED) || has_flag(FLAG_LOCK_ON)) {
