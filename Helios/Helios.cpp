@@ -329,18 +329,19 @@ void Helios::handle_state_modes()
   }
 
   // check for lock on - device stays on but locked
-  if (has_flag(FLAG_LOCK_ON) && hasReleased && !Button::onRelease() && !Button::isPressed()) {
-    // just play the current mode and don't allow sleep, but only when button is not pressed
-    // (when button is pressed, we want to allow menu access)
-    pat.play();
-    return;
+  if (has_flag(FLAG_LOCK_ON) && hasReleased && !Button::onRelease()) {
+    // For lock on mode, always play the pattern unless we're in a long hold (menu access)
+    uint32_t holdDur = Button::holdDuration();
+    bool heldPast = (holdDur > SHORT_CLICK_THRESHOLD);
+    if (!Button::isPressed() || !heldPast) {
+      pat.play();
+      return;
+    }
   }
 
-  if (!has_flag(FLAG_LOCKED) && hasReleased) {
-    // just play the current mode (include lock on case when not pressing button)
-    if (!has_flag(FLAG_LOCK_ON) || !Button::isPressed()) {
-      pat.play();
-    }
+  if (!has_flag(FLAG_LOCKED) && !has_flag(FLAG_LOCK_ON) && hasReleased) {
+    // just play the current mode
+    pat.play();
   }
   // check how long the button is held
   uint32_t holdDur = Button::holdDuration();
