@@ -9,21 +9,30 @@ jobs:
     steps:
       - name: Checkout current repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch all history for version calculation
       - name: Update Package Lists
         run: sudo apt-get update
-      - name: Install Dependencies
+      - name: Install Base Dependencies
         run: sudo apt-get install valgrind g++ make --fix-missing
-      - name: Build HeliosCLI
-        run: make -j
-        working-directory: HeliosCLI
-      - name: Archive HeliosCLI artifacts
-        run: zip -r "helioscli.zip" .
-        working-directory: HeliosCLI
-      - name: Upload HeliosCLI Artifact
+      - name: Install Project Dependencies
+        run: make install
+      - name: Install Emscripten
+        run: |
+          sudo apt install -y cmake python3
+          git clone https://github.com/emscripten-core/emsdk.git
+          cd emsdk
+          ./emsdk install latest
+          ./emsdk activate latest
+      - name: Build Complete Package
+        run: |
+          source ./emsdk/emsdk_env.sh
+          make package
+      - name: Upload Complete Package Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: helioscli-artifacts
-          path: HeliosCLI/helioscli.zip
+          name: helios-complete-package
+          path: helios-*.zip
 
   tests:
     needs: build
@@ -31,45 +40,27 @@ jobs:
     steps:
       - name: Checkout current repository
         uses: actions/checkout@v4
-      - name: Download HeliosCLI Artifact
+      - name: Download Complete Package
         uses: actions/download-artifact@v4
         with:
-          name: helioscli-artifacts
-          path: ./HeliosCLI
+          name: helios-complete-package
+          path: ./package
+      - name: Extract Package for Testing
+        run: |
+          cd package
+          unzip helios-*.zip -d extracted/
+          # Copy CLI binary to expected location for tests
+          mkdir -p ../HeliosCLI/build/desktop/
+          cp extracted/cli/helios ../HeliosCLI/build/desktop/
       - name: Set execute permissions for test script
-        run: chmod +x ./runtests.sh
+        run: chmod +x ./run_tests.sh
         working-directory: tests
       - name: Run general tests
-        run: ./runtests.sh
+        run: ./run_tests.sh
         working-directory: tests
 
-  embedded:
-    needs: tests
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout current repository
-        uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.x"
-      - name: Install Dependencies
-        run: make install
-        working-directory: HeliosEmbedded
-      - name: Build Binary
-        run: make build
-        working-directory: HeliosEmbedded
-      - name: Archive HeliosEmbedded artifacts
-        run: zip -r "embedded-firmware.zip" .
-        working-directory: HeliosEmbedded
-      - name: Upload HeliosEmbedded Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: embedded-firmware
-          path: HeliosEmbedded/embedded-firmware.zip
-
   release:
-    needs: embedded
+    needs: tests
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -125,26 +116,17 @@ jobs:
           git tag ${{ env.new_tag }}
           git push origin ${{ env.new_tag }}
 
-      - name: Download HeliosCLI Artifact
+      - name: Download Complete Package
         uses: actions/download-artifact@v4
         with:
-          name: helioscli-artifacts
-          path: ./artifact/helioscli
+          name: helios-complete-package
+          path: ./package
 
-      - name: Download HeliosEmbedded Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: embedded-firmware
-          path: ./artifact/embedded
-
-      - name: Create directories for unzipping
-        run: mkdir -p ./artifact/unzipped/helioscli ./artifact/unzipped/embedded
-
-      - name: Unzip HeliosCLI Artifact
-        run: unzip ./artifact/helioscli/helioscli.zip -d ./artifact/unzipped/helioscli
-
-      - name: Unzip HeliosEmbedded Artifact
-        run: unzip ./artifact/embedded/embedded-firmware.zip -d ./artifact/unzipped/embedded
+      - name: Extract Package for Release
+        run: |
+          cd package
+          unzip helios-*.zip -d extracted/
+          ls -la extracted/
 
       - name: Create GitHub Release
         id: create_release
@@ -154,58 +136,76 @@ jobs:
           name: Helios ${{ env.new_version }}
           body: |
             Release of Helios version ${{ env.new_version }}
+
+            This release includes:
+            - CLI binary for desktop use
+            - Embedded firmware files (hex, bin, elf, map)
+            - WebAssembly library for web integration
+            - Complete documentation
+
+            Download the complete package or individual components below.
           draft: false
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload Release Assets (helios.bin)
+      - name: Upload Complete Package
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./artifact/unzipped/embedded/helios.bin
-          asset_name: helios.bin
+          asset_path: ./package/helios-*.zip
+          asset_name: helios-complete-${{ env.new_version }}.zip
+          asset_content_type: application/zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload CLI Binary
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./package/extracted/cli/helios
+          asset_name: helios-cli
           asset_content_type: application/octet-stream
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload Release Assets (helios.elf)
+      - name: Upload Embedded Hex File
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./artifact/unzipped/embedded/helios.elf
-          asset_name: helios.elf
-          asset_content_type: application/octet-stream
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload Release Assets (helios.map)
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./artifact/unzipped/embedded/helios.map
-          asset_name: helios.map
-          asset_content_type: application/octet-stream
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload Release Assets (helios.hex)
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./artifact/unzipped/embedded/helios.hex
+          asset_path: ./package/extracted/embedded/helios.hex
           asset_name: helios.hex
           asset_content_type: application/octet-stream
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload Release Assets (Helios CLI)
+      - name: Upload Embedded Binary
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./artifact/unzipped/helioscli/helios
-          asset_name: helios
+          asset_path: ./package/extracted/embedded/helios.bin
+          asset_name: helios.bin
           asset_content_type: application/octet-stream
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload WASM Library
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./package/extracted/wasm/HeliosLib.js
+          asset_name: HeliosLib.js
+          asset_content_type: application/javascript
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload WASM Binary
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./package/extracted/wasm/HeliosLib.wasm
+          asset_name: HeliosLib.wasm
+          asset_content_type: application/wasm
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

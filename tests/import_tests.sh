@@ -68,7 +68,7 @@ TESTDIR="tests"
 mkdir -p $TESTDIR
 
 # Helios command path
-HELIOS="../HeliosCLI/helios"
+HELIOS="../HeliosCLI/build/desktop/helios"
 
 # Check if the CSV file exists
 if [ ! -f "$CSV_FILE" ]; then

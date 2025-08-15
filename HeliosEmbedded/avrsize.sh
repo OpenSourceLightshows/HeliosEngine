@@ -3,16 +3,31 @@
 # need megatinycore installed for this
 
 if [ "$OS" == "Windows_NT" ]; then
-	AVR_SIZE="C:/Program Files (x86)/Atmel/Studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/avr-size.exe"
+  AVR_SIZE="C:/Program Files (x86)/Atmel/Studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/avr-size.exe"
 elif [ "$(uname -s)" == "Linux" ]; then
-  AVR_SIZE="${HOME}/atmel_setup/avr8-gnu-toolchain-linux_x86_64/bin/avr-size"
+  # Try system-installed avr-size first, then fall back to custom path
+  if command -v avr-size >/dev/null 2>&1; then
+    AVR_SIZE="avr-size"
+  else
+    AVR_SIZE="${HOME}/atmel_setup/avr8-gnu-toolchain-linux_x86_64/bin/avr-size"
+  fi
 else
 	AVR_SIZE="/opt/homebrew/bin/avr-size"
 fi
 
-if [ ! -x "$AVR_SIZE" ]; then
-  echo "Could not find avr-size program"
-  exit 1
+# Check if avr-size is available
+if [ "$AVR_SIZE" == "avr-size" ]; then
+  # System command, check if it exists
+  if ! command -v avr-size >/dev/null 2>&1; then
+    echo "Could not find avr-size program"
+    exit 1
+  fi
+else
+  # Specific path, check if file exists and is executable
+  if [ ! -x "$AVR_SIZE" ]; then
+    echo "Could not find avr-size program"
+    exit 1
+  fi
 fi
 
 # Replace this with the path to your .elf file
@@ -29,9 +44,9 @@ DYNAMIC_MEMORY=512
 
 # Run avr-size and parse the output
 if [ "$(uname -o)" == "Msys" ]; then
-	OUTPUT=$("$AVR_SIZE" -A $ELF_FILE)
+  OUTPUT=$("$AVR_SIZE" -A $ELF_FILE)
 else
-	OUTPUT=$($AVR_SIZE -A $ELF_FILE)
+  OUTPUT=$($AVR_SIZE -A $ELF_FILE)
 fi
 
 # Extract sizes of .text, .data, .rodata, and .bss sections

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-HELIOS=./helios
+HELIOS=./build/desktop/helios
 PATTERN_DIR=./default_patterns
 BMP_DIR=./bmp_patterns
 
@@ -14,7 +14,7 @@ NUM_DEFAULT_PATTERNS=6
 # Ensure bmp_patterns directory exists
 mkdir -p "$BMP_DIR"
 
-make helios
+make
 if [ $? -ne 0 ]; then
     echo "Failed to build helios"
     exit 1

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-HELIOS="../HeliosCLI/helios"
+HELIOS="../HeliosCLI/build/desktop/helios"
 OUTPUT_FILE="recorded_input.txt"
 
 # Color definitions

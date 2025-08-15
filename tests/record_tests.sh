@@ -1,7 +1,7 @@
 #!/bin/bash
 
 VALGRIND="valgrind --quiet --leak-check=full --show-leak-kinds=all"
-HELIOS="../HeliosCLI/helios"
+HELIOS="../HeliosCLI/build/desktop/helios"
 
 VALIDATE=0
 QUIET=0
