@@ -368,7 +368,7 @@ void Helios::handle_state_modes()
         case 4: Led::set(RGB_WHITE_BRI_LOW); break;                // Lock On Mode
       }
       } else {
-      if (has_flag(FLAG_LOCKED) || has_flag(FLAG_LOCK_ON)) {
+      if (has_flag(FLAG_LOCKED)) {
         switch (magnitude) {
           default:
           case 0: Led::clear(); break;
