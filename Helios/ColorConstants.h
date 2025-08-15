@@ -49,6 +49,13 @@
 #define RGB_HOT_PINK     (uint32_t)0xFF00B4 // 255, 0, 180
 #define RGB_MAGENTA      (uint32_t)0xFF003C // 255, 0, 60
 
+#define RGB_CREAM        (uint32_t)0xFF932A // 255, 147, 42  - Warm cream with golden undertones
+#define RGB_CORAL        (uint32_t)0xFF2813 // 255, 40, 19   - Deep coral with rich red base
+#define RGB_CYAN         (uint32_t)0x00E5FA // 0, 255, 255   - Pure cyan, equal mix of green and blue
+
+#define RGB_MINT         (uint32_t)0x9dff8c // 157, 255, 140  - More green-blue tint, less white
+#define RGB_LUNA         (uint32_t)0x4050A0 // 64, 80, 160   - Deeper blue tint, less gray
+
 // Helios Medium Brightness Colors
 #define RGB_WHITE_BRI_MEDIUM         (uint32_t)0x787878 // 120 120 120
 #define RGB_RED_BRI_MEDIUM           (uint32_t)0x780000 // 120, 0, 0

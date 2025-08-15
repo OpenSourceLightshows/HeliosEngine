@@ -29,9 +29,23 @@ public:
 #endif
 
   enum Flags : uint8_t {
-    FLAG_NONE = 0,
-    FLAG_LOCKED = (1 << 0),
-    FLAG_CONJURE = (1 << 1),
+    // No flags are set
+    FLAG_NONE     = 0,
+
+    // The device is locked and must be unlocked to turn on
+    FLAG_LOCKED   = (1 << 0),
+    // Conjure mode is enabled, one click will toggle power
+    FLAG_CONJURE  = (1 << 1),
+    // Autoplay is enabled, modes will automatically cycle
+    FLAG_AUTOPLAY = (1 << 2),
+    // Add new flags here, max 8 flags
+
+    // ==============================================
+    // Auto increment to count the number of flags
+    INTERNAL_FLAGS_END,
+    // Calculate mask for invalid Flags based on the
+    // inverse of all flags listed above here
+    FLAGS_INVALID = (uint8_t)(~((1 << (INTERNAL_FLAGS_END - 1)) - 1))
   };
 
   // get/set global flags
@@ -58,33 +72,25 @@ private:
 
   static void handle_off_menu(uint8_t mag, bool past);
   static void handle_on_menu(uint8_t mag, bool past);
-  static void handle_state_col_select();
-  static void handle_state_col_select_slot(ColorSelectOption &out_option);
-  static void handle_state_col_select_quadrant();
-  static void handle_state_col_select_hue_sat_val();
+  static void handle_state_color_selection();
+  static void handle_state_color_group_selection();
+  static void handle_state_col_select_hue_val();
   static void handle_state_pat_select();
   static void handle_state_toggle_flag(Flags flag);
   static void handle_state_set_defaults();
-  static void handle_state_set_global_brightness();
-  static void handle_state_shift_mode();
-  static void handle_state_randomize();
   static void show_selection(RGBColor color);
   static void factory_reset();
 
+
   enum State : uint8_t {
     STATE_MODES,
-    STATE_COLOR_SELECT_SLOT,
-    STATE_COLOR_SELECT_QUADRANT,
+    STATE_COLOR_GROUP_SELECTION,
     STATE_COLOR_SELECT_HUE,
-    STATE_COLOR_SELECT_SAT,
     STATE_COLOR_SELECT_VAL,
     STATE_PATTERN_SELECT,
     STATE_TOGGLE_CONJURE,
     STATE_TOGGLE_LOCK,
     STATE_SET_DEFAULTS,
-    STATE_SET_GLOBAL_BRIGHTNESS,
-    STATE_SHIFT_MODE,
-    STATE_RANDOMIZE,
 #ifdef HELIOS_CLI
     STATE_SLEEP,
 #endif
@@ -96,18 +102,17 @@ private:
   static Flags global_flags;
   static uint8_t menu_selection;
   static uint8_t cur_mode;
-  // the quadrant that was selected in color select
-  static uint8_t selected_slot;
-  static uint8_t selected_base_quad;
+  static uint8_t selected_base_group;
   static uint8_t selected_hue;
-  static uint8_t selected_sat;
   static uint8_t selected_val;
-  static PatternArgs default_args[6];
-  static Colorset default_colorsets[6];
+  static uint8_t selected_sat;
+  static uint8_t num_colors_selected;  // Track number of colors selected in current session
   static Pattern pat;
   static bool keepgoing;
+  static uint32_t last_mode_switch_time;
+  static Colorset new_colorset;
 
 #ifdef HELIOS_CLI
-  static bool sleeping;
+  static bool sleeping;  // Only used in CLI mode
 #endif
 };
