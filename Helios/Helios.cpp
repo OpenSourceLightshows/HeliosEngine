@@ -218,8 +218,8 @@ void Helios::load_global_flags()
     factory_reset();
     return;
   }
-  if (has_flag(FLAG_CONJURE)) {
-    // if conjure is enabled then load the current mode index from storage
+  if (has_flag(FLAG_CONJURE) || has_flag(FLAG_LOCK_ON)) {
+    // if conjure or lock on is enabled then load the current mode index from storage
     cur_mode = Storage::read_current_mode();
   }
 }
