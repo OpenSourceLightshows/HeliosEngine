@@ -94,8 +94,6 @@ DEFINES=\
 	-DF_CPU=$(CPU_SPEED) \
 	-D HELIOS_EMBEDDED
 
-# -mcall-prologues \             Use shared function prologue/epilogue subroutines to reduce code size (Not necessary for embedded use)
-
 CFLAGS = -g \
 	 -Os \
 	 -MMD \
