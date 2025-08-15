@@ -29,16 +29,31 @@ public:
 #endif
 
   enum Flags : uint8_t {
-    FLAG_NONE = 0,
-    FLAG_LOCKED = (1 << 0),
-    FLAG_CONJURE = (1 << 1),
+    // No flags are set
+    FLAG_NONE     = 0,
+
+    // The device is locked and must be unlocked to turn on
+    FLAG_LOCKED   = (1 << 0),
+    // Conjure mode is enabled, one click will toggle power
+    FLAG_CONJURE  = (1 << 1),
+    // Autoplay is enabled, modes will automatically cycle
+    FLAG_AUTOPLAY = (1 << 2),
+    // Add new flags here, max 8 flags
+
+    // ==============================================
+    // Auto increment to count the number of flags
+    INTERNAL_FLAGS_END,
+    // Calculate mask for invalid Flags based on the
+    // inverse of all flags listed above here
+    FLAGS_INVALID = (uint8_t)(~((1 << (INTERNAL_FLAGS_END - 1)) - 1))
   };
 
   // get/set global flags
-  static void set_flag(Flags flag) { global_flags = (Flags)(global_flags | flag); }
-  static bool has_flag(Flags flag) { return (global_flags & flag) == flag; }
-  static void clear_flag(Flags flag) { global_flags = (Flags)(global_flags & ~flag); }
-  static void toggle_flag(Flags flag) { global_flags = (Flags)(global_flags ^ flag); }
+  static void set_flags(Flags flag) { global_flags = (Flags)(global_flags | flag); }
+  static bool has_flags(Flags flag) { return (global_flags & flag) == flag; }
+  static bool has_any_flags(Flags flag) { return (global_flags & flag) != FLAG_NONE; }
+  static void clear_flags(Flags flag) { global_flags = (Flags)(global_flags & ~flag); }
+  static void toggle_flags(Flags flag) { global_flags = (Flags)(global_flags ^ flag); }
 
 private:
   // initialize the various components of helios
