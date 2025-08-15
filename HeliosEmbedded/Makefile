@@ -48,7 +48,16 @@ AVRDUDE = ${AVRDUDEDIR}avrdude
 ### AVRDUDE SETTINGS ###
 ########################
 
-AVRDUDE_CONF = /opt/homebrew/etc/avrdude.conf
+ifeq ($(OS),Windows_NT) # Windows
+    AVRDUDE_CONF = avrdude.conf
+else ifeq ($(OS),Linux)
+    AVRDUDE_CONF = avrdude.conf
+else ifeq ($(OS),Darwin)
+    AVRDUDE_CONF = /opt/homebrew/etc/avrdude.conf
+else
+    # ??? unknown OS
+endif
+
 AVRDUDE_CHIP = attiny85
 
 ifeq ($(OS),Windows_NT) # Windows
