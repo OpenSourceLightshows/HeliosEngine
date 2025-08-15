@@ -24,7 +24,7 @@ else ifeq ($(OS),Linux)
     DEVICE_DIR=~/atmel_setup/gcc/dev/attiny85
     INCLUDE_DIR=~/atmel_setup/include/
 else ifeq ($(OS),Darwin)
-    BINDIR=/opt/homebrew/bin/
+		BINDIR=/opt/homebrew/bin/
     AVRDUDEDIR=/opt/homebrew/bin/
     INCLUDE_DIR=""
 else
