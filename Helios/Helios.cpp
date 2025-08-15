@@ -718,7 +718,7 @@ void Helios::handle_state_pat_select()
 void Helios::handle_state_toggle_flag(Flags flag)
 {
   // toggle the conjure flag
-  toggle_flag(flag);
+  toggle_flags(flag);
   // write out the new global flags and the current mode
   save_global_flags();
   // switch back to modes
