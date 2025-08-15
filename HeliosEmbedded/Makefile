@@ -108,6 +108,7 @@ CFLAGS = -g \
 	 -funsigned-char \
 	 -ffunction-sections\
 	 -funsigned-bitfields \
+	 -mcall-prologues \
 	 -fno-threadsafe-statics \
 	 -D__AVR_ATtiny85__ \
 	 -mmcu=$(AVRDUDE_CHIP) \
