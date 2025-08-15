@@ -24,7 +24,7 @@ else ifeq ($(OS),Linux)
     DEVICE_DIR=~/atmel_setup/gcc/dev/attiny85
     INCLUDE_DIR=~/atmel_setup/include/
 else ifeq ($(OS),Darwin)
-		BINDIR=/opt/homebrew/bin/
+    BINDIR=/opt/homebrew/bin/
     AVRDUDEDIR=/opt/homebrew/bin/
     INCLUDE_DIR=""
 else
@@ -48,7 +48,7 @@ AVRDUDE = ${AVRDUDEDIR}avrdude
 ### AVRDUDE SETTINGS ###
 ########################
 
-AVRDUDE_CONF = /opt/homebrew/etc/avrdude.conf
+AVRDUDE_CONF = ${AVRDUDEDIR}/avrdude.conf
 AVRDUDE_CHIP = attiny85
 
 ifeq ($(OS),Windows_NT) # Windows
@@ -109,7 +109,6 @@ CFLAGS = -g \
 	 -ffunction-sections\
 	 -funsigned-bitfields \
 	 -fno-threadsafe-statics \
-	 -fno-rtti \
 	 -mcall-prologues \
 	 -D__AVR_ATtiny85__ \
 	 -mmcu=$(AVRDUDE_CHIP) \
@@ -276,10 +275,10 @@ upload_eeprom_fingers: eeprom_fingers.eep
 ###################
 
 upload_hex:
-	$(AVRDUDE) $(AVRDUDE_FLAGS) -U flash:w:aeos_firmware.hex:i
+	$(AVRDUDE) $(AVRDUDE_FLAGS) -U flash:w:helios_firmware.hex:i
 
-extract_hex: aeos_firmware.hex
-	$(AVRDUDE) $(AVRDUDE_FLAGS) -U flash:r:aeos_firmware.hex:i
+extract_hex: helios_firmware.hex
+	$(AVRDUDE) $(AVRDUDE_FLAGS) -U flash:r:helios_firmware.hex:i
 
 #####################
 ####### CLEAN #######
