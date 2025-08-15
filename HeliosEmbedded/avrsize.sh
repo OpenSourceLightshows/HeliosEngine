@@ -12,7 +12,7 @@ elif [ "$(uname -s)" == "Linux" ]; then
     AVR_SIZE="${HOME}/atmel_setup/avr8-gnu-toolchain-linux_x86_64/bin/avr-size"
   fi
 else
-  AVR_SIZE="/Applications/Arduino.app/Contents/Java/hardware/tools/avr/bin/avr-size"
+	AVR_SIZE="/opt/homebrew/bin/avr-size"
 fi
 
 # Check if avr-size is available

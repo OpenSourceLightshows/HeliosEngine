@@ -14,33 +14,67 @@ CPU_SPEED = 8000000L
 
 # OS Detection and toolchain paths
 ifeq ($(OS),Windows_NT) # Windows
-    BINDIR = "C:/Program Files (x86)/Atmel/Studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/"
-    AVRDUDEDIR = "$(shell echo "$$LOCALAPPDATA")/Arduino15/packages/DxCore/tools/avrdude/6.3.0-arduino17or18/bin/"
-    PYTHON = "$(shell echo "$$LOCALAPPDATA")/Arduino15/packages/megaTinyCore/tools/python3/3.7.2-post1/python3"
-    PYPROG = "$(shell echo "$$LOCALAPPDATA")/Arduino15/packages/megaTinyCore/hardware/megaavr/2.6.5/tools/prog.py"
-    DEVICE_DIR = "C:/Program Files (x86)/Atmel/Studio/7.0/Packs/atmel/ATtiny_DFP/1.10.348/gcc/dev/attiny85/"
-    INCLUDE_DIR = "C:/Program Files (x86)/Atmel/Studio/7.0/Packs/atmel/ATtiny_DFP/1.10.348/include/"
+    BINDIR="C:/Program Files (x86)/Atmel/Studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/"
+    AVRDUDEDIR="$(shell echo "$$LOCALAPPDATA")/Arduino15/packages/DxCore/tools/avrdude/6.3.0-arduino17or18/bin/"
+    PYTHON="$(shell echo "$$LOCALAPPDATA")/Arduino15/packages/megaTinyCore/tools/python3/3.7.2-post1/python3"
+    PYPROG="$(shell echo "$$LOCALAPPDATA")/Arduino15/packages/megaTinyCore/hardware/megaavr/2.6.5/tools/prog.py"
+    DEVICE_DIR="C:/Program Files (x86)/Atmel/Studio/7.0/Packs/atmel/ATtiny_DFP/1.10.348/gcc/dev/attiny85/"
+    INCLUDE_DIR="C:/Program Files (x86)/Atmel/Studio/7.0/Packs/atmel/ATtiny_DFP/1.10.348/include/"
 else ifeq ($(shell uname),Linux)
     # Use system-installed AVR toolchain (from apt-get install gcc-avr avr-libc)
-    BINDIR =
-    DEVICE_DIR =
-    INCLUDE_DIR =
+    BINDIR=
+    DEVICE_DIR=
+    INCLUDE_DIR=
 else ifeq ($(shell uname),Darwin)
-    BINDIR = /Applications/Arduino.app/Contents/Java/hardware/tools/avr/bin/
-    AVRDUDEDIR = /Applications/Arduino.app/Contents/Java/hardware/tools/avr/bin/
-    INCLUDE_DIR =
+    BINDIR=/opt/homebrew/bin/
+    AVRDUDEDIR=/opt/homebrew/bin/
+    INCLUDE_DIR=""
 else
     $(error Unknown operating system)
 endif
 
-CC = $(BINDIR)avr-g++
-LD = $(CC)
-AR = $(BINDIR)avr-gcc-ar
-OBJCOPY = $(BINDIR)avr-objcopy
-NM = $(BINDIR)avr-nm
-OBJDUMP = $(BINDIR)avr-objdump
-AVRDUDE = avrdude
-AVRDUDE_FLAGS = -Cavrdude.conf -p$(AVR_CHIP) -cusbasp -v -B1
+#######################
+### TOOLCHAIN SETUP ###
+#######################
+
+CC = ${BINDIR}avr-g++
+LD = ${BINDIR}avr-g++
+OBJCOPY = ${BINDIR}avr-objcopy -v
+AR = ${BINDIR}avr-gcc-ar
+SIZE = ${BINDIR}avr-size
+OBJDUMP = ${BINDIR}avr-objdump
+NM = ${BINDIR}avr-nm
+AVRDUDE = ${AVRDUDEDIR}avrdude
+
+########################
+### AVRDUDE SETTINGS ###
+########################
+
+AVRDUDE_CONF = ${AVRDUDEDIR}/avrdude.conf
+AVRDUDE_CHIP = attiny85
+
+ifeq ($(OS),Windows_NT) # Windows
+    AVRDUDE_PROGRAMMER = atmelice_isp
+    AVRDUDE_BAUDRATE = 115200
+    AVRDUDE_PORT = usb
+else ifeq ($(OS),Darwin)
+    AVRDUDE_PROGRAMMER = usbtiny
+    AVRDUDE_BAUDRATE = 19200
+    AVRDUDE_PORT = usb
+endif
+
+AVRDUDE_FLAGS = -C$(AVRDUDE_CONF) \
+		-p$(AVRDUDE_CHIP) \
+		-c$(AVRDUDE_PROGRAMMER) \
+		-P$(AVRDUDE_PORT) \
+		-b$(AVRDUDE_BAUDRATE) \
+		-v \
+		-B1
+
+# -v -- Verbose output - display detailed progress
+# -B1 -- Bit clock period (in microseconds) - sets programming speed
+# -V -- Disable automatic verify check when uploading
+# -D -- Disable auto erase for flash memory
 
 FIRMWARE = $(BUILD_DIR)/helios
 ELF = $(FIRMWARE).elf
@@ -54,17 +88,53 @@ MAP = $(FIRMWARE).map
 ### COMPILER FLAGS ####
 #######################
 
-CFLAGS = -Os -Wall -std=gnu++17 -MMD \
-	-mmcu=$(AVR_CHIP) -DF_CPU=$(CPU_SPEED) \
-	-flto -fno-exceptions -fdata-sections -ffunction-sections \
-	-DHELIOS_EMBEDDED \
-	-DHELIOS_VERSION_MAJOR=$(HELIOS_VERSION_MAJOR) \
-	-DHELIOS_VERSION_MINOR=$(HELIOS_VERSION_MINOR) \
-	-DHELIOS_BUILD_NUMBER=$(HELIOS_BUILD_NUMBER) \
-	-DHELIOS_VERSION_NUMBER=$(HELIOS_VERSION_NUMBER) \
-	-I ../Helios
+CFLAGS = -g \
+	 -Os \
+	 -MMD \
+	 -Wall \
+	 -flto \
+	 -mrelax \
+	 -std=gnu++17 \
+	 -fshort-enums \
+	 -fpack-struct \
+	 -fno-exceptions \
+	 -fdata-sections \
+	 -funsigned-char \
+	 -ffunction-sections \
+	 -funsigned-bitfields \
+	 -fno-threadsafe-statics \
+	 -mcall-prologues \
+	 -D__AVR_ATtiny85__ \
+	 -mmcu=$(AVR_CHIP) \
+	 -DF_CPU=$(CPU_SPEED) \
+	 -DHELIOS_EMBEDDED \
+	 -DHELIOS_VERSION_MAJOR=$(HELIOS_VERSION_MAJOR) \
+	 -DHELIOS_VERSION_MINOR=$(HELIOS_VERSION_MINOR) \
+	 -DHELIOS_BUILD_NUMBER=$(HELIOS_BUILD_NUMBER) \
+	 -DHELIOS_VERSION_NUMBER=$(HELIOS_VERSION_NUMBER)
 
-LDFLAGS = -Os -mmcu=$(AVR_CHIP) -flto -Wl,--gc-sections
+LDFLAGS = -g \
+	  -Wall \
+	  -Os \
+	  -flto \
+	  -fuse-linker-plugin \
+	  -Wl,--gc-sections \
+	  -mrelax \
+	  -lm \
+	  -mmcu=$(AVR_CHIP)
+
+ifeq ($(OS),Windows_NT) # Windows
+    CFLAGS+=-B $(DEVICE_DIR)
+    LDFLAGS+=-B $(DEVICE_DIR)
+endif
+
+ifneq ($(DEFINES),)
+    CFLAGS+=$(DEFINES)
+endif
+
+INCLUDES= \
+	-I $(INCLUDE_DIR) \
+	-I ../Helios
 
 #######################
 ### SOURCE FILES ######
