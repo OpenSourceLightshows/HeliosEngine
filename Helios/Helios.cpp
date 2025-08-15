@@ -214,7 +214,7 @@ void Helios::load_global_flags()
   uint8_t saved_brightness = Storage::read_brightness();
   // Check if flags are valid (FLAGS_INVALID is inverse mask of valid flags)
   // and brightness is set in storage
-  bool is_valid = !has_any_flag(FLAGS_INVALID) && saved_brightness > 0;
+  bool is_valid = !has_any_flags(FLAGS_INVALID) && saved_brightness > 0;
   if (is_valid) {
     Led::setBrightness(saved_brightness);
   }
