@@ -367,7 +367,7 @@ void Helios::handle_state_modes()
         case 3: Led::set(RGB_YELLOW_BRI_LOW); break;                    // Conjure Mode
         case 4: Led::set(RGB_WHITE_BRI_LOW); break;                // Lock On Mode
       }
-      } else {
+    } else {
       if (has_flag(FLAG_LOCKED)) {
         switch (magnitude) {
           default:
