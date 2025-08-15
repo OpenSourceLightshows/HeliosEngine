@@ -39,12 +39,12 @@ endif
 
 CC = ${BINDIR}avr-g++
 LD = ${BINDIR}avr-g++
-OBJCOPY = ${BINDIR}avr-objcopy -v
 AR = ${BINDIR}avr-gcc-ar
-SIZE = ${BINDIR}avr-size
-OBJDUMP = ${BINDIR}avr-objdump
+OBJCOPY = ${BINDIR}avr-objcopy -v
 NM = ${BINDIR}avr-nm
+OBJDUMP = ${BINDIR}avr-objdump
 AVRDUDE = ${AVRDUDEDIR}avrdude
+SIZE = ${BINDIR}avr-size
 
 ########################
 ### AVRDUDE SETTINGS ###
