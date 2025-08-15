@@ -219,7 +219,9 @@ void Helios::load_global_flags()
     Led::setBrightness(saved_brightness);
   }
 
-   if (!is_valid) {
+  if (!is_valid) {
+    // if the brightness was 0 and the flags are invalid then the storage was likely
+    // uninitialized or corrupt so write out the defaults
     factory_reset();
   }
 }
