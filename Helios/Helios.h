@@ -38,6 +38,8 @@ public:
     FLAG_CONJURE  = (1 << 1),
     // Autoplay is enabled, modes will automatically cycle
     FLAG_AUTOPLAY = (1 << 2),
+    // Lock on mode is enabled, device stays on and locked
+    FLAG_LOCK_ON  = (1 << 3),
     // Add new flags here, max 8 flags
 
     // ==============================================
@@ -90,6 +92,7 @@ private:
     STATE_PATTERN_SELECT,
     STATE_TOGGLE_CONJURE,
     STATE_TOGGLE_LOCK,
+    STATE_TOGGLE_LOCK_ON,
     STATE_SET_DEFAULTS,
 #ifdef HELIOS_CLI
     STATE_SLEEP,

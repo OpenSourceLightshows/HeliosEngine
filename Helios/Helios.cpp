@@ -218,8 +218,9 @@ void Helios::load_global_flags()
     factory_reset();
     return;
   }
-  if (has_flag(FLAG_CONJURE)) {
-    // if conjure is enabled then load the current mode index from storage
+  if (has_flag(FLAG_CONJURE) || has_flag(FLAG_LOCK_ON)) {
+    // if conjure or lock on is enabled then load the current mode index from storage
+    // For Lock On this will prevent the cur mode from changing back to the first mode when reset
     cur_mode = Storage::read_current_mode();
   }
 }
@@ -272,6 +273,9 @@ void Helios::handle_state()
     case STATE_TOGGLE_LOCK:
       handle_state_toggle_flag(FLAG_LOCKED);
       break;
+    case STATE_TOGGLE_LOCK_ON:
+      handle_state_toggle_flag(FLAG_LOCK_ON);
+      break;
     case STATE_SET_DEFAULTS:
       handle_state_set_defaults();
       break;
@@ -294,6 +298,9 @@ void Helios::handle_state_modes()
   if (Button::releaseCount() > 1 && Button::onShortClick()) {
     if (has_flag(FLAG_CONJURE)) {
       enter_sleep();
+    } else if (has_flag(FLAG_LOCK_ON)) {
+      // when lock on is enabled, short clicks do nothing
+      return;
     } else {
       load_next_mode();
     }
@@ -321,7 +328,18 @@ void Helios::handle_state_modes()
     return;
   }
 
-  if (!has_flag(FLAG_LOCKED) && hasReleased) {
+  // check for lock on - device stays on but locked
+  if (has_flag(FLAG_LOCK_ON) && hasReleased && !Button::onRelease()) {
+    // For lock on mode, always play the pattern unless we're in a long hold (menu access)
+    uint32_t holdDur = Button::holdDuration();
+    bool heldPast = (holdDur > SHORT_CLICK_THRESHOLD);
+    if (!Button::isPressed() || !heldPast) {
+      pat.play();
+      return;
+    }
+  }
+
+  if (!has_flag(FLAG_LOCKED) && !has_flag(FLAG_LOCK_ON) && hasReleased) {
     // just play the current mode
     pat.play();
   }
@@ -333,7 +351,7 @@ void Helios::handle_state_modes()
   // whether the user has held the button longer than a short click
   bool heldPast = (holdDur > SHORT_CLICK_THRESHOLD);
 
-  // flash red briefly when locked and short clicked
+  // flash red briefly when locked and short clicked (only for glow lock, not lock on)
   if (has_flag(FLAG_LOCKED) && holdDur < SHORT_CLICK_THRESHOLD) {
     Led::set(RGB_RED_BRI_LOW);
   }
@@ -347,6 +365,7 @@ void Helios::handle_state_modes()
         case 1: Led::set(RGB_TURQUOISE_BRI_LOW); break;                 // Color Selection
         case 2: Led::set(RGB_MAGENTA_BRI_LOW); break;                   // Pattern Selection
         case 3: Led::set(RGB_YELLOW_BRI_LOW); break;                    // Conjure Mode
+        case 4: Led::set(RGB_WHITE_BRI_LOW); break;                // Lock On Mode
       }
     } else {
       if (has_flag(FLAG_LOCKED)) {
@@ -393,6 +412,20 @@ void Helios::handle_off_menu(uint8_t mag, bool past)
         // ALWAYS RETURN AFTER SLEEP! WE WILL WAKE HERE!
     }
     // in this case we return either way, since we're locked
+    return;
+  }
+
+  // if lock on is enabled, handle the unlocking menu
+  if (has_flag(FLAG_LOCK_ON)) {
+    switch (mag) {
+      case TIME_TILL_GLOW_LOCK_UNLOCK:  // red unlock
+        cur_state = STATE_TOGGLE_LOCK_ON;
+        break;
+      default:
+        // stay on but locked - do not sleep
+        return;
+    }
+    // in this case we return either way, since we're locked on
     return;
   }
 
@@ -451,6 +484,10 @@ void Helios::handle_on_menu(uint8_t mag, bool past)
       break;
     case 3:  // conjure mode
       cur_state = STATE_TOGGLE_CONJURE;
+      Led::clear();
+      break;
+    case 4:  // lock on mode
+      cur_state = STATE_TOGGLE_LOCK_ON;
       Led::clear();
       break;
     default:  // hold past
