@@ -220,6 +220,7 @@ void Helios::load_global_flags()
   }
   if (has_flag(FLAG_CONJURE) || has_flag(FLAG_LOCK_ON)) {
     // if conjure or lock on is enabled then load the current mode index from storage
+    // For Lock On this will prevent the cur mode from changing back to the first mode when reset
     cur_mode = Storage::read_current_mode();
   }
 }
