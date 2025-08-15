@@ -206,7 +206,7 @@ void Helios::load_global_flags()
 {
   // read the global flags from index 0 config
   global_flags = (Flags)Storage::read_global_flags();
-  if (has_flag(FLAG_CONJURE)) {
+  if (has_exact_flag(FLAG_CONJURE)) {
     // if conjure is enabled then load the current mode index from storage
     cur_mode = Storage::read_current_mode();
   }
@@ -214,7 +214,7 @@ void Helios::load_global_flags()
   uint8_t saved_brightness = Storage::read_brightness();
   // Check if flags are valid (FLAGS_INVALID is inverse mask of valid flags)
   // and brightness is set in storage
-  bool is_valid = !(global_flags & FLAGS_INVALID) == 0 && saved_brightness > 0;
+  bool is_valid = (!has_any_flag(FLAGS_INVALID)) == 0 && saved_brightness > 0;
   if (is_valid) {
     Led::setBrightness(saved_brightness);
   }
@@ -303,7 +303,7 @@ void Helios::handle_state_modes()
   bool hasReleased = (Button::releaseCount() > 0);
 
   if (Button::releaseCount() > 1 && Button::onShortClick()) {
-    if (has_flag(FLAG_CONJURE)) {
+    if (has_exact_flag(FLAG_CONJURE)) {
       enter_sleep();
     } else {
       load_next_mode();
@@ -312,13 +312,13 @@ void Helios::handle_state_modes()
   }
 
   // check for lock and go back to sleep
-  if (has_flag(FLAG_LOCKED) && hasReleased && !Button::onRelease()) {
+  if (has_exact_flag(FLAG_LOCKED) && hasReleased && !Button::onRelease()) {
     enter_sleep();
     // ALWAYS RETURN AFTER SLEEP! WE WILL WAKE HERE!
     return;
   }
 
-  if (!has_flag(FLAG_LOCKED) && hasReleased) {
+  if (!has_exact_flag(FLAG_LOCKED) && hasReleased) {
     // just play the current mode
     pat.play();
   }
@@ -331,7 +331,7 @@ void Helios::handle_state_modes()
   bool heldPast = (holdDur > SHORT_CLICK_THRESHOLD);
 
   // flash red briefly when locked and short clicked
-  if (has_flag(FLAG_LOCKED) && !heldPast) {
+  if (has_exact_flag(FLAG_LOCKED) && !heldPast) {
     Led::set(RGB_RED_BRI_LOW);
   }
   // if the button is held for at least 1 second
@@ -348,7 +348,7 @@ void Helios::handle_state_modes()
         case 5: Led::set(HSVColor(Time::getCurtime(), 255, 100)); break; // Randomizer
       }
     } else {
-      if (has_flag(FLAG_LOCKED)) {
+      if (has_exact_flag(FLAG_LOCKED)) {
         switch (magnitude) {
           default:
           case 0: Led::clear(); break;
@@ -381,7 +381,7 @@ void Helios::handle_state_modes()
 void Helios::handle_off_menu(uint8_t mag, bool past)
 {
   // if still locked then handle the unlocking menu which is just if mag == 5
-  if (has_flag(FLAG_LOCKED)) {
+  if (has_exact_flag(FLAG_LOCKED)) {
     switch (mag) {
       case TIME_TILL_GLOW_LOCK_UNLOCK:  // red lock
         cur_state = STATE_TOGGLE_LOCK;

@@ -50,7 +50,8 @@ public:
 
   // get/set global flags
   static void set_flag(Flags flag) { global_flags = (Flags)(global_flags | flag); }
-  static bool has_flag(Flags flag) { return (global_flags & flag) == flag; }
+  static bool has_exact_flag(Flags flag) { return (global_flags & flag) == flag; }
+  static bool has_any_flag(Flags flag) { return (global_flags & flag) != FLAG_NONE; }
   static void clear_flag(Flags flag) { global_flags = (Flags)(global_flags & ~flag); }
   static void toggle_flag(Flags flag) { global_flags = (Flags)(global_flags ^ flag); }
 
