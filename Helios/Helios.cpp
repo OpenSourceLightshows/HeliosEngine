@@ -213,15 +213,23 @@ void Helios::load_global_flags()
 {
   // read the global flags from index 0 config
   global_flags = (Flags)Storage::read_global_flags();
-  // if flags are uninitialized (0xff) or invalid then run factory reset
-  if (global_flags & FLAGS_INVALID) {
-    factory_reset();
-    return;
-  }
   if (has_any_flags((Flags)(FLAG_CONJURE | FLAG_LOCK_ON))) {
-    // if conjure or lock on is enabled then load the current mode index from storage
-    // For Lock On this will prevent the cur mode from changing back to the first mode when reset
+    // if conjure is enabled then load the current mode index from storage
     cur_mode = Storage::read_current_mode();
+  }
+  // read the global brightness from index 2 config
+  uint8_t saved_brightness = Storage::read_brightness();
+  // Check if flags are valid (FLAGS_INVALID is inverse mask of valid flags)
+  // and brightness is set in storage
+  bool is_valid = !has_any_flags(FLAGS_INVALID) && saved_brightness > 0;
+  if (is_valid) {
+    Led::setBrightness(saved_brightness);
+  }
+
+  if (!is_valid) {
+    // if the brightness was 0 and the flags are invalid then the storage was likely
+    // uninitialized or corrupt so write out the defaults
+    factory_reset();
   }
 }
 
@@ -761,6 +769,9 @@ void Helios::factory_reset()
     Patterns::make_default(i, pat);
     Storage::write_pattern(i, pat);
   }
+  // Reset global brightness to default
+  Led::setBrightness(DEFAULT_BRIGHTNESS);
+  Storage::write_brightness(DEFAULT_BRIGHTNESS);
   // set global flags to autoplay
   global_flags = FLAG_AUTOPLAY;
   cur_mode = 0;
