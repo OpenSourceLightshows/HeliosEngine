@@ -439,10 +439,7 @@ void Helios::handle_off_menu(uint8_t mag, bool past)
       cur_state = STATE_SET_DEFAULTS;
       return; //RETURN HERE
     case 3:  // autoplay toggle
-      toggle_flag(FLAG_AUTOPLAY);
-      save_global_flags();
-      last_mode_switch_time = Time::getCurtime(); // Reset the timer when enabling autoplay
-      cur_state = STATE_MODES;
+      handle_state_toggle_flag(FLAG_AUTOPLAY);
       return; //RETURN HERE
     default:
       // just go back to sleep in hold-past off menu
@@ -727,7 +724,7 @@ void Helios::handle_state_pat_select()
 void Helios::handle_state_toggle_flag(Flags flag)
 {
   // toggle the conjure flag
-  toggle_flag(flag);
+  toggle_flags(flag);
   // write out the new global flags and the current mode
   save_global_flags();
   // switch back to modes
