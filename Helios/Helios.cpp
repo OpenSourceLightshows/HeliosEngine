@@ -339,7 +339,7 @@ void Helios::handle_state_modes()
     }
   }
 
-  if (!has_any_flags(FLAG_LOCKED | FLAG_LOCK_ON)  && hasReleased) {
+  if (!has_any_flags(FLAG_LOCKED | FLAG_LOCK_ON) && hasReleased) {
     // just play the current mode
     pat.play();
   }
