@@ -48,7 +48,7 @@ AVRDUDE = ${AVRDUDEDIR}avrdude
 ### AVRDUDE SETTINGS ###
 ########################
 
-AVRDUDE_CONF = ${AVRDUDEDIR}/avrdude.conf
+AVRDUDE_CONF = /opt/homebrew/etc/avrdude.conf
 AVRDUDE_CHIP = attiny85
 
 ifeq ($(OS),Windows_NT) # Windows
@@ -56,9 +56,9 @@ ifeq ($(OS),Windows_NT) # Windows
     AVRDUDE_BAUDRATE = 115200
     AVRDUDE_PORT = usb
 else ifeq ($(OS),Darwin)
-    AVRDUDE_PROGRAMMER = stk500v1
+    AVRDUDE_PROGRAMMER = usbtiny
     AVRDUDE_BAUDRATE = 19200
-    AVRDUDE_PORT = /dev/tty.usbmodem21301
+    AVRDUDE_PORT = usb
 endif
 
 AVRDUDE_FLAGS = -C$(AVRDUDE_CONF) \
