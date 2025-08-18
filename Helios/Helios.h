@@ -38,6 +38,8 @@ public:
     FLAG_CONJURE  = (1 << 1),
     // Autoplay is enabled, modes will automatically cycle
     FLAG_AUTOPLAY = (1 << 2),
+    // Lock on mode is enabled, device stays on and locked
+    FLAG_LOCK_ON  = (1 << 3),
     // Add new flags here, max 8 flags
 
     // ==============================================
@@ -49,10 +51,11 @@ public:
   };
 
   // get/set global flags
-  static void set_flag(Flags flag) { global_flags = (Flags)(global_flags | flag); }
-  static bool has_flag(Flags flag) { return (global_flags & flag) == flag; }
-  static void clear_flag(Flags flag) { global_flags = (Flags)(global_flags & ~flag); }
-  static void toggle_flag(Flags flag) { global_flags = (Flags)(global_flags ^ flag); }
+  static void set_flags(Flags flag) { global_flags = (Flags)(global_flags | flag); }
+  static bool has_flags(Flags flag) { return (global_flags & flag) == flag; }
+  static bool has_any_flags(Flags flag) { return (global_flags & flag) != FLAG_NONE; }
+  static void clear_flags(Flags flag) { global_flags = (Flags)(global_flags & ~flag); }
+  static void toggle_flags(Flags flag) { global_flags = (Flags)(global_flags ^ flag); }
 
 private:
   // initialize the various components of helios
@@ -90,6 +93,7 @@ private:
     STATE_PATTERN_SELECT,
     STATE_TOGGLE_CONJURE,
     STATE_TOGGLE_LOCK,
+    STATE_TOGGLE_LOCK_ON,
     STATE_SET_DEFAULTS,
 #ifdef HELIOS_CLI
     STATE_SLEEP,
