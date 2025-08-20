@@ -24,8 +24,15 @@ else ifeq ($(OS),Linux)
     DEVICE_DIR=~/atmel_setup/gcc/dev/attiny85
     INCLUDE_DIR=~/atmel_setup/include/
 else ifeq ($(OS),Darwin)
-    BINDIR=/opt/homebrew/bin/
-    AVRDUDEDIR=/opt/homebrew/bin/
+    # Auto-detect Homebrew installation path (Apple Silicon vs Intel Mac)
+    ifeq ($(shell test -d /opt/homebrew && echo "apple_silicon"), apple_silicon)
+        HOMEBREW_PREFIX=/opt/homebrew
+    else
+        HOMEBREW_PREFIX=/usr/local
+    endif
+    BINDIR=$(HOMEBREW_PREFIX)/bin/
+    AVRDUDEDIR=$(HOMEBREW_PREFIX)/bin/
+    AVRDUDE_CONF = $(HOMEBREW_PREFIX)/etc/avrdude.conf
     INCLUDE_DIR=""
 else
     # ??? unknown OS
@@ -48,7 +55,7 @@ AVRDUDE = ${AVRDUDEDIR}avrdude
 ### AVRDUDE SETTINGS ###
 ########################
 
-AVRDUDE_CONF = /opt/homebrew/etc/avrdude.conf
+# AVRDUDE_CONF is now set in the Darwin section above based on detected Homebrew path
 AVRDUDE_CHIP = attiny85
 
 ifeq ($(OS),Windows_NT) # Windows
