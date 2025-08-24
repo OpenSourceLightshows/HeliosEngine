@@ -1,6 +1,7 @@
 #!/bin/bash
 
-HELIOS="../HeliosCLI/helios"
+# Helios path relative to HeliosCLI CWD
+HELIOS="./output/helios_cli"
 
 FILE=$1
 VALIDATE=$2
@@ -24,12 +25,15 @@ fi
 INPUT="$(grep "Input=" $FILE | cut -d= -f2 | tr -d '\n' | tr -d '\r')"
 BRIEF="$(grep "Brief=" $FILE | cut -d= -f2 | tr -d '\n' | tr -d '\r')"
 ARGS="$(grep "Args=" $FILE | cut -d= -f2 | tr -d '\n' | tr -d '\r')"
-TESTNUM="$(echo $FILE | cut -d/ -f3 | cut -d_ -f1 | cut -d/ -f2)"
-TESTNUM=$((10#$TESTNUM))
+# Extract Test number correctly from basename
+TESTNUM_FILENAME_PART=$(basename "$FILE")
+TESTNUM_PREFIX=$(echo "$TESTNUM_FILENAME_PART" | cut -d_ -f1)
+TESTNUM=$((10#$TESTNUM_PREFIX))
 
 if [ "$QUIET" -eq 0 ]; then
   echo -e -n "\e[31mRecording test ($TESTCOUNT/$NUMFILES) \e[33m[\e[97m$BRIEF\e[33m] \e[33m[\e[97m$ARGS\e[33m]...\e[0m"
 fi
+# Temp file path relative to CWD (HeliosCLI)
 TEMP_FILE="tmp/${FILE}.out"
 # Append the output of the $HELIOS command to the temp file
 # NOTE: When recording the tests we don't use valgrind because
@@ -40,10 +44,11 @@ echo "Brief=${BRIEF}" >> "$TEMP_FILE"
 echo "Args=${ARGS}" >> "$TEMP_FILE"
 echo "--------------------------------------------------------------------------------" >> "$TEMP_FILE"
 
-# ensure there is no existing storage file
+# ensure there is no existing storage file (in CWD: HeliosCLI)
 rm -f Helios.storage
 
 # strip any \r in case this was run on windows
+# Run Helios from CWD (HeliosCLI)
 $HELIOS $ARGS --no-timestep --hex <<< $INPUT >> $TEMP_FILE
 
 sed -i 's/\r//g' $TEMP_FILE
@@ -55,6 +60,7 @@ else
   echo -n "."
 fi
 if [ "$VALIDATE" -eq 1 ]; then
+  # Run Helios from CWD (HeliosCLI) for validation
   $HELIOS $ARGS --no-timestep --color <<< $INPUT
   echo -e "\e[31mRecorded \e[33m[\e[97m$BRIEF\e[33m] \e[33m[\e[97m$ARGS\e[33m]\e[0m"
   echo -en "${YELLOW}Is this correct? (Y/n):${WHITE} "

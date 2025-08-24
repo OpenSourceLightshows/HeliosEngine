@@ -66,25 +66,36 @@ LLIBS=\
 LIBS=\
 	$(LLIBS) \
 
+# Architecture passed from parent Makefile (default to x64 if run standalone)
+ARCH ?= x64
+
+# Build and Output directories relative to this Makefile
+BUILD_DIR = $(ARCH)
+OUTPUT_DIR = output
+FINAL_LIB_TARGET = $(OUTPUT_DIR)/helios_lib.a
+FINAL_WASM_TARGET = $(OUTPUT_DIR)/helios_wasm.js
+FINAL_WASM_BIN_TARGET = $(OUTPUT_DIR)/helios_wasm.wasm
+
 # source files
-# local source files first, other sources after
 ifeq ($(OS),Windows_NT)
-    SRC = $(shell find ../Helios/ -type f -name \\*.cpp) HeliosLib.cpp
+    HELIOS_SRC = $(shell find ../Helios/ -type f -name \\*.cpp)
+    LOCAL_SRC = HeliosLib.cpp
 else
-    SRC = $(shell find ../Helios/ -type f -name '*.cpp') HeliosLib.cpp
+    HELIOS_SRC = $(shell find ../Helios/ -type f -name '*.cpp')
+    LOCAL_SRC = HeliosLib.cpp
 endif
 
-# object files are source files with .c replaced with .o
-OBJS=\
-	$(SRC:.cpp=.o) \
+# Generate object file paths using BUILD_DIR
+HELIOS_OBJS = $(patsubst ../Helios/%.cpp,$(BUILD_DIR)/Helios/%.o,$(HELIOS_SRC))
+LOCAL_OBJS = $(patsubst %.cpp,$(BUILD_DIR)/%.o,$(LOCAL_SRC))
+OBJS = $(HELIOS_OBJS) $(LOCAL_OBJS)
 
-# dependency files are source files with .c replaced with .d
-DFILES=\
-	$(SRC:.cpp=.d) \
+# Generate dependency file paths
+HELIOS_DFILES = $(patsubst ../Helios/%.cpp,$(BUILD_DIR)/Helios/%.d,$(HELIOS_SRC))
+LOCAL_DFILES = $(patsubst %.cpp,$(BUILD_DIR)/%.d,$(LOCAL_SRC))
+DFILES = $(HELIOS_DFILES) $(LOCAL_DFILES)
 
 # target dependencies
-# this includes any script generated c/h files,
-# the $(LLIBS) list, and the $(OBJS) list
 DEPS=\
 	$(LLIBS) \
 	$(OBJS) \
@@ -94,10 +105,9 @@ TESTS=\
 
 # target files
 ifdef WASM
-TARGETS=HeliosLib.js \
-	helios.a
+TARGETS=$(FINAL_WASM_TARGET) $(FINAL_LIB_TARGET)
 else
-TARGETS=helios.a
+TARGETS=$(FINAL_LIB_TARGET)
 endif
 
 # Default target for 'make' command
@@ -108,25 +118,45 @@ tests: $(TESTS)
 
 # force sub-build of wasm
 wasm: FORCE
-	env WASM=1 $(MAKE)
+	@if command -v em++; then \
+		echo "WebAssembly compiler found, building WASM..."; \
+		env ARCH=wasm WASM=1 $(MAKE) $(FINAL_WASM_TARGET) $(FINAL_LIB_TARGET); \
+	else \
+		echo "WebAssembly compiler (em++) not found, skipping WASM build."; \
+		mkdir -p $(OUTPUT_DIR); \
+		touch $(FINAL_WASM_TARGET); \
+		touch $(FINAL_WASM_BIN_TARGET); \
+	fi
 
 # target for helios lib
-helios.a: compute_version $(DEPS)
+$(FINAL_LIB_TARGET): compute_version $(DEPS)
+	@mkdir -p $(dir $@)
 	$(AR) $@ $(DEPS)
+	@echo "Created $@"
 
-HeliosLib.js: compute_version $(DEPS)
+# target for HeliosLib.js
+$(FINAL_WASM_TARGET): compute_version $(DEPS)
+	@mkdir -p $(dir $@)
 	$(CC) $(LDFLAGS) $(DEPS) -o $@ $(LLIBS)
 
-# catch-all make target to generate .o and .d files
-%.o: %.cpp
+# Rules for building object files
+$(BUILD_DIR)/Helios/%.o: ../Helios/%.cpp
+	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -MMD -c $< -o $@
 
-# Empty rule that forces %.a to run all the time
+$(BUILD_DIR)/%.o: %.cpp
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -MMD -c $< -o $@
+
+# Empty rule that forces .a to run all the time
 FORCE:
 
 # generic clean target
 clean:
-	@$(RM) $(DFILES) $(OBJS) $(TARGETS) $(TESTS) HeliosLib.js HeliosLib.wasm
+	@echo "Cleaning up HeliosLib..."
+	@$(RM) -rf $(BUILD_DIR) $(OUTPUT_DIR)
+	@$(RM) -f $(DFILES) $(OBJS) $(TESTS) HeliosLib.js HeliosLib.wasm # Remove old possible output names
+	@echo "Cleaned HeliosLib!"
 
 compute_version:
 	$(eval LATEST_TAG ?= $(shell git fetch --depth=1 origin +refs/tags/*:refs/tags/* &> /dev/null && git tag --list | sort -V | tail -n1))

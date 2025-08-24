@@ -143,18 +143,33 @@ CFLAGS+=$(INCLUDES)
 ### SOURCE FILES ######
 #######################
 
+# Architecture passed from parent Makefile (default to avr if run standalone)
+ARCH ?= avr
+
+# Build and Output directories relative to this Makefile
+BUILD_DIR = $(ARCH)
+LOCAL_OUTPUT_DIR = output
+
 # Source files
 ifeq ($(OS),Windows_NT) # Windows
-SRCS = \
-       $(shell find ../Helios -maxdepth 1 -type f -name '\*.cpp') main.cpp
-else # linux
-SRCS = \
-       $(shell find ../Helios -maxdepth 1 -type f -name \*.cpp) main.cpp
+HELIOS_SRCS = \
+       $(shell find ../Helios -maxdepth 1 -type f -name '\*.cpp')
+LOCAL_SRCS = main.cpp
+else # linux/macos
+HELIOS_SRCS = \
+       $(shell find ../Helios -maxdepth 1 -type f -name \*.cpp)
+LOCAL_SRCS = main.cpp
 endif
 
-OBJS = $(SRCS:.cpp=.o)
+# Generate object file paths using BUILD_DIR
+HELIOS_OBJS = $(patsubst ../Helios/%.cpp,$(BUILD_DIR)/Helios/%.o,$(HELIOS_SRCS))
+LOCAL_OBJS = $(patsubst %.cpp,$(BUILD_DIR)/%.o,$(LOCAL_SRCS))
+OBJS = $(HELIOS_OBJS) $(LOCAL_OBJS)
 
-DFILES = $(SRCS:.cpp=.d)
+# Generate dependency file paths
+HELIOS_DFILES = $(patsubst ../Helios/%.cpp,$(BUILD_DIR)/Helios/%.d,$(HELIOS_SRCS))
+LOCAL_DFILES = $(patsubst %.cpp,$(BUILD_DIR)/%.d,$(LOCAL_SRCS))
+DFILES = $(HELIOS_DFILES) $(LOCAL_DFILES)
 
 #######################
 ### BUILD TARGETS #####
@@ -163,30 +178,50 @@ DFILES = $(SRCS:.cpp=.d)
 # Target name
 TARGET = helios
 
-all: compute_version $(TARGET).hex
+# Define final hex target (still goes to root output)
+ROOT_OUTPUT_DIR = ../output # This needs to stay for the root makefile to copy
+FINAL_HEX_TARGET = $(ROOT_OUTPUT_DIR)/helios_firmware.hex # Keep final target name
+
+# Define targets for intermediate files in local output
+LOCAL_ELF_TARGET = $(LOCAL_OUTPUT_DIR)/$(TARGET).elf
+LOCAL_BIN_TARGET = $(LOCAL_OUTPUT_DIR)/$(TARGET).bin
+LOCAL_EEP_TARGET = $(LOCAL_OUTPUT_DIR)/$(TARGET).eep
+LOCAL_LST_TARGET = $(LOCAL_OUTPUT_DIR)/$(TARGET).lst
+LOCAL_MAP_TARGET = $(LOCAL_OUTPUT_DIR)/$(TARGET).map
+
+all: compute_version $(FINAL_HEX_TARGET)
 	@echo Detected Operating System: $(OS)
-	$(OBJDUMP) --disassemble --source --line-numbers --demangle --section=.text $(TARGET).elf > $(TARGET).lst
-	$(NM) --numeric-sort --line-numbers --demangle --print-size --format=s $(TARGET).elf > $(TARGET).map
+	$(OBJDUMP) --disassemble --source --line-numbers --demangle --section=.text $(LOCAL_ELF_TARGET) > $(LOCAL_LST_TARGET)
+	$(NM) --numeric-sort --line-numbers --demangle --print-size --format=s $(LOCAL_ELF_TARGET) > $(LOCAL_MAP_TARGET)
 	chmod +x avrsize.sh
-	./avrsize.sh $(TARGET).elf
+	./avrsize.sh $(LOCAL_ELF_TARGET)
 	@echo "== Success building Helios v$(HELIOS_VERSION_NUMBER) =="
 
-$(TARGET).hex: $(TARGET).elf
-	$(OBJCOPY) -O binary -R .eeprom $(TARGET).elf $(TARGET).bin
-	$(OBJCOPY) -O ihex -j .eeprom --set-section-flags=.eeprom=alloc,load --no-change-warnings --change-section-lma .eeprom=0 $(TARGET).elf $(TARGET).eep
-	$(OBJCOPY) -O ihex -R .eeprom $< $@
+$(FINAL_HEX_TARGET): $(LOCAL_ELF_TARGET)
+	@mkdir -p $(dir $@)
+	@mkdir -p $(LOCAL_OUTPUT_DIR)
+	$(OBJCOPY) -O binary -R .eeprom $< $(LOCAL_BIN_TARGET)
+	$(OBJCOPY) -O ihex -j .eeprom --set-section-flags=.eeprom=alloc,load --no-change-warnings --change-section-lma .eeprom=0 $< $(LOCAL_EEP_TARGET)
+	$(OBJCOPY) -O ihex -R .eeprom $< ../output/helios_firmware.hex
+	@echo "Created final hex: ../output/helios_firmware.hex"
 
-$(TARGET).elf: compute_version $(OBJS)
+$(LOCAL_ELF_TARGET): compute_version $(OBJS)
+	@mkdir -p $(dir $@)
 	$(LD) $(LDFLAGS) $(OBJS) -o $@
 
-%.o: %.S
-	$(CC) $(ASMFLAGS) -c $< -o $@
-
-%.o: %.cpp
+# Rules for building object files
+$(BUILD_DIR)/Helios/%.o: ../Helios/%.cpp
+	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -MM -MT "$@" -MF "$(BUILD_DIR)/Helios/$*.d" $<
 
-upload: set_fuses $(TARGET).hex
-	$(AVRDUDE) $(AVRDUDE_FLAGS) -Uflash:w:$(TARGET).hex:i
+$(BUILD_DIR)/%.o: %.cpp
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -MM -MT "$@" -MF "$(BUILD_DIR)/$*.d" $<
+
+upload: set_fuses $(FINAL_HEX_TARGET)
+	$(AVRDUDE) $(AVRDUDE_FLAGS) -Uflash:w:$(FINAL_HEX_TARGET):i
 
 #######################
 ### LINUX SETUP #######
@@ -286,7 +321,11 @@ extract_hex: helios_firmware.hex
 #####################
 
 clean:
-	rm -f $(OBJS) $(TARGET).elf $(TARGET).hex $(DFILES) $(TARGET).bin $(TARGET).eep $(TARGET).lst $(TARGET).map
+	@echo "Cleaning up HeliosEmbedded..."
+	@$(RM) -rf $(BUILD_DIR) $(LOCAL_OUTPUT_DIR)
+	@$(RM) -f $(OBJS) $(DFILES) # Keep FINAL_HEX_TARGET out of here, root cleans it
+	@$(RM) -f *.d ../Helios/*.d
+	@echo "Cleaned HeliosEmbedded!"
 
 compute_version:
 	$(eval LATEST_TAG ?= $(shell git fetch --depth=1 origin +refs/tags/*:refs/tags/* &> /dev/null && git tag --list | sort -V | tail -n1))

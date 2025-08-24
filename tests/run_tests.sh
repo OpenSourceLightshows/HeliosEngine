@@ -1,7 +1,8 @@
 #!/bin/bash
 
 VALGRIND=
-HELIOS="../HeliosCLI/helios"
+# Path relative to HeliosCLI CWD
+HELIOS="./output/helios_cli"
 DIFF="diff --strip-trailing-cr"
 
 # select the target repo to create a test for
@@ -34,7 +35,8 @@ do
 done
 
 function run_tests() {
-  PROJECT="tests"
+  # Path relative to HeliosCLI CWD
+  PROJECT="../tests/tests"
 
   ALLSUCCES=1
 
@@ -66,7 +68,7 @@ function run_tests() {
 
   echo -e "\e[33m== [\e[97mRunning $NUMFILES Helios Integration Tests\e[33m] ==\e[0m"
 
-  # clear tmp folder
+  # clear tmp folder relative to HeliosCLI CWD
   rm -rf tmp/$PROJECT
   mkdir -p tmp/$PROJECT
 
@@ -76,8 +78,10 @@ function run_tests() {
     INPUT="$(grep "Input=" $FILE | cut -d= -f2 | tr -d '\n' | tr -d '\r')"
     BRIEF="$(grep "Brief=" $FILE | cut -d= -f2 | tr -d '\n' | tr -d '\r')"
     ARGS="$(grep "Args=" $FILE | cut -d= -f2 | tr -d '\n' | tr -d '\r')"
-    TESTNUM="$(echo $FILE | cut -d/ -f2 | cut -d_ -f1 | cut -d/ -f2)"
-    TESTNUM=$((10#$TESTNUM))
+    # Extract Test number correctly from basename
+    TESTNUM_FILENAME_PART=$(basename "$FILE")
+    TESTNUM_PREFIX=$(echo "$TESTNUM_FILENAME_PART" | cut -d_ -f1)
+    TESTNUM=$((10#$TESTNUM_PREFIX)) # Use the extracted prefix
     TESTCOUNT=$((TESTCOUNT + 1))
     echo -e -n "\e[33mRunning test ($TESTCOUNT/$NUMFILES) [\e[97m$BRIEF\e[33m] "
     if [ "$ARGS" != "" ]; then
@@ -104,9 +108,9 @@ function run_tests() {
       echo "Test: $TESTNUM"
       echo "-----------------------------"
     fi
-    # ensure there is no leftover storage file
+    # ensure there is no leftover storage file (in HeliosCLI CWD)
     rm -f Helios.storage
-    # now run the test
+    # now run the test (from HeliosCLI CWD)
     $VALGRIND $HELIOS $ARGS --no-timestep --hex <<< $INPUT &> $OUTPUT
     # and diff the result
     $DIFF --brief $EXPECTED $OUTPUT &> $DIFFOUT
