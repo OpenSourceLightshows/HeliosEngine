@@ -53,13 +53,15 @@ jobs:
         uses: actions/checkout@v4
       - name: Update Package Lists
         run: sudo apt-get update
-      - name: Install Dependencies
+      - name: Install Base Dependencies
         run: sudo apt-get install valgrind g++ make --fix-missing
+      - name: Install Project Dependencies
+        run: make install
       - name: Build HeliosCLI
         run: make -j
         working-directory: HeliosCLI
       - name: Archive HeliosCLI artifacts
-        run: zip -r "helioscli.zip" .
+        run: zip -r "helioscli.zip" build/
         working-directory: HeliosCLI
       - name: Upload HeliosCLI Artifact
         uses: actions/upload-artifact@v4
@@ -79,14 +81,14 @@ jobs:
           name: helioscli-artifacts
           path: ./HeliosCLI
       - name: Set execute permissions for test script
-        run: chmod +x ./runtests.sh
+        run: chmod +x ./run_tests.sh
         working-directory: tests
       - name: Run general tests
-        run: ./runtests.sh
+        run: ./run_tests.sh
         working-directory: tests
 
   embedded:
-    needs: [setup, build, tests]
+    needs: [setup, tests]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout current repository
@@ -95,25 +97,26 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: "3.x"
-      - name: Install Dependencies
+      - name: Update Package Lists
+        run: sudo apt-get update
+      - name: Install Base Dependencies
+        run: sudo apt-get install make --fix-missing
+      - name: Install Project Dependencies
         run: make install
-        working-directory: HeliosEmbedded
-      - name: Build Binary
+      - name: Build Embedded using unified Makefile
         run: |
           export HELIOS_VERSION_MAJOR=${{ needs.setup.outputs.helios_version_major }}
           export HELIOS_VERSION_MINOR=${{ needs.setup.outputs.helios_version_minor }}
           export HELIOS_BUILD_NUMBER=${{ needs.setup.outputs.helios_build_number }}
           export HELIOS_VERSION_NUMBER=${{ needs.setup.outputs.helios_version_number }}
-          make -j build
-        working-directory: HeliosEmbedded
+          make embedded
       - name: Archive HeliosEmbedded artifacts
-        run: zip -r "embedded-firmware.zip" .
-        working-directory: HeliosEmbedded
+        run: zip -r "embedded-firmware.zip" HeliosEmbedded/build/
       - name: Upload HeliosEmbedded Artifact
         uses: actions/upload-artifact@v4
         with:
           name: embedded-firmware
-          path: HeliosEmbedded/embedded-firmware.zip
+          path: embedded-firmware.zip
 
   wasm:
     needs: [setup, build, tests, embedded]
@@ -131,12 +134,12 @@ jobs:
           ./emsdk install latest
           ./emsdk activate latest
         working-directory: HeliosLib
-      - name: Build Webassembly
+      - name: Build WebAssembly
         run: |
           source ./emsdk/emsdk_env.sh
           export HELIOS_VERSION_MAJOR=${{ needs.setup.outputs.helios_version_major }}
           export HELIOS_VERSION_MINOR=${{ needs.setup.outputs.helios_version_minor }}
           export HELIOS_BUILD_NUMBER=${{ needs.setup.outputs.helios_build_number }}
           export HELIOS_VERSION_NUMBER=${{ needs.setup.outputs.helios_version_number }}
-          make -j wasm
+          make wasm
         working-directory: HeliosLib

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-HELIOS="../HeliosCLI/helios"
+HELIOS="../HeliosCLI/build/desktop/helios"
 
 FILE=$1
 VALIDATE=$2
