@@ -24,8 +24,19 @@ else ifeq ($(OS),Linux)
     DEVICE_DIR=~/atmel_setup/gcc/dev/attiny85
     INCLUDE_DIR=~/atmel_setup/include/
 else ifeq ($(OS),Darwin)
-    BINDIR=/opt/homebrew/bin/
-    AVRDUDEDIR=/opt/homebrew/bin/
+    # Detect Mac architecture (Intel vs Apple Silicon)
+    ARCH = $(shell uname -m)
+    ifeq ($(ARCH),arm64)
+        # Apple Silicon Mac (M1/M2/M3)
+        BINDIR=/opt/homebrew/bin/
+        AVRDUDEDIR=/opt/homebrew/bin/
+        AVRDUDE_CONF = /opt/homebrew/etc/avrdude.conf
+    else
+        # Intel Mac
+        BINDIR=/usr/local/bin/
+        AVRDUDEDIR=/usr/local/bin/
+        AVRDUDE_CONF = /usr/local/Cellar/avrdude/8.1/.bottle/etc/avrdude.conf
+    endif
     INCLUDE_DIR=""
 else
     # ??? unknown OS
@@ -48,20 +59,26 @@ AVRDUDE = ${AVRDUDEDIR}avrdude
 ### AVRDUDE SETTINGS ###
 ########################
 
-AVRDUDE_CONF = /opt/homebrew/etc/avrdude.conf
 AVRDUDE_CHIP = attiny85
 
 ifeq ($(OS),Windows_NT) # Windows
     AVRDUDE_PROGRAMMER = atmelice_isp
     AVRDUDE_BAUDRATE = 115200
     AVRDUDE_PORT = usb
+    AVRDUDE_CONFIG_FLAG = # Windows will use default avrdude.conf
+else ifeq ($(OS),Linux)
+    AVRDUDE_PROGRAMMER = usbtiny
+    AVRDUDE_BAUDRATE = 19200
+    AVRDUDE_PORT = usb
+    AVRDUDE_CONFIG_FLAG = # Linux will use default avrdude.conf
 else ifeq ($(OS),Darwin)
     AVRDUDE_PROGRAMMER = usbtiny
     AVRDUDE_BAUDRATE = 19200
     AVRDUDE_PORT = usb
+    AVRDUDE_CONFIG_FLAG = -C$(AVRDUDE_CONF)
 endif
 
-AVRDUDE_FLAGS = -C$(AVRDUDE_CONF) \
+AVRDUDE_FLAGS = $(AVRDUDE_CONFIG_FLAG) \
 		-p$(AVRDUDE_CHIP) \
 		-c$(AVRDUDE_PROGRAMMER) \
 		-P$(AVRDUDE_PORT) \
@@ -108,7 +125,6 @@ CFLAGS = -g \
 	 -funsigned-char \
 	 -ffunction-sections\
 	 -funsigned-bitfields \
-	 -mcall-prologues \
 	 -fno-threadsafe-statics \
 	 -mcall-prologues \
 	 -D__AVR_ATtiny85__ \
