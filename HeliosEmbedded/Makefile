@@ -54,8 +54,8 @@ AVRDUDE = ${AVRDUDEDIR}avrdude
 ### AVRDUDE SETTINGS ###
 ########################
 
-# Using filtered avrdude config to avoid pickit5_updi compatibility issues
-AVRDUDE_CHIP = attiny85
+# Using avrdude built-in definitions for t85 and usbtiny (avrdude 8.1+)
+AVRDUDE_CHIP = t85
 
 ifeq ($(OS),Windows_NT) # Windows
     AVRDUDE_PROGRAMMER = atmelice_isp
@@ -67,8 +67,7 @@ else ifeq ($(OS),Darwin)
     AVRDUDE_PORT = usb
 endif
 
-AVRDUDE_FLAGS = -C./avrdude_working.conf \
-		-p$(AVRDUDE_CHIP) \
+AVRDUDE_FLAGS = -p$(AVRDUDE_CHIP) \
 		-c$(AVRDUDE_PROGRAMMER) \
 		-P$(AVRDUDE_PORT) \
 		-b$(AVRDUDE_BAUDRATE) \
@@ -190,21 +189,7 @@ $(TARGET).elf: compute_version $(OBJS)
 %.o: %.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
-avrdude_working.conf:
-ifeq ($(OS),Darwin)
-	@if [ -f "$(HOMEBREW_PREFIX)/etc/avrdude.conf" ]; then \
-		echo "Creating filtered avrdude config..."; \
-		awk '/^programmer/{p=1} p && /id.*=.*"pickit5_updi"/{skip=1} p && skip && /^};/{skip=0; p=0; next} !skip' "$(HOMEBREW_PREFIX)/etc/avrdude.conf" > avrdude_working.conf; \
-	else \
-		echo "System avrdude.conf not found, using local fallback..."; \
-		cp avrdude.conf avrdude_working.conf; \
-	fi
-else
-	@echo "Using local avrdude.conf for non-Darwin systems..."
-	@cp avrdude.conf avrdude_working.conf
-endif
-
-upload: set_fuses $(TARGET).hex avrdude_working.conf
+upload: set_fuses $(TARGET).hex
 	$(AVRDUDE) $(AVRDUDE_FLAGS) -Uflash:w:$(TARGET).hex:i
 
 #######################
@@ -235,7 +220,7 @@ endif
 ####### FUSES #######
 #####################
 
-set_fuses: avrdude_working.conf # Low Fuse = Clock Speed | High Fuse = Brown Out Detection Off | Extended Fuse N/A
+set_fuses: # Low Fuse = Clock Speed | High Fuse = Brown Out Detection Off | Extended Fuse N/A
 ifeq ($(CPU_SPEED),16000000L)
 	@echo "Setting fuses for 16MHz..."
 	$(AVRDUDE) $(AVRDUDE_FLAGS) -U lfuse:w:0xe1:m -U hfuse:w:0xdf:m -U efuse:w:0xff:m
@@ -305,7 +290,7 @@ extract_hex: helios_firmware.hex
 #####################
 
 clean:
-	rm -f $(OBJS) $(TARGET).elf $(TARGET).hex $(DFILES) $(TARGET).bin $(TARGET).eep $(TARGET).lst $(TARGET).map avrdude_working.conf
+	rm -f $(OBJS) $(TARGET).elf $(TARGET).hex $(DFILES) $(TARGET).bin $(TARGET).eep $(TARGET).lst $(TARGET).map
 
 compute_version:
 	$(eval LATEST_TAG ?= $(shell git fetch --depth=1 origin +refs/tags/*:refs/tags/* &> /dev/null && git tag --list | sort -V | tail -n1))
