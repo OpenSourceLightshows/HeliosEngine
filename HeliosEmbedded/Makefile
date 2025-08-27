@@ -24,14 +24,8 @@ else ifeq ($(OS),Linux)
     DEVICE_DIR=~/atmel_setup/gcc/dev/attiny85
     INCLUDE_DIR=~/atmel_setup/include/
 else ifeq ($(OS),Darwin)
-    # Auto-detect Homebrew installation path (Apple Silicon vs Intel Mac)
-    ifeq ($(shell test -d /opt/homebrew && echo "apple_silicon"), apple_silicon)
-        HOMEBREW_PREFIX=/opt/homebrew
-    else
-        HOMEBREW_PREFIX=/usr/local
-    endif
-    BINDIR=$(HOMEBREW_PREFIX)/bin/
-    AVRDUDEDIR=$(HOMEBREW_PREFIX)/bin/
+    BINDIR=/opt/homebrew/bin/
+    AVRDUDEDIR=/opt/homebrew/bin/
     INCLUDE_DIR=""
 else
     # ??? unknown OS
@@ -54,8 +48,8 @@ AVRDUDE = ${AVRDUDEDIR}avrdude
 ### AVRDUDE SETTINGS ###
 ########################
 
-# Using avrdude built-in definitions for t85 and usbtiny (avrdude 8.1+)
-AVRDUDE_CHIP = t85
+AVRDUDE_CONF = /opt/homebrew/etc/avrdude.conf
+AVRDUDE_CHIP = attiny85
 
 ifeq ($(OS),Windows_NT) # Windows
     AVRDUDE_PROGRAMMER = atmelice_isp
@@ -67,7 +61,8 @@ else ifeq ($(OS),Darwin)
     AVRDUDE_PORT = usb
 endif
 
-AVRDUDE_FLAGS = -p$(AVRDUDE_CHIP) \
+AVRDUDE_FLAGS = -C$(AVRDUDE_CONF) \
+		-p$(AVRDUDE_CHIP) \
 		-c$(AVRDUDE_PROGRAMMER) \
 		-P$(AVRDUDE_PORT) \
 		-b$(AVRDUDE_BAUDRATE) \
