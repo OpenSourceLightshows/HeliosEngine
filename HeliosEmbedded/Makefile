@@ -27,12 +27,13 @@ else ifeq ($(OS),Darwin)
     # Auto-detect Homebrew installation path (Apple Silicon vs Intel Mac)
     ifeq ($(shell test -d /opt/homebrew && echo "apple_silicon"), apple_silicon)
         HOMEBREW_PREFIX=/opt/homebrew
+    		AVRDUDE_CONF = $(HOMEBREW_PREFIX)/etc/avrdude.conf
     else
         HOMEBREW_PREFIX=/usr/local
+				AVRDUDE_CONF = avrdude.conf
     endif
     BINDIR=$(HOMEBREW_PREFIX)/bin/
     AVRDUDEDIR=$(HOMEBREW_PREFIX)/bin/
-    AVRDUDE_CONF = $(HOMEBREW_PREFIX)/etc/avrdude.conf
     INCLUDE_DIR=""
 else
     # ??? unknown OS
