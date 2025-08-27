@@ -32,7 +32,6 @@ else ifeq ($(OS),Darwin)
     endif
     BINDIR=$(HOMEBREW_PREFIX)/bin/
     AVRDUDEDIR=$(HOMEBREW_PREFIX)/bin/
-    AVRDUDE_CONF = $(HOMEBREW_PREFIX)/etc/avrdude.conf
     INCLUDE_DIR=""
 else
     # ??? unknown OS
@@ -55,7 +54,7 @@ AVRDUDE = ${AVRDUDEDIR}avrdude
 ### AVRDUDE SETTINGS ###
 ########################
 
-# AVRDUDE_CONF is now set in the Darwin section above based on detected Homebrew path
+# AVRDUDE will use its default system configuration file automatically
 AVRDUDE_CHIP = attiny85
 
 ifeq ($(OS),Windows_NT) # Windows
@@ -68,8 +67,7 @@ else ifeq ($(OS),Darwin)
     AVRDUDE_PORT = usb
 endif
 
-AVRDUDE_FLAGS = -C$(AVRDUDE_CONF) \
-		-p$(AVRDUDE_CHIP) \
+AVRDUDE_FLAGS = -p$(AVRDUDE_CHIP) \
 		-c$(AVRDUDE_PROGRAMMER) \
 		-P$(AVRDUDE_PORT) \
 		-b$(AVRDUDE_BAUDRATE) \
