@@ -2,7 +2,7 @@
 ### CONFIGURATION ###
 #####################
 
-.PHONY: all upload set_fuses set_default_fuses set_16mhz_fuses set_8mhz_fuses set_1mhz_fuses get_fuses extract_hex upload_hex extract_eeprom upload_eeprom clean compute_version extract_version helios_release aeos_release
+.PHONY: all upload set_fuses set_default_fuses set_16mhz_fuses set_8mhz_fuses set_1mhz_fuses get_fuses extract_hex upload_hex extract_eeprom upload_eeprom clean compute_version extract_version helios_release
 
 ifneq ($(OS),Windows_NT)
     OS = $(shell uname -s)
@@ -231,7 +231,7 @@ helios_release:
 		echo "✓ Tag $(VERSION) created and pushed"; \
 	fi
 	@echo "Triggering Helios Release workflow..."
-	gh workflow run "Helios Release" --ref main
+	gh workflow run "Helios Release" --ref master
 	@echo "✓ Helios Release workflow triggered successfully!"
 	@echo "Monitor progress with: gh run list --workflow=\"release.yml\" --limit=1"
 
