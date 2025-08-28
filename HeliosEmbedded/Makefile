@@ -2,7 +2,7 @@
 ### CONFIGURATION ###
 #####################
 
-.PHONY: all upload set_fuses set_default_fuses set_16mhz_fuses set_8mhz_fuses set_1mhz_fuses get_fuses extract_hex upload_hex extract_eeprom upload_eeprom clean compute_version extract_version
+.PHONY: all upload set_fuses set_default_fuses set_16mhz_fuses set_8mhz_fuses set_1mhz_fuses get_fuses extract_hex upload_hex extract_eeprom upload_eeprom clean compute_version extract_version helios_release aeos_release
 
 ifneq ($(OS),Windows_NT)
     OS = $(shell uname -s)
@@ -203,6 +203,37 @@ $(TARGET).elf: compute_version $(OBJS)
 
 upload: set_fuses $(TARGET).hex
 	$(AVRDUDE) $(AVRDUDE_FLAGS) -Uflash:w:$(TARGET).hex:i
+
+#######################
+### GITHUB RELEASE ####
+#######################
+
+helios_release:
+	@if [ -z "$(VERSION)" ]; then \
+		echo "Error: VERSION parameter is required"; \
+		echo "Usage: make helios_release VERSION=1.2.3"; \
+		exit 1; \
+	fi
+	@echo "Creating and pushing $(VERSION) tag..."
+	@if git rev-parse "$(VERSION)" >/dev/null 2>&1; then \
+		echo "Warning: Tag $(VERSION) already exists locally"; \
+		echo "Checking if it exists on remote..."; \
+		if git ls-remote --tags origin | grep -q "refs/tags/$(VERSION)$$"; then \
+			echo "Tag $(VERSION) already exists on remote. Skipping tag creation."; \
+		else \
+			echo "Pushing existing local tag to remote..."; \
+			git push origin $(VERSION); \
+		fi \
+	else \
+		echo "Creating new tag $(VERSION)..."; \
+		git tag $(VERSION); \
+		git push origin $(VERSION); \
+		echo "✓ Tag $(VERSION) created and pushed"; \
+	fi
+	@echo "Triggering Helios Release workflow..."
+	gh workflow run "Helios Release" --ref main
+	@echo "✓ Helios Release workflow triggered successfully!"
+	@echo "Monitor progress with: gh run list --workflow=\"release.yml\" --limit=1"
 
 #######################
 ### LINUX SETUP #######
