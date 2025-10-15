@@ -14,6 +14,6 @@ for bmp_file in "$BMP_FOLDER"/*.bmp; do
     output_filename="${filename%.bmp}.svg"
     output_path="$OUTPUT_FOLDER/$output_filename"
 
-    # Call the Python script to generate PNG from BMP
-    python convert_bmp_to_svg.py "$bmp_file" "$output_path"
+    # Call the Python script to generate SVG from BMP (using virtual environment)
+    source venv/bin/activate && python3 convert_bmp_to_svg.py "$bmp_file" "$output_path"
 done
