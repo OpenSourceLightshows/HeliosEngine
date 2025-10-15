@@ -2,7 +2,7 @@
 ### CONFIGURATION ###
 #####################
 
-.PHONY: all upload set_fuses set_default_fuses set_16mhz_fuses set_8mhz_fuses set_1mhz_fuses get_fuses extract_hex upload_hex extract_eeprom upload_eeprom clean compute_version extract_version
+.PHONY: all upload set_fuses set_default_fuses set_16mhz_fuses set_8mhz_fuses set_1mhz_fuses get_fuses extract_hex upload_hex extract_eeprom upload_eeprom clean compute_version extract_version aeos_release
 
 ifneq ($(OS),Windows_NT)
     OS = $(shell uname -s)
@@ -24,8 +24,19 @@ else ifeq ($(OS),Linux)
     DEVICE_DIR=~/atmel_setup/gcc/dev/attiny85
     INCLUDE_DIR=~/atmel_setup/include/
 else ifeq ($(OS),Darwin)
-    BINDIR=/Applications/Arduino.app/Contents/Java/hardware/tools/avr/bin/
-    AVRDUDEDIR=/Applications/Arduino.app/Contents/Java/hardware/tools/avr/bin/
+    # Detect Mac architecture (Intel vs Apple Silicon)
+    ARCH = $(shell uname -m)
+    ifeq ($(ARCH),arm64)
+        # Apple Silicon Mac (M1/M2/M3)
+        BINDIR=/opt/homebrew/bin/
+        AVRDUDEDIR=/opt/homebrew/bin/
+        AVRDUDE_CONF = /opt/homebrew/etc/avrdude.conf
+    else
+        # Intel Mac
+        BINDIR=/usr/local/bin/
+        AVRDUDEDIR=/usr/local/bin/
+        AVRDUDE_CONF = /usr/local/Cellar/avrdude/8.1/.bottle/etc/avrdude.conf
+    endif
     INCLUDE_DIR=""
 else
     # ??? unknown OS
@@ -48,20 +59,26 @@ AVRDUDE = ${AVRDUDEDIR}avrdude
 ### AVRDUDE SETTINGS ###
 ########################
 
-AVRDUDE_CONF = avrdude.conf
 AVRDUDE_CHIP = attiny85
 
 ifeq ($(OS),Windows_NT) # Windows
     AVRDUDE_PROGRAMMER = atmelice_isp
     AVRDUDE_BAUDRATE = 115200
     AVRDUDE_PORT = usb
-else ifeq ($(OS),Darwin)
-    AVRDUDE_PROGRAMMER = stk500v1
+    AVRDUDE_CONFIG_FLAG = # Windows will use default avrdude.conf
+else ifeq ($(OS),Linux)
+    AVRDUDE_PROGRAMMER = usbtiny
     AVRDUDE_BAUDRATE = 19200
-    AVRDUDE_PORT = /dev/tty.usbmodem21301
+    AVRDUDE_PORT = usb
+    AVRDUDE_CONFIG_FLAG = # Linux will use default avrdude.conf
+else ifeq ($(OS),Darwin)
+    AVRDUDE_PROGRAMMER = usbtiny
+    AVRDUDE_BAUDRATE = 19200
+    AVRDUDE_PORT = usb
+    AVRDUDE_CONFIG_FLAG = -C$(AVRDUDE_CONF)
 endif
 
-AVRDUDE_FLAGS = -C$(AVRDUDE_CONF) \
+AVRDUDE_FLAGS = $(AVRDUDE_CONFIG_FLAG) \
 		-p$(AVRDUDE_CHIP) \
 		-c$(AVRDUDE_PROGRAMMER) \
 		-P$(AVRDUDE_PORT) \
@@ -109,6 +126,7 @@ CFLAGS = -g \
 	 -ffunction-sections\
 	 -funsigned-bitfields \
 	 -fno-threadsafe-statics \
+	 -mcall-prologues \
 	 -D__AVR_ATtiny85__ \
 	 -mmcu=$(AVRDUDE_CHIP) \
 	 -DF_CPU=$(CPU_SPEED) \
@@ -185,6 +203,37 @@ $(TARGET).elf: compute_version $(OBJS)
 
 upload: set_fuses $(TARGET).hex
 	$(AVRDUDE) $(AVRDUDE_FLAGS) -Uflash:w:$(TARGET).hex:i
+
+#######################
+### GITHUB RELEASE ####
+#######################
+
+aeos_release:
+	@if [ -z "$(VERSION)" ]; then \
+		echo "Error: VERSION parameter is required"; \
+		echo "Usage: make aeos_release VERSION=1.2.3"; \
+		exit 1; \
+	fi
+	@echo "Creating and pushing aeos-$(VERSION) tag..."
+	@if git rev-parse "aeos-$(VERSION)" >/dev/null 2>&1; then \
+		echo "Warning: Tag aeos-$(VERSION) already exists locally"; \
+		echo "Checking if it exists on remote..."; \
+		if git ls-remote --tags origin | grep -q "aeos-$(VERSION)"; then \
+			echo "Tag aeos-$(VERSION) already exists on remote. Skipping tag creation."; \
+		else \
+			echo "Pushing existing local tag to remote..."; \
+			git push origin aeos-$(VERSION); \
+		fi \
+	else \
+		echo "Creating new tag aeos-$(VERSION)..."; \
+		git tag aeos-$(VERSION); \
+		git push origin aeos-$(VERSION); \
+		echo "✓ Tag aeos-$(VERSION) created and pushed"; \
+	fi
+	@echo "Triggering Aeos Release workflow..."
+	gh workflow run "Aeos Release" --ref aeos
+	@echo "✓ Aeos Release workflow triggered successfully!"
+	@echo "Monitor progress with: gh run list --workflow=\"aeos_release.yml\" --limit=1"
 
 #######################
 ### LINUX SETUP #######
@@ -274,10 +323,10 @@ upload_eeprom_fingers: eeprom_fingers.eep
 ###################
 
 upload_hex:
-	$(AVRDUDE) $(AVRDUDE_FLAGS) -U flash:w:nyx_firmware.hex:i
+	$(AVRDUDE) $(AVRDUDE_FLAGS) -U flash:w:aeos.hex:i
 
-extract_hex: nyx_firmware.hex
-	$(AVRDUDE) $(AVRDUDE_FLAGS) -U flash:r:nyx_firmware.hex:i
+extract_hex: aeos.hex
+	$(AVRDUDE) $(AVRDUDE_FLAGS) -U flash:r:aeos.hex:i
 
 #####################
 ####### CLEAN #######
