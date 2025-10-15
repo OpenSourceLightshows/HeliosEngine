@@ -638,7 +638,7 @@ void Helios::factory_reset()
   Led::setBrightness(DEFAULT_BRIGHTNESS);
   Storage::write_brightness(DEFAULT_BRIGHTNESS);
   // set global flags to autoplay
-  global_flags = FLAG_AUTOPLAY;
+  global_flags = FLAG_NONE;
   cur_mode = 0;
   // save global flags
   save_global_flags();
