@@ -138,13 +138,13 @@
 // Colorset Size
 //
 // the colorset is just an array of colors but it also has a num colors val
-#define COLORSET_SIZE ((sizeof(RGBColor) * NUM_COLOR_SLOTS) + 1)
+#define COLORSET_SIZE ((sizeof(rgb_color_t) * NUM_COLOR_SLOTS) + 1)
 
 // Pattern Args Size
 //
 // There is currently 6 args for a pattern: on, off, gap, dash, group, blend
 // Each takes up 1 byte currently
-#define PAT_ARGS_SIZE (sizeof(PatternArgs))
+#define PAT_ARGS_SIZE (sizeof(pattern_args_t))
 
 // Pattern Size
 //

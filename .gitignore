@@ -9,11 +9,12 @@
 !*.pattern
 !*.h
 !*.cpp
+!*.c
 !*.py
 !*.atsln
 !*.componentinfo.xml
 !*.cppproj
-!*.github/workflows/**
+
 # Ignore object files, dependency files, and other build artifacts
 *.o
 *.d
@@ -37,7 +38,3 @@
 
 !**/Makefile
 
-
-!*.test
-
-!*.conf
