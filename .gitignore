@@ -36,6 +36,7 @@
 !*.md
 
 !**/Makefile
+!**/Makefile.8051
 
 
 !*.test

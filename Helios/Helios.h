@@ -6,7 +6,7 @@
 
 class Helios
 {
-public:
+
   static bool init();
   static void tick();
 
@@ -39,7 +39,7 @@ public:
   static void clear_flag(Flags flag) { global_flags = (Flags)(global_flags & ~flag); }
   static void toggle_flag(Flags flag) { global_flags = (Flags)(global_flags ^ flag); }
 
-private:
+
   // initialize the various components of helios
   static bool init_components();
 

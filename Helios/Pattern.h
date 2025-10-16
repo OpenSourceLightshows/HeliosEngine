@@ -21,7 +21,7 @@ struct PatternArgs {
 
 class Pattern
 {
-public:
+
   // try to not set on duration to 0
   Pattern(uint8_t onDur = 1, uint8_t offDur = 0, uint8_t gap = 0,
           uint8_t dash = 0, uint8_t group = 0, uint8_t blend = 0, uint8_t fade = 0);
@@ -66,7 +66,7 @@ public:
   // whether fade speed is non 0
   bool isFade() const { return m_args.fade_dur > 0; }
 
-protected:
+
   // ==================================
   //  Pattern Parameters
   PatternArgs m_args;

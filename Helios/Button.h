@@ -6,7 +6,7 @@
 
 class Button
 {
-public:
+
   // initialize a new button object with a pin number
   static bool init();
   // directly poll the pin for whether it's pressed right now
@@ -70,7 +70,7 @@ public:
   static uint32_t inputQueueSize();
 #endif
 
-private:
+
   // ========================================
   // state data that is populated each check
 

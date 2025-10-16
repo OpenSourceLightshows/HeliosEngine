@@ -20,7 +20,7 @@ class Pattern;
 
 class Storage
 {
-public:
+
 
   static bool init();
 
@@ -47,7 +47,7 @@ public:
   // toggle storage on/off
   static void enableStorage(bool enabled) { m_enableStorage = enabled; }
 #endif
-private:
+
   static uint8_t crc_pos(uint8_t pos);
   static uint8_t read_crc(uint8_t pos);
   static bool check_crc(uint8_t pos);

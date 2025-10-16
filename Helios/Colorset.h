@@ -9,7 +9,7 @@ class Random;
 
 class Colorset
 {
-public:
+
   // empty colorset
   Colorset();
   // constructor for 1-8 color slots
@@ -130,7 +130,7 @@ public:
   // whether the colorset is currently on the first color or last color
   bool onStart() const;
   bool onEnd() const;
-private:
+
   // palette of colors
   RGBColor m_palette[NUM_COLOR_SLOTS];
   // the actual number of colors in the set

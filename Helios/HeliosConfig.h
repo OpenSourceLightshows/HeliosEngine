@@ -164,4 +164,37 @@
 // the pattern is in each tick of the pattern
 #define DEBUG_BASIC_PATTERN 0
 
+// ============================================================================
+//  Architecture Configuration
+//
+//  Define the target architecture for compilation
+
+// Uncomment ONE of these based on your target:
+// #define HELIOS_AVR     // ATTiny85 (AVR architecture)
+// #define HELIOS_8051    // CA51F152XX (8051 architecture)
+
+// Auto-detect architecture if not explicitly defined
+#if !defined(HELIOS_AVR) && !defined(HELIOS_8051) && !defined(HELIOS_CLI)
+  #ifdef __AVR_ATtiny85__
+    #define HELIOS_AVR
+  #elif defined(__SDCC_mcs51) || defined(__C51__)
+    #define HELIOS_8051
+  #endif
+#endif
+
+// RAM Optimization for 8051
+//
+// The CA51F152XX has only 256 bytes of RAM (vs 512 on ATTiny85)
+// We need to be very careful about RAM usage and move as much as
+// possible to code space (flash)
+#ifdef HELIOS_8051
+  // Mark this so code can conditionally optimize for low RAM
+  #define LOW_RAM_DEVICE 1
+
+  // Storage size adjustment - 8051 has 16KB flash so we can afford
+  // to use more for pattern storage if needed
+  #undef STORAGE_SIZE
+  #define STORAGE_SIZE 256  // Keep same for compatibility
+#endif
+
 #endif

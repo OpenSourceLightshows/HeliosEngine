@@ -14,7 +14,7 @@ class Time
   // private unimplemented constructor
   Time();
 
-public:
+
   // opting for static class here because there should only ever be one
   // Settings control object and I don't like singletons
   static bool init();
@@ -43,7 +43,7 @@ public:
   static void enableTimestep(bool enabled) { m_enableTimestep = enabled; }
 #endif
 
-private:
+
   // global tick counter
   static uint32_t m_curTick;
   // the last frame timestamp

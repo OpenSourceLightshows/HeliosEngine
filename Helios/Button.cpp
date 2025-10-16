@@ -2,13 +2,15 @@
 #include "TimeControl.h"
 
 #ifdef HELIOS_EMBEDDED
-#include <avr/interrupt.h>
-#include <avr/io.h>
-#ifdef HELIOS_ARDUINO
-#include <arduino.h>
-#endif
-#define BUTTON_PIN 3
-#define BUTTON_PORT 2
+  #ifdef HELIOS_8051
+    #include "CA51Hardware.h"
+  #elif defined(HELIOS_AVR)
+    #include <avr/interrupt.h>
+    #include <avr/io.h>
+    #ifdef HELIOS_ARDUINO
+      #include <arduino.h>
+    #endif
+  #endif
 #endif
 
 #include "Helios.h"
@@ -57,13 +59,18 @@ bool Button::init()
   m_enableWake = false;
 #endif
 #ifdef HELIOS_EMBEDDED
-#ifdef HELIOS_ARDUINO
-  pinMode(3, INPUT);
-#else
-  // turn off wake
-  PCMSK &= ~(1 << PCINT3);
-  GIMSK &= ~(1 << PCIE);
-#endif
+  #ifdef HELIOS_8051
+    // CA51F152XX: Configure button pin as input
+    SET_PIN_INPUT(1, BUTTON_PIN);
+    // Disable wake interrupt initially
+    IE &= ~EX0;  // Disable external interrupt 0
+  #elif defined(HELIOS_ARDUINO)
+    pinMode(3, INPUT);
+  #elif defined(HELIOS_AVR)
+    // turn off wake
+    PCMSK &= ~(1 << PCINT3);
+    GIMSK &= ~(1 << PCIE);
+  #endif
 #endif
   return true;
 }
@@ -72,36 +79,59 @@ bool Button::init()
 void Button::enableWake()
 {
 #ifdef HELIOS_EMBEDDED
-  // Configure INT0 to trigger on falling edge
-  PCMSK |= (1 << PCINT3);
-  GIMSK |= (1 << PCIE);
-  sei();
+  #ifdef HELIOS_8051
+    // CA51F152XX: Configure external interrupt 0 for button wake
+    // IT0: Set interrupt type (1 = edge triggered, 0 = level triggered)
+    TCON |= IT0;  // Edge-triggered on falling edge
+    IE0 = 0;      // Clear interrupt flag
+    IE |= EX0;    // Enable external interrupt 0
+    ENABLE_INTERRUPTS();  // Global interrupt enable
+  #elif defined(HELIOS_AVR)
+    // Configure INT0 to trigger on falling edge
+    PCMSK |= (1 << PCINT3);
+    GIMSK |= (1 << PCIE);
+    sei();
+  #endif
 #else // HELIOS_CLI
   m_enableWake = false;
 #endif
 }
 
 #ifdef HELIOS_EMBEDDED
-ISR(PCINT0_vect) {
-  PCMSK &= ~(1 << PCINT3);
-  GIMSK &= ~(1 << PCIE);
-  Helios::wakeup();
-}
+  #ifdef HELIOS_8051
+    // 8051 External Interrupt 0 ISR (button wake)
+    void button_wake_isr(void) ISR_ATTR(0) {
+      IE &= ~EX0;  // Disable external interrupt 0
+      IE0 = 0;     // Clear interrupt flag
+      Helios::wakeup();
+    }
+  #elif defined(HELIOS_AVR)
+    ISR(PCINT0_vect) {
+      PCMSK &= ~(1 << PCINT3);
+      GIMSK &= ~(1 << PCIE);
+      Helios::wakeup();
+    }
+  #endif
 #endif
 
 // directly poll the pin for whether it's pressed right now
 bool Button::check()
 {
 #ifdef HELIOS_EMBEDDED
-#ifdef HELIOS_ARDUINO
-  return digitalRead(3) == HIGH;
-#else
-  return (PINB & (1 << 3)) != 0;
-#endif
+  #ifdef HELIOS_8051
+    // CA51F152XX: Read button pin state
+    return READ_PIN(1, BUTTON_PIN);
+  #elif defined(HELIOS_ARDUINO)
+    return digitalRead(3) == HIGH;
+  #elif defined(HELIOS_AVR)
+    return (PINB & (1 << 3)) != 0;
+  #endif
 #elif defined(HELIOS_CLI)
   // then just return the pin state as-is, the input event may have
   // adjusted this value
   return m_pinState;
+#else
+  return false;
 #endif
 }
 

@@ -11,9 +11,13 @@
 #include "Led.h"
 
 #ifdef HELIOS_EMBEDDED
-#include <avr/sleep.h>
-#include <avr/interrupt.h>
-#include <avr/wdt.h>
+  #ifdef HELIOS_8051
+    #include "CA51Hardware.h"
+  #elif defined(HELIOS_AVR)
+    #include <avr/sleep.h>
+    #include <avr/interrupt.h>
+    #include <avr/wdt.h>
+  #endif
 #endif
 
 #ifdef HELIOS_CLI
@@ -55,20 +59,42 @@ bool Helios::init()
   }
   // then initialize the hardware for embedded helios
 #ifdef HELIOS_EMBEDDED
-  // Set PB0, PB1, PB4 as output
-  DDRB |= (1 << DDB0) | (1 << DDB1) | (1 << DDB4);
-  // Timer0 Configuration for PWM
-  TCCR0A = (1 << WGM01) | (1 << WGM00) | (1 << COM0A1) | (1 << COM0B1);
-  // No prescaler
-  TCCR0B = (1 << CS00);
-  // Timer1 for PWM on PB4, Fast PWM, Non-inverting, No prescaler
-  TCCR1 = (1 << PWM1A) | (1 << COM1A1) | (1 << CS10);
-  // Enable PWM on OC1B
-  GTCCR = (1 << PWM1B) | (1 << COM1B1);
-  // Enable Timer0 overflow interrupt
-  TIMSK |= (1 << TOIE0);
-  // Enable interrupts
-  sei();
+  #ifdef HELIOS_8051
+    // CA51F152XX: Hardware initialization
+
+    // Configure Timer0 for microsecond timing
+    // Mode 0: 13-bit timer/counter
+    TMOD &= 0xF0;  // Clear Timer0 mode bits
+    TMOD |= 0x00;  // Set Timer0 to mode 0 (13-bit counter)
+
+    // Start Timer0
+    TH0 = 0;
+    TL0 = 0;
+    TR0 = 1;  // Enable Timer0
+
+    // Enable Timer0 overflow interrupt
+    IE |= ET0;
+
+    // Enable global interrupts
+    ENABLE_INTERRUPTS();
+
+  #elif defined(HELIOS_AVR)
+    // AVR ATtiny85: Hardware initialization
+    // Set PB0, PB1, PB4 as output
+    DDRB |= (1 << DDB0) | (1 << DDB1) | (1 << DDB4);
+    // Timer0 Configuration for PWM
+    TCCR0A = (1 << WGM01) | (1 << WGM00) | (1 << COM0A1) | (1 << COM0B1);
+    // No prescaler
+    TCCR0B = (1 << CS00);
+    // Timer1 for PWM on PB4, Fast PWM, Non-inverting, No prescaler
+    TCCR1 = (1 << PWM1A) | (1 << COM1A1) | (1 << CS10);
+    // Enable PWM on OC1B
+    GTCCR = (1 << PWM1B) | (1 << COM1B1);
+    // Enable Timer0 overflow interrupt
+    TIMSK |= (1 << TOIE0);
+    // Enable interrupts
+    sei();
+  #endif
 #endif
   return true;
 }
@@ -128,22 +154,52 @@ void Helios::enter_sleep()
 #ifdef HELIOS_EMBEDDED
   // clear the led colors
   Led::clear();
-  // Set all pins to input
-  DDRB = 0x00;
-  // Disable pull-ups on all pins
-  PORTB = 0x00;
-  // Enable wake on interrupt for the button
-  Button::enableWake();
-  // Set sleep mode to POWER DOWN mode
-  set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-  // enter sleep
-  sleep_mode();
-  // ... interrupt will make us wake here
 
-  // Set PB0, PB1, PB4 as output
-  DDRB |= (1 << DDB0) | (1 << DDB1) | (1 << DDB4);
-  // wakeup here, re-init
-  init_components();
+  #ifdef HELIOS_8051
+    // CA51F152XX: Enter power-down mode
+
+    // Set all LED pins to input to save power
+    SET_PIN_INPUT(1, PWM_PIN_R);
+    SET_PIN_INPUT(1, PWM_PIN_G);
+    SET_PIN_INPUT(1, PWM_PIN_B);
+
+    // Disable PWM
+    PWMCR = 0x00;
+
+    // Disable Timer0
+    TR0 = 0;
+    IE &= ~ET0;
+
+    // Enable wake on button press
+    Button::enableWake();
+
+    // Enter power-down mode (IDL+PD bits)
+    PCON |= PD;  // Power down mode
+
+    // ... interrupt will wake us here
+
+    // Re-initialize after wake
+    init_components();
+
+  #elif defined(HELIOS_AVR)
+    // AVR ATtiny85: Power-down mode
+    // Set all pins to input
+    DDRB = 0x00;
+    // Disable pull-ups on all pins
+    PORTB = 0x00;
+    // Enable wake on interrupt for the button
+    Button::enableWake();
+    // Set sleep mode to POWER DOWN mode
+    set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+    // enter sleep
+    sleep_mode();
+    // ... interrupt will make us wake here
+
+    // Set PB0, PB1, PB4 as output
+    DDRB |= (1 << DDB0) | (1 << DDB1) | (1 << DDB4);
+    // wakeup here, re-init
+    init_components();
+  #endif
 #else
   cur_state = STATE_SLEEP;
   // enable the sleep bool

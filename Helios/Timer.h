@@ -5,7 +5,7 @@
 
 class Timer
 {
-public:
+
   Timer();
   ~Timer();
 
@@ -20,7 +20,7 @@ public:
   // Will return the true if the timer hit
   bool alarm();
 
-private:
+
   // the alarm
   uint32_t m_alarm;
   // start time in microseconds

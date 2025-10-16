@@ -23,7 +23,7 @@ class RGBColor;
 
 class HSVColor
 {
-public:
+
   HSVColor();
   HSVColor(uint8_t hue, uint8_t sat, uint8_t val);
 
@@ -52,7 +52,7 @@ public:
 
 class RGBColor
 {
-public:
+
   RGBColor();
   RGBColor(uint8_t red, uint8_t green, uint8_t blue);
 

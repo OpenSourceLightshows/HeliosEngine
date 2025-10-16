@@ -10,7 +10,7 @@ class Led
   // private unimplemented constructor
   Led();
 
-public:
+
   // opting for static class here because there should only ever be one
   // Led control object and I don't like singletons
   static bool init();
@@ -47,7 +47,7 @@ public:
   // actually update the LEDs and show the changes
   static void update();
 
-private:
+
   static void setPWM(uint8_t pwmPin, uint8_t pwmValue, volatile uint8_t &controlRegister,
       uint8_t controlBit, volatile uint8_t &compareRegister);
 

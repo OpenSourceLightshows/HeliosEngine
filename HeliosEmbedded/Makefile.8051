@@ -1,0 +1,157 @@
+#####################
+### CONFIGURATION ###
+#####################
+
+.PHONY: all upload clean compute_version
+
+###########################
+### ARCHITECTURE SELECT ###
+###########################
+
+# Define target architecture
+ARCH = 8051
+TARGET_CHIP = CA51F152XX
+
+#######################
+### TOOLCHAIN SETUP ###
+#######################
+
+# SDCC (Small Device C Compiler) for 8051
+CC = sdcc
+LD = sdcc
+OBJCOPY = objcopy
+PACKIHX = packihx
+SIZE = size
+
+# Programmer tool (adjust based on your programmer)
+PROGRAMMER = stcgal
+PROGRAMMER_PORT = /dev/ttyUSB0
+
+########################
+### COMPILER FLAGS #####
+########################
+
+# System clock speed
+CPU_SPEED = 12000000L
+
+# Compiler defines
+DEFINES = \
+	-DHELIOS_VERSION_MAJOR=$(HELIOS_VERSION_MAJOR) \
+	-DHELIOS_VERSION_MINOR=$(HELIOS_VERSION_MINOR) \
+	-DHELIOS_BUILD_NUMBER=$(HELIOS_BUILD_NUMBER) \
+	-DHELIOS_VERSION_NUMBER=$(HELIOS_VERSION_NUMBER) \
+	-DHELIOS_8051 \
+	-D__SDCC \
+	-DF_CPU=$(CPU_SPEED) \
+	-DHELIOS_EMBEDDED \
+	-include ../Helios/sdcc_compat.h
+
+# SDCC compiler flags
+# Note: SDCC is a C compiler, we treat .cpp as .c and avoid C++ features
+CFLAGS = \
+	--model-small \
+	--stack-auto \
+	--int-long-reent \
+	--float-reent \
+	--opt-code-speed \
+	--std-c99 \
+	-mmcs51 \
+	--disable-warning 85 \
+	--disable-warning 84 \
+	--disable-warning 93 \
+	$(DEFINES)
+
+# Linker flags
+LDFLAGS = \
+	--model-small \
+	--stack-auto \
+	--int-long-reent \
+	--float-reent \
+	--out-fmt-ihx \
+	--code-size 16384 \
+	--xram-size 0 \
+	--iram-size 256
+
+# Include directories
+INCLUDES = \
+	-I ../Helios
+
+CFLAGS += $(INCLUDES)
+
+#######################
+### SOURCE FILES ######
+#######################
+
+# Find all .cpp files in Helios directory and main.cpp
+SRCS = $(wildcard ../Helios/*.cpp) main.cpp
+
+# Convert .cpp to .rel (SDCC object files)
+OBJS = $(SRCS:.cpp=.rel)
+
+# Dependency files
+DFILES = $(SRCS:.cpp=.d)
+
+#######################
+### BUILD TARGETS #####
+#######################
+
+# Target name
+TARGET = helios_8051
+
+all: compute_version $(TARGET).hex
+	@echo "== Success building Helios v$(HELIOS_VERSION_NUMBER) for 8051 =="
+	@if command -v $(SIZE) >/dev/null 2>&1; then \
+		$(SIZE) $(TARGET).hex; \
+	fi
+
+$(TARGET).hex: $(TARGET).ihx
+	$(PACKIHX) $< > $@
+
+$(TARGET).ihx: $(OBJS)
+	$(LD) $(LDFLAGS) $(OBJS) -o $@
+
+# Rename .cpp to .c for compilation, then compile
+%.rel: %.cpp
+	@cp $< $<.c
+	$(CC) $(CFLAGS) -c $<.c -o $@
+	@rm $<.c
+
+%.rel: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+#######################
+### PROGRAMMING #######
+#######################
+
+upload: $(TARGET).hex
+	@echo "Uploading to $(TARGET_CHIP)..."
+	$(PROGRAMMER) -p $(PROGRAMMER_PORT) $(TARGET).hex
+
+#######################
+### VERSION COMPUTE ###
+#######################
+
+compute_version:
+	$(eval LATEST_TAG ?= $(shell git fetch --depth=1 origin +refs/tags/*:refs/tags/* 2>/dev/null && git tag --list | sort -V | tail -n1))
+	$(eval HELIOS_VERSION_MAJOR ?= $(shell echo $(LATEST_TAG) | cut -d. -f1))
+	$(eval HELIOS_VERSION_MINOR ?= $(shell echo $(LATEST_TAG) | cut -d. -f2))
+	$(eval LAST_HELIOS_BUILD_NUMBER ?= $(shell echo $(LATEST_TAG) | cut -d. -f3))
+	$(eval COMMITS_SINCE_TAG := $(shell git rev-list --count $(LATEST_TAG)..HEAD 2>/dev/null || echo 0))
+	$(eval HELIOS_BUILD_NUMBER := $(shell echo $$(( $(LAST_HELIOS_BUILD_NUMBER) + $(COMMITS_SINCE_TAG) ))))
+	$(eval HELIOS_VERSION_MAJOR := $(if $(HELIOS_VERSION_MAJOR),$(HELIOS_VERSION_MAJOR),1))
+	$(eval HELIOS_VERSION_MINOR := $(if $(HELIOS_VERSION_MINOR),$(HELIOS_VERSION_MINOR),0))
+	$(eval HELIOS_BUILD_NUMBER := $(if $(HELIOS_BUILD_NUMBER),$(HELIOS_BUILD_NUMBER),0))
+	$(eval HELIOS_VERSION_NUMBER := $(HELIOS_VERSION_MAJOR).$(HELIOS_VERSION_MINOR).$(HELIOS_BUILD_NUMBER))
+
+#####################
+####### CLEAN #######
+#####################
+
+clean:
+	rm -f $(OBJS) $(TARGET).ihx $(TARGET).hex $(DFILES)
+	rm -f ../Helios/*.rel ../Helios/*.rst ../Helios/*.sym ../Helios/*.lst ../Helios/*.asm
+	rm -f *.rel *.rst *.sym *.lst *.asm *.lk *.map *.mem
+
+# Include dependency files to ensure partial rebuilds work correctly
+-include $(DFILES)
+
