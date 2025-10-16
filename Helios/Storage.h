@@ -1,6 +1,10 @@
 #ifndef STORAGE_H
 #define STORAGE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <inttypes.h>
 #include "HeliosConfig.h"
 
@@ -43,6 +47,10 @@ uint8_t storage_crc8(uint8_t pos, uint8_t size);
 #ifdef HELIOS_CLI
 /* toggle storage on/off */
 void storage_enable_storage(uint8_t enabled);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif

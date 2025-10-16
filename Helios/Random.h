@@ -1,6 +1,10 @@
 #ifndef RANDOM_H
 #define RANDOM_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 
 typedef struct random_t random_t;
@@ -24,5 +28,9 @@ uint8_t random_next8(random_t *rng, uint8_t minValue, uint8_t maxValue);
 
 /* Generate next random 16-bit value within range [minValue, maxValue] */
 uint16_t random_next16(random_t *rng, uint16_t minValue, uint16_t maxValue);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

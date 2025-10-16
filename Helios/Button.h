@@ -1,6 +1,10 @@
 #ifndef BUTTON_H
 #define BUTTON_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 
 /* Initialize button */
@@ -72,6 +76,10 @@ void button_do_toggle(void);
 /* Queue up an input event for the button */
 void button_queue_input(char input);
 uint32_t button_input_queue_size(void);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif
