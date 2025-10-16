@@ -1,3 +1,8 @@
+/* Enable POSIX features for clock_gettime, usleep, etc. */
+#ifdef HELIOS_CLI
+#define _POSIX_C_SOURCE 200112L
+#endif
+
 #include "TimeControl.h"
 
 #include <math.h>
@@ -17,7 +22,6 @@
 #ifdef HELIOS_CLI
 #include <unistd.h>
 #include <time.h>
-static uint64_t start = 0;
 /* convert seconds and nanoseconds to microseconds */
 #define SEC_TO_US(sec) ((sec)*1000000)
 #define NS_TO_US(ns) ((ns)/1000)
