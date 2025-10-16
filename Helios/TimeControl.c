@@ -33,18 +33,18 @@ static uint32_t m_prevTime = 0;
 static uint8_t m_enableTimestep = 1;
 #endif
 
-uint8_t Time_init(void)
+uint8_t time_init(void)
 {
-  m_prevTime = Time_microseconds();
+  m_prevTime = time_microseconds();
   m_curTick = 0;
   return 1;
 }
 
-void Time_cleanup(void)
+void time_cleanup(void)
 {
 }
 
-void Time_tickClock(void)
+void time_tick_clock(void)
 {
   /* tick clock forward */
   m_curTick++;
@@ -61,7 +61,7 @@ void Time_tickClock(void)
   uint32_t elapsed_us;
   uint32_t us;
   do {
-    us = Time_microseconds();
+    us = time_microseconds();
     /* detect rollover of microsecond counter */
     if (us < m_prevTime) {
       /* calculate wrapped around difference */
@@ -78,10 +78,10 @@ void Time_tickClock(void)
   } while (elapsed_us < (1000000 / TICKRATE));
 
   /* store current time */
-  m_prevTime = Time_microseconds();
+  m_prevTime = time_microseconds();
 }
 
-uint32_t Time_getCurtime(void)
+uint32_t time_get_current_time(void)
 {
   return m_curTick;
 }
@@ -93,7 +93,7 @@ ISR(TIMER0_OVF_vect) {
 }
 #endif
 
-uint32_t Time_microseconds(void)
+uint32_t time_microseconds(void)
 {
 #ifdef HELIOS_CLI
   struct timespec ts;
@@ -124,7 +124,7 @@ uint32_t Time_microseconds(void)
 __attribute__((noinline))
 #endif
 void
-Time_delayMicroseconds(uint32_t us)
+time_delay_microseconds(uint32_t us)
 {
 #ifdef HELIOS_EMBEDDED
 #if F_CPU >= 16000000L
@@ -167,15 +167,15 @@ Time_delayMicroseconds(uint32_t us)
 #endif
 
 #else
-  uint32_t newtime = Time_microseconds() + us;
-  while (Time_microseconds() < newtime)
+  uint32_t newtime = time_microseconds() + us;
+  while (time_microseconds() < newtime)
   {
     /* busy loop */
   }
 #endif
 }
 
-void Time_delayMilliseconds(uint32_t ms)
+void time_delay_milliseconds(uint32_t ms)
 {
 #ifdef HELIOS_CLI
   usleep(ms * 1000);
@@ -183,13 +183,13 @@ void Time_delayMilliseconds(uint32_t ms)
   /* not very accurate */
   uint16_t i;
   for (i = 0; i < ms; ++i) {
-    Time_delayMicroseconds(1000);
+    time_delay_microseconds(1000);
   }
 #endif
 }
 
 #ifdef HELIOS_CLI
-void Time_enableTimestep(uint8_t enabled)
+void time_enable_timestep(uint8_t enabled)
 {
   m_enableTimestep = enabled;
 }

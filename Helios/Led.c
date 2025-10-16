@@ -81,7 +81,7 @@ void led_adjust_brightness(uint8_t fadeBy)
 
 void led_strobe(uint16_t on_time, uint16_t off_time, const rgb_color_t *off_col, const rgb_color_t *on_col)
 {
-  if ((Time_getCurtime() % (on_time + off_time)) > on_time) {
+  if ((time_get_current_time() % (on_time + off_time)) > on_time) {
     led_set_rgb(off_col);
   } else {
     led_set_rgb(on_col);
@@ -95,7 +95,7 @@ void led_breath(uint8_t hue, uint32_t duration, uint8_t magnitude, uint8_t sat, 
     return;
   }
   /* Determine the phase in the cycle */
-  uint32_t phase = Time_getCurtime() % (2 * duration);
+  uint32_t phase = time_get_current_time() % (2 * duration);
   /* Calculate hue shift */
   int32_t hueShift;
   if (phase < duration) {
@@ -120,7 +120,7 @@ void led_hold(const rgb_color_t *col)
 {
   led_set_rgb(col);
   led_update();
-  Time_delayMilliseconds(250);
+  time_delay_milliseconds(250);
 }
 
 static void led_set_pwm(uint8_t pwmPin, uint8_t pwmValue, volatile uint8_t *controlRegister,

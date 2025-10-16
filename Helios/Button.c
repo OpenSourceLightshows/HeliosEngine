@@ -140,18 +140,18 @@ void button_update(void)
     m_buttonState = newButtonState;
     m_isPressed = m_buttonState;
     if (m_isPressed) {
-      m_pressTime = Time_getCurtime();
+      m_pressTime = time_get_current_time();
       m_newPress = 1;
     } else {
-      m_releaseTime = Time_getCurtime();
+      m_releaseTime = time_get_current_time();
       m_newRelease = 1;
       m_releaseCount++;
     }
   }
   if (m_isPressed) {
-    m_holdDuration = (Time_getCurtime() >= m_pressTime) ? (uint32_t)(Time_getCurtime() - m_pressTime) : 0;
+    m_holdDuration = (time_get_current_time() >= m_pressTime) ? (uint32_t)(time_get_current_time() - m_pressTime) : 0;
   } else {
-    m_releaseDuration = (Time_getCurtime() >= m_releaseTime) ? (uint32_t)(Time_getCurtime() - m_releaseTime) : 0;
+    m_releaseDuration = (time_get_current_time() >= m_releaseTime) ? (uint32_t)(time_get_current_time() - m_releaseTime) : 0;
   }
   m_shortClick = (m_newRelease && (m_holdDuration <= SHORT_CLICK_THRESHOLD));
   m_longClick = (m_newRelease && (m_holdDuration > SHORT_CLICK_THRESHOLD) && (m_holdDuration < HOLD_CLICK_START));
@@ -287,7 +287,7 @@ void button_do_short_click(void)
 {
   m_newRelease = 1;
   m_shortClick = 1;
-  m_pressTime = Time_getCurtime();
+  m_pressTime = time_get_current_time();
   m_holdDuration = SHORT_CLICK_THRESHOLD - 1;
   m_releaseCount++;
 }
@@ -296,7 +296,7 @@ void button_do_long_click(void)
 {
   m_newRelease = 1;
   m_longClick = 1;
-  m_pressTime = Time_getCurtime();
+  m_pressTime = time_get_current_time();
   m_holdDuration = SHORT_CLICK_THRESHOLD + 1;
   m_releaseCount++;
 }
@@ -305,7 +305,7 @@ void button_do_hold_click(void)
 {
   m_newRelease = 1;
   m_holdClick = 1;
-  m_pressTime = Time_getCurtime();
+  m_pressTime = time_get_current_time();
   m_holdDuration = HOLD_CLICK_START + 1;
   m_releaseCount++;
 }

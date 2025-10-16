@@ -62,7 +62,7 @@ void pattern_init_state(pattern_t *pat)
   colorset_reset_index(&pat->m_colorset);
 
   /* Reset the fade start time to the current time */
-  pat->m_fadeStartTime = Time_getCurtime();
+  pat->m_fadeStartTime = time_get_current_time();
 
   /* the default state to begin with */
   pat->m_state = STATE_BLINK_ON;
@@ -92,7 +92,7 @@ void pattern_init_state(pattern_t *pat)
 
 static void pattern_tick_fade(pattern_t *pat)
 {
-  uint32_t now = Time_getCurtime();
+  uint32_t now = time_get_current_time();
   /* Calculate relative time since pattern was initialized */
   uint32_t relativeTime = now - pat->m_fadeStartTime;
   uint32_t duration = pat->m_args.fade_dur * 10;

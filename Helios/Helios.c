@@ -114,7 +114,7 @@ uint8_t helios_init(void)
 static uint8_t helios_init_components(void)
 {
   /* initialize various components of Helios */
-  if (!Time_init()) {
+  if (!time_init()) {
     return 0;
   }
   if (!led_init()) {
@@ -158,7 +158,7 @@ void helios_tick(void)
 
   /* finally tick the clock forward and then sleep till the entire
    * tick duration has been consumed */
-  Time_tickClock();
+  time_tick_clock();
 }
 
 void helios_enter_sleep(void)
@@ -198,7 +198,7 @@ void helios_wakeup(void)
    * but if we re-initialize the button it will clear this state */
   uint8_t pressed = button_is_pressed();
   /* re-initialize some stuff */
-  Time_init();
+  time_init();
   button_init();
   /* so just re-press it */
   if (pressed) {
@@ -230,7 +230,7 @@ void helios_load_cur_mode(void)
   /* then re-initialize the pattern */
   pattern_init_state(&pat);
   /* Update the last mode switch time when loading a mode */
-  last_mode_switch_time = Time_getCurtime();
+  last_mode_switch_time = time_get_current_time();
 }
 
 void helios_save_cur_mode(void)
@@ -667,9 +667,9 @@ static void helios_handle_state_set_defaults(void)
 
 static void helios_show_selection(rgb_color_t color)
 {
-  uint32_t time_since_click = Time_getCurtime();
+  uint32_t time_since_click = time_get_current_time();
   if (button_press_time() > 0) {
-    time_since_click = Time_getCurtime() - button_press_time();
+    time_since_click = time_get_current_time() - button_press_time();
   }
   /* flash the selection color briefly after clicking */
   if (time_since_click < 150) {

@@ -20,7 +20,7 @@ void timer_init(timer_t *timer, uint8_t alarm)
 void timer_start(timer_t *timer, uint32_t offset)
 {
   /* reset the start time */
-  timer->m_startTime = Time_getCurtime() + offset;
+  timer->m_startTime = time_get_current_time() + offset;
 }
 
 void timer_reset(timer_t *timer)
@@ -34,7 +34,7 @@ uint8_t timer_alarm(timer_t *timer)
   if (!timer->m_alarm) {
     return 0;
   }
-  uint32_t now = Time_getCurtime();
+  uint32_t now = time_get_current_time();
   /* time since start (forward or backwards) */
   int32_t timeDiff = (int32_t)(int64_t)(now - timer->m_startTime);
   if (timeDiff < 0) {
