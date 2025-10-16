@@ -5,14 +5,16 @@
 .PHONY: all tests clean pngs bmps clean_storage
 
 # compiler tool definitions
-CC=g++
+CXX=g++
+CC=gcc
 AR=ar cru
 
 MAKE=make
 RM=rm -rf
 RANLIB=ranlib
 
-CFLAGS=-O2 -g -Wall -std=c++11
+CXXFLAGS=-O2 -g -Wall -std=c++11
+CFLAGS=-O2 -g -Wall -std=c11
 
 # compiler defines
 DEFINES=\
@@ -29,9 +31,11 @@ INCLUDES=\
 # only set them if they're not empty to prevent unnecessary whitespace
 ifneq ($(DEFINES),)
     CFLAGS+=$(DEFINES)
+    CXXFLAGS+=$(DEFINES)
 endif
 ifneq ($(INCLUDES),)
     CFLAGS+=$(INCLUDES)
+    CXXFLAGS+=$(INCLUDES)
 endif
 
 # local NONSTANDARD libraries to link with
@@ -52,20 +56,24 @@ LIBS=\
 # source files
 # local source files first, other sources after
 ifeq ($(OS),Windows_NT)
-	SRC = $(shell find ../Helios -type f -name \\*.cpp) \
-        $(shell find . -type f -name \\*.cpp -not -path "./venv/*")
+	C_SRC = $(shell find ../Helios -type f -name \\*.c)
+	CPP_SRC = $(shell find . -type f -name \\*.cpp -not -path "./venv/*")
 else
-	SRC = $(shell find ../Helios -type f -name '*.cpp') \
-        $(shell find . -type f -name '*.cpp' -not -path "./venv/*")
+	C_SRC = $(shell find ../Helios -type f -name '*.c')
+	CPP_SRC = $(shell find . -type f -name '*.cpp' -not -path "./venv/*")
 endif
 
-# object files are source files with .c replaced with .o
-OBJS=\
-	$(SRC:.cpp=.o) \
+SRC = $(C_SRC) $(CPP_SRC)
 
-# dependency files are source files with .c replaced with .d
-DFILES=\
-	$(SRC:.cpp=.d) \
+# object files are source files with .c/.cpp replaced with .o
+C_OBJS = $(C_SRC:.c=.o)
+CPP_OBJS = $(CPP_SRC:.cpp=.o)
+OBJS = $(C_OBJS) $(CPP_OBJS)
+
+# dependency files
+C_DFILES = $(C_SRC:.c=.d)
+CPP_DFILES = $(CPP_SRC:.cpp=.d)
+DFILES = $(C_DFILES) $(CPP_DFILES)
 
 # target dependencies
 # this includes any script generated c/h files,
@@ -89,10 +97,14 @@ tests: $(TESTS)
 
 # target for vortex lib
 helios: compute_version $(DEPS)
-	$(CC) $(CFLAGS) $(DEPS) -o $@ $(LLIBS)
+	$(CXX) $(CXXFLAGS) $(DEPS) -o $@ $(LLIBS)
 
-# catch-all make target to generate .o and .d files
+# catch-all make target to generate .o and .d files from .cpp
 %.o: %.cpp
+	$(CXX) $(CXXFLAGS) -MMD -c $< -o $@
+
+# catch-all make target to generate .o and .d files from .c
+%.o: %.c
 	$(CC) $(CFLAGS) -MMD -c $< -o $@
 
 # catch-all for static libraries in the form of:

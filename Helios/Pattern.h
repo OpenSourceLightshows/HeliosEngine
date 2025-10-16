@@ -1,6 +1,10 @@
 #ifndef PATTERN_H
 #define PATTERN_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "Colorset.h"
 
 #include "Timer.h"
@@ -74,7 +78,7 @@ struct pattern_t
   enum pattern_state m_state;
 
   /* the blink timer used to measure blink timings */
-  timer_t m_blinkTimer;
+  helios_timer_t m_blinkTimer;
 
   /* ==================================
    *  Blend Members */
@@ -133,5 +137,9 @@ uint8_t pattern_is_blend(const pattern_t *pat);
 
 /* whether fade speed is non 0 */
 uint8_t pattern_is_fade(const pattern_t *pat);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
