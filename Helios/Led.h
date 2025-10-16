@@ -1,6 +1,10 @@
 #ifndef LED_CONTROL_H
 #define LED_CONTROL_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <inttypes.h>
 
 #include "Colortypes.h"
@@ -40,5 +44,9 @@ void led_set_brightness(uint8_t brightness);
 
 /* actually update the LEDs and show the changes */
 void led_update(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

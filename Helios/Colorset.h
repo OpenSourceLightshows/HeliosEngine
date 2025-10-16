@@ -1,6 +1,10 @@
 #ifndef COLORSET_H
 #define COLORSET_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "Colortypes.h"
 
 #include "HeliosConfig.h"
@@ -132,5 +136,9 @@ uint8_t colorset_num_colors(const colorset_t *set);
 /* Whether the colorset is currently on the first color or last color */
 uint8_t colorset_on_start(const colorset_t *set);
 uint8_t colorset_on_end(const colorset_t *set);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

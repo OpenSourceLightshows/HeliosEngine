@@ -1,6 +1,10 @@
 #ifndef TIME_CONTROL_H
 #define TIME_CONTROL_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <inttypes.h>
 
 #include "HeliosConfig.h"
@@ -34,6 +38,10 @@ void time_delay_milliseconds(uint32_t ms);
 #ifdef HELIOS_CLI
 /* Toggle timestep on/off */
 void time_enable_timestep(uint8_t enabled);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif

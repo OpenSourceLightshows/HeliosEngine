@@ -1,6 +1,10 @@
 #ifndef HELIOS_H
 #define HELIOS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 
 #include "HeliosConfig.h"
@@ -42,5 +46,9 @@ void helios_set_flag(enum helios_flags flag);
 uint8_t helios_has_flag(enum helios_flags flag);
 void helios_clear_flag(enum helios_flags flag);
 void helios_toggle_flag(enum helios_flags flag);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

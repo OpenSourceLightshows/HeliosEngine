@@ -6,6 +6,10 @@
 #include "HeliosConfig.h"
 #include "ColorConstants.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if ALTERNATIVE_HSV_RGB == 1
 enum hsv_to_rgb_algorithm
 {
@@ -81,5 +85,9 @@ rgb_color_t hsv_to_rgb_rainbow(const hsv_color_t *rhs);
 rgb_color_t hsv_to_rgb_generic(const hsv_color_t *rhs);
 /* Convert rgb to hsv with generic fast method */
 hsv_color_t rgb_to_hsv_generic(const rgb_color_t *rhs);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

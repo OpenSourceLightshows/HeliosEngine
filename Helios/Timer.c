@@ -4,32 +4,32 @@
 
 #include "TimeControl.h"
 
-void timer_init_default(timer_t *timer)
+void timer_init_default(helios_timer_t *timer)
 {
   timer->m_alarm = 0;
   timer->m_startTime = 0;
 }
 
-void timer_init(timer_t *timer, uint8_t alarm)
+void timer_init(helios_timer_t *timer, uint8_t alarm)
 {
   timer_reset(timer);
   timer->m_alarm = alarm;
   timer_start(timer, 0);
 }
 
-void timer_start(timer_t *timer, uint32_t offset)
+void timer_start(helios_timer_t *timer, uint32_t offset)
 {
   /* reset the start time */
   timer->m_startTime = time_get_current_time() + offset;
 }
 
-void timer_reset(timer_t *timer)
+void timer_reset(helios_timer_t *timer)
 {
   timer->m_alarm = 0;
   timer->m_startTime = 0;
 }
 
-uint8_t timer_alarm(timer_t *timer)
+uint8_t timer_alarm(helios_timer_t *timer)
 {
   if (!timer->m_alarm) {
     return 0;
