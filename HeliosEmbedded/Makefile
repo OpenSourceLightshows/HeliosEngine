@@ -46,8 +46,8 @@ endif
 ### TOOLCHAIN SETUP ###
 #######################
 
-CC = ${BINDIR}avr-g++
-LD = ${BINDIR}avr-g++
+CC = ${BINDIR}avr-gcc
+LD = ${BINDIR}avr-gcc
 OBJCOPY = ${BINDIR}avr-objcopy -v
 AR = ${BINDIR}avr-gcc-ar
 SIZE = ${BINDIR}avr-size
@@ -117,15 +117,13 @@ CFLAGS = -g \
 	 -Wall \
 	 -flto \
 	 -mrelax \
-	 -std=gnu++17 \
+	 -std=c11 \
 	 -fshort-enums \
 	 -fpack-struct \
-	 -fno-exceptions \
 	 -fdata-sections \
 	 -funsigned-char \
 	 -ffunction-sections\
 	 -funsigned-bitfields \
-	 -fno-threadsafe-statics \
 	 -mcall-prologues \
 	 -D__AVR_ATtiny85__ \
 	 -mmcu=$(AVRDUDE_CHIP) \
@@ -162,15 +160,15 @@ CFLAGS+=$(INCLUDES)
 # Source files
 ifeq ($(OS),Windows_NT) # Windows
 SRCS = \
-       $(shell find ../Helios -maxdepth 1 -type f -name '\*.cpp') main.cpp
+       $(shell find ../Helios -maxdepth 1 -type f -name '\*.c') main.c
 else # linux
 SRCS = \
-       $(shell find ../Helios -maxdepth 1 -type f -name \*.cpp) main.cpp
+       $(shell find ../Helios -maxdepth 1 -type f -name \*.c) main.c
 endif
 
-OBJS = $(SRCS:.cpp=.o)
+OBJS = $(SRCS:.c=.o)
 
-DFILES = $(SRCS:.cpp=.d)
+DFILES = $(SRCS:.c=.d)
 
 #######################
 ### BUILD TARGETS #####
@@ -198,7 +196,7 @@ $(TARGET).elf: compute_version $(OBJS)
 %.o: %.S
 	$(CC) $(ASMFLAGS) -c $< -o $@
 
-%.o: %.cpp
+%.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 upload: set_fuses $(TARGET).hex
