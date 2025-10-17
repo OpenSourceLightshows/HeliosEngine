@@ -2,6 +2,10 @@
 #include "TimeControl.h"
 #include "HeliosConfig.h"
 
+#ifdef HELIOS_CLI
+#include <stdio.h>
+#endif
+
 #ifdef HELIOS_EMBEDDED
 #include <avr/interrupt.h>
 #include <avr/io.h>
@@ -164,12 +168,6 @@ void button_update(void)
   if (!processed_pre) {
     button_process_post_input();
   }
-
-  if (m_enableWake) {
-    if (m_isPressed || m_shortClick || m_longClick) {
-      helios_wakeup();
-    }
-  }
 #endif
 }
 
@@ -231,6 +229,9 @@ uint8_t button_release_count(void)
 #ifdef HELIOS_CLI
 static uint8_t button_process_pre_input(void)
 {
+#ifdef HELIOS_CLI
+  static uint32_t processed_count = 0;
+#endif
   if (m_queueHead == m_queueTail) {
     return 0;
   }
@@ -246,6 +247,10 @@ static uint8_t button_process_pre_input(void)
     button_do_toggle();
     break;
   case 'q': /* quit */
+#ifdef HELIOS_CLI
+    fprintf(stderr, "DEBUG: Command #%u - Processing 'q' command, calling helios_terminate()\n", processed_count);
+    fflush(stderr);
+#endif
     helios_terminate();
     break;
   case 'w': /* wait */
@@ -254,10 +259,24 @@ static uint8_t button_process_pre_input(void)
   default:
     /* return here! do not pop the queue
      * do not process post input events */
+#ifdef HELIOS_CLI
+    fprintf(stderr, "DEBUG: Unknown pre-input command '%c' (0x%02X) at head of queue, blocking further processing!\n",
+            (command >= 32 && command < 127) ? command : '?', (unsigned char)command);
+    fflush(stderr);
+#endif
     return 0;
   }
   /* now pop whatever pre-input command was processed */
   m_queueHead = (m_queueHead + 1) % INPUT_QUEUE_SIZE;
+#ifdef HELIOS_CLI
+  processed_count++;
+  uint32_t queue_size_after = button_input_queue_size();
+  if (queue_size_after <= 10 || processed_count >= 3195) {
+    fprintf(stderr, "DEBUG PRE: Processed #%u command='%c'(0x%02X) queue_size_after=%u\n",
+            processed_count, (command >= 32 && command < 127) ? command : '?', (unsigned char)command, queue_size_after);
+    fflush(stderr);
+  }
+#endif
   return 1;
 }
 
@@ -278,9 +297,26 @@ static uint8_t button_process_post_input(void)
     break;
   default:
     /* should never happen */
+#ifdef HELIOS_CLI
+    fprintf(stderr, "DEBUG POST: Unknown command '%c'(0x%02X) in post-input, blocking!\n",
+            (command >= 32 && command < 127) ? command : '?', (unsigned char)command);
+    fflush(stderr);
+#endif
     return 0;
   }
   m_queueHead = (m_queueHead + 1) % INPUT_QUEUE_SIZE;
+#ifdef HELIOS_CLI
+  {
+    static uint32_t post_count = 0;
+    post_count++;
+    uint32_t queue_size_after = button_input_queue_size();
+    if (queue_size_after <= 10) {
+      fprintf(stderr, "DEBUG POST: Processed #%u command='%c'(0x%02X) queue_size_after=%u\n",
+              post_count, (command >= 32 && command < 127) ? command : '?', (unsigned char)command, queue_size_after);
+      fflush(stderr);
+    }
+  }
+#endif
   return 1;
 }
 
@@ -331,10 +367,17 @@ void button_do_toggle(void)
 /* queue up an input event for the button */
 void button_queue_input(char input)
 {
+  static uint32_t total_queued = 0;
   uint32_t nextTail = (m_queueTail + 1) % INPUT_QUEUE_SIZE;
   if (nextTail != m_queueHead) {
     m_inputQueue[m_queueTail] = input;
     m_queueTail = nextTail;
+    total_queued++;
+    if (total_queued == 3200 || total_queued == 3205 || total_queued == 3206) {
+      fprintf(stderr, "DEBUG: Queued command #%u ('%c'), queue size: %u\n",
+              total_queued, input, button_input_queue_size());
+      fflush(stderr);
+    }
   }
 }
 

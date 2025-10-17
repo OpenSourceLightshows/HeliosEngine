@@ -374,11 +374,16 @@ static bool read_inputs()
   // keep track of the number of inputs and only process
   // one input per tick
   static uint32_t numInputs = 0;
+  static bool eof_reported = false;
   // check for any inputs on stdin if theres no inputs left
   if (!numInputs) {
     // this will capture the number of characters on stdin
     ioctl(STDIN_FILENO, FIONREAD, &numInputs);
     if (!numInputs) {
+      if (!eof_reported) {
+        fprintf(stderr, "DEBUG: read_inputs() - no more bytes on stdin (EOF), queue size: %u\n", button_input_queue_size());
+        eof_reported = true;
+      }
       return false;
     }
   }
@@ -403,9 +408,12 @@ static bool read_inputs()
       }
       command = newc;
     }
-    for (uint32_t i = 0; i < repeatAmount; ++i) {
-      // otherwise just queue up the command
-      button_queue_input(command);
+    // skip whitespace and other non-printable characters
+    if (command != '\n' && command != '\r' && command != ' ' && command != '\t') {
+      for (uint32_t i = 0; i < repeatAmount; ++i) {
+        // otherwise just queue up the command
+        button_queue_input(command);
+      }
     }
   }
   return true;

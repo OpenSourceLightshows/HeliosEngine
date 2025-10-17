@@ -137,9 +137,18 @@ static uint8_t helios_init_components(void)
 
 void helios_tick(void)
 {
+  static uint32_t tick_count = 0;
   // sample the button and re-calculate all button globals
   // the button globals should not change anywhere else
   button_update();
+#ifdef HELIOS_CLI
+  tick_count++;
+  if (tick_count % 500 == 0) {
+    fprintf(stderr, "DEBUG: Tick #%u, queue size: %u, asleep: %u, keepgoing: %u\n",
+            tick_count, button_input_queue_size(), helios_is_asleep(), g_keepgoing);
+    fflush(stderr);
+  }
+#endif
 
   // handle the current state of the system, ie whatever state
   // we're in we check for the appropriate input events for that
@@ -966,6 +975,9 @@ uint8_t helios_keep_going(void)
 
 void helios_terminate(void)
 {
+#ifdef HELIOS_CLI
+  fprintf(stderr, "DEBUG: helios_terminate() called, setting g_keepgoing = 0\n");
+#endif
   g_keepgoing = 0;
 }
 
