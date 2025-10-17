@@ -1,6 +1,10 @@
 #ifndef PATTERNS_H
 #define PATTERNS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <inttypes.h>
 
 /* Forward declaration */
@@ -35,5 +39,9 @@ enum pattern_id {
 
 void patterns_make_default(uint8_t index, pattern_t *pat);
 void patterns_make_pattern(enum pattern_id id, pattern_t *pat);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
