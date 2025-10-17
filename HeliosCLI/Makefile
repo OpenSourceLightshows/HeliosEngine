@@ -56,24 +56,18 @@ LIBS=\
 # source files
 # local source files first, other sources after
 ifeq ($(OS),Windows_NT)
-	C_SRC = $(shell find ../Helios -type f -name \\*.c)
-	CPP_SRC = $(shell find . -type f -name \\*.cpp -not -path "./venv/*")
+	CPP_SRC = $(shell find ../Helios -type f -name \\*.cpp) $(shell find . -type f -name \\*.cpp -not -path "./venv/*")
 else
-	C_SRC = $(shell find ../Helios -type f -name '*.c')
-	CPP_SRC = $(shell find . -type f -name '*.cpp' -not -path "./venv/*")
+	CPP_SRC = $(shell find ../Helios -type f -name '*.cpp') $(shell find . -type f -name '*.cpp' -not -path "./venv/*")
 endif
 
-SRC = $(C_SRC) $(CPP_SRC)
+SRC = $(CPP_SRC)
 
-# object files are source files with .c/.cpp replaced with .o
-C_OBJS = $(C_SRC:.c=.o)
-CPP_OBJS = $(CPP_SRC:.cpp=.o)
-OBJS = $(C_OBJS) $(CPP_OBJS)
+# object files are source files with .cpp replaced with .o
+OBJS = $(CPP_SRC:.cpp=.o)
 
 # dependency files
-C_DFILES = $(C_SRC:.c=.d)
-CPP_DFILES = $(CPP_SRC:.cpp=.d)
-DFILES = $(C_DFILES) $(CPP_DFILES)
+DFILES = $(CPP_SRC:.cpp=.d)
 
 # target dependencies
 # this includes any script generated c/h files,
@@ -102,10 +96,6 @@ helios: compute_version $(DEPS)
 # catch-all make target to generate .o and .d files from .cpp
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -MMD -c $< -o $@
-
-# catch-all make target to generate .o and .d files from .c
-%.o: %.c
-	$(CC) $(CFLAGS) -MMD -c $< -o $@
 
 # catch-all for static libraries in the form of:
 # <directory>/<library.a>

@@ -13,8 +13,14 @@
 #endif
 
 /* Forward declaration */
+#ifdef __cplusplus
+extern "C" {
+#endif
 void helios_wakeup(void);
 void helios_terminate(void);
+#ifdef __cplusplus
+}
+#endif
 
 #ifdef HELIOS_CLI
 /* Forward declarations for CLI functions */
