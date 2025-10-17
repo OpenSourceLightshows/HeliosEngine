@@ -48,7 +48,6 @@ LLIBS=\
 # MUST have LLIBS BEFORE the standard libraries
 LIBS=\
 	$(LLIBS) \
-	-lstdc++ \
 
 # source files
 # local source files first, other sources after
@@ -90,7 +89,7 @@ tests: $(TESTS)
 
 # target for vortex lib
 helios: compute_version $(DEPS)
-	$(CC) $(CFLAGS) $(DEPS) -o $@ $(LIBS)
+	$(CC) $(CFLAGS) $(DEPS) -o $@ $(LLIBS)
 
 # catch-all make target to generate .o and .d files
 %.o: %.cpp
