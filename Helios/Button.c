@@ -43,7 +43,7 @@ static uint8_t m_pinState = 0;
 static uint8_t m_enableWake = 0;
 /* Simple input queue for CLI - using a fixed-size circular buffer */
 /* Larger queue size for CLI to handle long test sequences */
-#define INPUT_QUEUE_SIZE 4096
+#define INPUT_QUEUE_SIZE 8192
 static char m_inputQueue[INPUT_QUEUE_SIZE];
 static uint32_t m_queueHead = 0;
 static uint32_t m_queueTail = 0;
