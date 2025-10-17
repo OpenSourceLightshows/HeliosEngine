@@ -180,12 +180,10 @@
 
 // Some math to calculate storage sizes:
 // 3 * 6 = 18 for the colorset
-// 1 + 7 + 1 + 1 = 10 for the rest
-//  = 28 bytes total for a pattern including CRC
-//    -> 8 slots = 8 * 28 = 224
-//      = 31 bytes left
-//    -> 9 slots = 9 * 28 = 252
-//      = 3 bytes left
+// 1 + 6 + 1 + 1 = 9 for the rest
+//  = 27 bytes total for a pattern including CRC
+//    -> 9 slots = 9 * 27 = 243
+//      = 12 bytes left
 
 // forbidden constant:
 // #define HELIOS_ARDUINO 1
