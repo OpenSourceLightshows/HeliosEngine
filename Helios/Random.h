@@ -1,20 +1,28 @@
-#pragma once
+#ifndef RANDOM_H
+#define RANDOM_H
 
 #include <stdint.h>
 
-class Random 
+typedef struct random_t random_t;
+
+struct random_t
 {
-public:
-  Random();
-  Random(uint32_t newseed);
-  ~Random();
-
-  void seed(uint32_t newseed);
-
-  uint8_t next8(uint8_t minValue = 0, uint8_t maxValue = 0xFF);
-  uint16_t next16(uint16_t minValue = 0, uint16_t maxValue = 0xFFFF);
-
-private:
   uint32_t m_seed;
 };
 
+/* Initialize a random struct with default seed */
+void random_init(random_t *rng);
+
+/* Initialize a random struct with a specific seed */
+void random_init_seed(random_t *rng, uint32_t newseed);
+
+/* Set the seed for the random number generator */
+void random_seed(random_t *rng, uint32_t newseed);
+
+/* Generate next random 8-bit value within range [minValue, maxValue] */
+uint8_t random_next8(random_t *rng, uint8_t minValue, uint8_t maxValue);
+
+/* Generate next random 16-bit value within range [minValue, maxValue] */
+uint16_t random_next16(random_t *rng, uint16_t minValue, uint16_t maxValue);
+
+#endif

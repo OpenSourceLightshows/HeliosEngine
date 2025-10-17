@@ -6,129 +6,132 @@
 #include "Timer.h"
 #include "Patterns.h"
 
-// for specifying things like default args
-struct PatternArgs {
-  PatternArgs(uint8_t on = 0, uint8_t off = 0, uint8_t gap = 0, uint8_t dash = 0, uint8_t group = 0, uint8_t blend = 0) :
-    on_dur(on), off_dur(off), gap_dur(gap), dash_dur(dash), group_size(group), blend_speed(blend) {}
+/* Forward declarations */
+typedef struct pattern_args_t pattern_args_t;
+typedef struct pattern_t pattern_t;
+
+/* for specifying things like default args */
+struct pattern_args_t {
   uint8_t on_dur;
   uint8_t off_dur;
   uint8_t gap_dur;
   uint8_t dash_dur;
   uint8_t group_size;
   uint8_t blend_speed;
+  uint8_t fade_dur;
 };
 
-class Pattern
+/* Initialize pattern args with all parameters */
+void pattern_args_init(pattern_args_t *args, uint8_t on, uint8_t off, uint8_t gap,
+                       uint8_t dash, uint8_t group, uint8_t blend, uint8_t fade);
+
+/* The various different blinking states the pattern can be in */
+enum pattern_state
 {
-public:
-  // try to not set on duration to 0
-  Pattern(uint8_t onDur = 1, uint8_t offDur = 0, uint8_t gap = 0,
-          uint8_t dash = 0, uint8_t group = 0, uint8_t blend = 0);
-  Pattern(const PatternArgs &args);
-  ~Pattern();
+  /* the led is disabled (there is no on or dash) */
+  STATE_DISABLED,
 
-  // init the pattern to initial state
-  void init();
+  /* the pattern is blinking on the next color in the set */
+  STATE_BLINK_ON,
+  STATE_ON,
 
-  // play the pattern
-  void play();
+  /* the pattern is blinking off */
+  STATE_BLINK_OFF,
+  STATE_OFF,
 
-  // set/get args
-  void setArgs(const PatternArgs &args);
-  const PatternArgs getArgs() const { return m_args; }
-  PatternArgs getArgs() { return m_args; }
-  PatternArgs &args() { return m_args; }
+  /* the pattern is starting a gap after a colorset */
+  STATE_BEGIN_GAP,
+  STATE_IN_GAP,
 
-  // change the colorset
-  const Colorset getColorset() const { return m_colorset; }
-  Colorset getColorset() { return m_colorset; }
-  Colorset &colorset() { return m_colorset; }
-  void setColorset(const Colorset &set);
-  void clearColorset();
+  /* the pattern is beginning a dash after a colorset or gap */
+  STATE_BEGIN_DASH,
+  STATE_IN_DASH,
 
-  // comparison to other pattern
-  bool equals(const Pattern *other);
+  /* the pattern is starting a gap after a dash */
+  STATE_BEGIN_GAP2,
+  STATE_IN_GAP2,
+};
 
-  // set a color in the colorset and re-initialize
-  void updateColor(uint8_t index, const RGBColor &col);
+struct pattern_t
+{
+  /* ==================================
+   *  Pattern Parameters */
+  pattern_args_t m_args;
 
-  // calculate crc of the colorset + pattern
-  uint32_t crc32() const;
+  /* ==================================
+   *  Pattern Members */
 
-  // get the pattern flags
-  uint32_t getFlags() const { return m_patternFlags; }
-  bool hasFlags(uint32_t flags) const { return (m_patternFlags & flags) != 0; }
-
-  // whether blend speed is non 0
-  bool isBlend() const { return m_args.blend_speed > 0; }
-
-protected:
-  // ==================================
-  //  Pattern Parameters
-  PatternArgs m_args;
-
-  // ==================================
-  //  Pattern Members
-
-  // any flags the pattern has
+  /* any flags the pattern has */
   uint8_t m_patternFlags;
-  // a copy of the colorset that this pattern is initialized with
-  Colorset m_colorset;
+  /* a copy of the colorset that this pattern is initialized with */
+  colorset_t m_colorset;
 
-  // ==================================
-  //  Blink Members
+  /* ==================================
+   *  Blink Members */
   uint8_t m_groupCounter;
 
-  // apis for blink
-  void onBlinkOn();
-  void onBlinkOff();
-  void beginGap();
-  void beginDash();
-  void nextState(uint8_t timing);
+  /* the state of the current pattern */
+  enum pattern_state m_state;
 
-  // the various different blinking states the pattern can be in
-  enum PatternState : uint8_t
-  {
-    // the led is disabled (there is no on or dash)
-    STATE_DISABLED,
+  /* the blink timer used to measure blink timings */
+  timer_t m_blinkTimer;
 
-    // the pattern is blinking on the next color in the set
-    STATE_BLINK_ON,
-    STATE_ON,
+  /* ==================================
+   *  Blend Members */
 
-    // the pattern is blinking off
-    STATE_BLINK_OFF,
-    STATE_OFF,
+  /* current color and target blend color */
+  rgb_color_t m_cur;
+  rgb_color_t m_next;
 
-    // the pattern is starting a gap after a colorset
-    STATE_BEGIN_GAP,
-    STATE_IN_GAP,
+  /* ==================================
+   *  Fade Members */
 
-    // the pattern is beginning a dash after a colorset or gap
-    STATE_BEGIN_DASH,
-    STATE_IN_DASH,
+  /* shifting value to represent current fade */
+  uint8_t m_fadeValue;
 
-    // the pattern is starting a gap after a dash
-    STATE_BEGIN_GAP2,
-    STATE_IN_GAP2,
-  };
-
-  // the state of the current pattern
-  PatternState m_state;
-
-  // the blink timer used to measure blink timings
-  Timer m_blinkTimer;
-
-  // ==================================
-  //  Blend Members
-
-  // current color and target blend color
-  RGBColor m_cur;
-  RGBColor m_next;
-
-  // apis for blend
-  void blendBlinkOn();
-  void interpolate(uint8_t &current, const uint8_t next);
+  /* Add a member variable to store when the pattern was last initialized */
+  uint32_t m_fadeStartTime;
 };
+
+/* try to not set on duration to 0 */
+void pattern_init(pattern_t *pat, uint8_t onDur, uint8_t offDur, uint8_t gap,
+                 uint8_t dash, uint8_t group, uint8_t blend, uint8_t fade);
+void pattern_init_with_args(pattern_t *pat, const pattern_args_t *args);
+
+/* init the pattern to initial state */
+void pattern_init_state(pattern_t *pat);
+
+/* play the pattern */
+void pattern_play(pattern_t *pat);
+
+/* set/get args */
+void pattern_set_args(pattern_t *pat, const pattern_args_t *args);
+pattern_args_t pattern_get_args(const pattern_t *pat);
+pattern_args_t *pattern_args_ptr(pattern_t *pat);
+
+/* change the colorset */
+colorset_t pattern_get_colorset(const pattern_t *pat);
+colorset_t *pattern_colorset_ptr(pattern_t *pat);
+void pattern_set_colorset(pattern_t *pat, const colorset_t *set);
+void pattern_clear_colorset(pattern_t *pat);
+
+/* comparison to other pattern */
+uint8_t pattern_equals(const pattern_t *pat, const pattern_t *other);
+
+/* set a color in the colorset and re-initialize */
+void pattern_update_color(pattern_t *pat, uint8_t index, const rgb_color_t *col);
+
+/* calculate crc of the colorset + pattern */
+uint32_t pattern_crc32(const pattern_t *pat);
+
+/* get the pattern flags */
+uint32_t pattern_get_flags(const pattern_t *pat);
+uint8_t pattern_has_flags(const pattern_t *pat, uint32_t flags);
+
+/* whether blend speed is non 0 */
+uint8_t pattern_is_blend(const pattern_t *pat);
+
+/* whether fade speed is non 0 */
+uint8_t pattern_is_fade(const pattern_t *pat);
 
 #endif

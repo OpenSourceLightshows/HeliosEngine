@@ -4,56 +4,53 @@
 
 #include "TimeControl.h"
 
-Timer::Timer() :
-  m_alarm(0),
-  m_startTime(0)
+void timer_init_default(timer_t *timer)
 {
+  timer->m_alarm = 0;
+  timer->m_startTime = 0;
 }
 
-Timer::~Timer()
+void timer_init(timer_t *timer, uint8_t alarm)
 {
+  timer_reset(timer);
+  timer->m_alarm = alarm;
+  timer_start(timer, 0);
 }
 
-void Timer::init(uint8_t alarm)
+void timer_start(timer_t *timer, uint32_t offset)
 {
-  reset();
-  m_alarm = alarm;
-  start();
+  /* reset the start time */
+  timer->m_startTime = time_get_current_time() + offset;
 }
 
-void Timer::start(uint32_t offset)
+void timer_reset(timer_t *timer)
 {
-  // reset the start time
-  m_startTime = Time::getCurtime() + offset;
+  timer->m_alarm = 0;
+  timer->m_startTime = 0;
 }
 
-void Timer::reset()
+uint8_t timer_alarm(timer_t *timer)
 {
-  m_alarm = 0;
-  m_startTime = 0;
-}
-
-bool Timer::alarm()
-{
-  if (!m_alarm) {
-    return false;
+  if (!timer->m_alarm) {
+    return 0;
   }
-  uint32_t now = Time::getCurtime();
-  // time since start (forward or backwards)
-  int32_t timeDiff = (int32_t)(int64_t)(now - m_startTime);
+  uint32_t now = time_get_current_time();
+  /* time since start (forward or backwards) */
+  int32_t timeDiff = (int32_t)(int64_t)(now - timer->m_startTime);
   if (timeDiff < 0) {
-    return false;
+    return 0;
   }
-  // if no time passed it's first alarm that is starting
+  /* if no time passed it's first alarm that is starting */
   if (timeDiff == 0) {
-    return true;
+    return 1;
   }
-  // if the current alarm duration is not a multiple of the current tick
-  if (m_alarm && (timeDiff % m_alarm) != 0) {
-    // then the alarm was not hit
-    return false;
+  /* if the current alarm duration is not a multiple of the current tick */
+  if (timer->m_alarm && (timeDiff % timer->m_alarm) != 0) {
+    /* then the alarm was not hit */
+    return 0;
   }
-  // update the start time of the timer
-  m_startTime = now;
-  return true;
+  /* update the start time of the timer */
+  timer->m_startTime = now;
+  return 1;
 }
+

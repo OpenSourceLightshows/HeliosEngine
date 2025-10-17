@@ -2,7 +2,7 @@
 ### CONFIGURATION ###
 #####################
 
-.PHONY: all upload set_fuses set_default_fuses set_16mhz_fuses set_8mhz_fuses set_1mhz_fuses get_fuses extract_hex upload_hex extract_eeprom upload_eeprom clean compute_version extract_version helios_release
+.PHONY: all upload set_fuses set_default_fuses set_16mhz_fuses set_8mhz_fuses set_1mhz_fuses get_fuses extract_hex upload_hex extract_eeprom upload_eeprom clean compute_version extract_version aeos_release
 
 ifneq ($(OS),Windows_NT)
     OS = $(shell uname -s)
@@ -46,8 +46,8 @@ endif
 ### TOOLCHAIN SETUP ###
 #######################
 
-CC = ${BINDIR}avr-g++
-LD = ${BINDIR}avr-g++
+CC = ${BINDIR}avr-gcc
+LD = ${BINDIR}avr-gcc
 OBJCOPY = ${BINDIR}avr-objcopy -v
 AR = ${BINDIR}avr-gcc-ar
 SIZE = ${BINDIR}avr-size
@@ -117,15 +117,13 @@ CFLAGS = -g \
 	 -Wall \
 	 -flto \
 	 -mrelax \
-	 -std=gnu++17 \
+	 -std=c11 \
 	 -fshort-enums \
 	 -fpack-struct \
-	 -fno-exceptions \
 	 -fdata-sections \
 	 -funsigned-char \
 	 -ffunction-sections\
 	 -funsigned-bitfields \
-	 -fno-threadsafe-statics \
 	 -mcall-prologues \
 	 -D__AVR_ATtiny85__ \
 	 -mmcu=$(AVRDUDE_CHIP) \
@@ -162,15 +160,15 @@ CFLAGS+=$(INCLUDES)
 # Source files
 ifeq ($(OS),Windows_NT) # Windows
 SRCS = \
-       $(shell find ../Helios -maxdepth 1 -type f -name '\*.cpp') main.cpp
+       $(shell find ../Helios -maxdepth 1 -type f -name '\*.c') main.c
 else # linux
 SRCS = \
-       $(shell find ../Helios -maxdepth 1 -type f -name \*.cpp) main.cpp
+       $(shell find ../Helios -maxdepth 1 -type f -name \*.c) main.c
 endif
 
-OBJS = $(SRCS:.cpp=.o)
+OBJS = $(SRCS:.c=.o)
 
-DFILES = $(SRCS:.cpp=.d)
+DFILES = $(SRCS:.c=.d)
 
 #######################
 ### BUILD TARGETS #####
@@ -198,7 +196,7 @@ $(TARGET).elf: compute_version $(OBJS)
 %.o: %.S
 	$(CC) $(ASMFLAGS) -c $< -o $@
 
-%.o: %.cpp
+%.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 upload: set_fuses $(TARGET).hex
@@ -208,32 +206,32 @@ upload: set_fuses $(TARGET).hex
 ### GITHUB RELEASE ####
 #######################
 
-helios_release:
+aeos_release:
 	@if [ -z "$(VERSION)" ]; then \
 		echo "Error: VERSION parameter is required"; \
-		echo "Usage: make helios_release VERSION=1.2.3"; \
+		echo "Usage: make aeos_release VERSION=1.2.3"; \
 		exit 1; \
 	fi
-	@echo "Creating and pushing $(VERSION) tag..."
-	@if git rev-parse "$(VERSION)" >/dev/null 2>&1; then \
-		echo "Warning: Tag $(VERSION) already exists locally"; \
+	@echo "Creating and pushing aeos-$(VERSION) tag..."
+	@if git rev-parse "aeos-$(VERSION)" >/dev/null 2>&1; then \
+		echo "Warning: Tag aeos-$(VERSION) already exists locally"; \
 		echo "Checking if it exists on remote..."; \
-		if git ls-remote --tags origin | grep -q "refs/tags/$(VERSION)$$"; then \
-			echo "Tag $(VERSION) already exists on remote. Skipping tag creation."; \
+		if git ls-remote --tags origin | grep -q "aeos-$(VERSION)"; then \
+			echo "Tag aeos-$(VERSION) already exists on remote. Skipping tag creation."; \
 		else \
 			echo "Pushing existing local tag to remote..."; \
-			git push origin $(VERSION); \
+			git push origin aeos-$(VERSION); \
 		fi \
 	else \
-		echo "Creating new tag $(VERSION)..."; \
-		git tag $(VERSION); \
-		git push origin $(VERSION); \
-		echo "✓ Tag $(VERSION) created and pushed"; \
+		echo "Creating new tag aeos-$(VERSION)..."; \
+		git tag aeos-$(VERSION); \
+		git push origin aeos-$(VERSION); \
+		echo "✓ Tag aeos-$(VERSION) created and pushed"; \
 	fi
-	@echo "Triggering Helios Release workflow..."
-	gh workflow run "Helios Release" --ref master
-	@echo "✓ Helios Release workflow triggered successfully!"
-	@echo "Monitor progress with: gh run list --workflow=\"release.yml\" --limit=1"
+	@echo "Triggering Aeos Release workflow..."
+	gh workflow run "Aeos Release" --ref aeos
+	@echo "✓ Aeos Release workflow triggered successfully!"
+	@echo "Monitor progress with: gh run list --workflow=\"aeos_release.yml\" --limit=1"
 
 #######################
 ### LINUX SETUP #######
@@ -323,10 +321,10 @@ upload_eeprom_fingers: eeprom_fingers.eep
 ###################
 
 upload_hex:
-	$(AVRDUDE) $(AVRDUDE_FLAGS) -U flash:w:helios_firmware.hex:i
+	$(AVRDUDE) $(AVRDUDE_FLAGS) -U flash:w:aeos.hex:i
 
-extract_hex: helios_firmware.hex
-	$(AVRDUDE) $(AVRDUDE_FLAGS) -U flash:r:helios_firmware.hex:i
+extract_hex: aeos.hex
+	$(AVRDUDE) $(AVRDUDE_FLAGS) -U flash:r:aeos.hex:i
 
 #####################
 ####### CLEAN #######
@@ -336,7 +334,7 @@ clean:
 	rm -f $(OBJS) $(TARGET).elf $(TARGET).hex $(DFILES) $(TARGET).bin $(TARGET).eep $(TARGET).lst $(TARGET).map
 
 compute_version:
-	$(eval LATEST_TAG ?= $(shell git fetch --depth=1 origin +refs/tags/*:refs/tags/* &> /dev/null && git tag --list | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$$' | sort -V | tail -n1))
+	$(eval LATEST_TAG ?= $(shell git fetch --depth=1 origin +refs/tags/*:refs/tags/* &> /dev/null && git tag --list | sort -V | tail -n1))
 	$(eval HELIOS_VERSION_MAJOR ?= $(shell echo $(LATEST_TAG) | cut -d. -f1))
 	$(eval HELIOS_VERSION_MINOR ?= $(shell echo $(LATEST_TAG) | cut -d. -f2))
 	$(eval LAST_HELIOS_BUILD_NUMBER ?= $(shell echo $(LATEST_TAG) | cut -d. -f3))
