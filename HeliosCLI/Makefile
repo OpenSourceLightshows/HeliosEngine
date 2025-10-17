@@ -5,14 +5,14 @@
 .PHONY: all tests clean pngs bmps clean_storage
 
 # compiler tool definitions
-CC=gcc
+CC=g++
 AR=ar cru
 
 MAKE=make
 RM=rm -rf
 RANLIB=ranlib
 
-CFLAGS=-O2 -g -Wall -std=c11
+CFLAGS=-O2 -g -Wall -std=c++11
 
 # compiler defines
 DEFINES=\
@@ -48,6 +48,7 @@ LLIBS=\
 # MUST have LLIBS BEFORE the standard libraries
 LIBS=\
 	$(LLIBS) \
+	-lstdc++ \
 
 # source files
 # local source files first, other sources after
@@ -89,7 +90,7 @@ tests: $(TESTS)
 
 # target for vortex lib
 helios: compute_version $(DEPS)
-	$(CC) $(CFLAGS) $(DEPS) -o $@ $(LLIBS)
+	$(CC) $(CFLAGS) $(DEPS) -o $@ $(LIBS)
 
 # catch-all make target to generate .o and .d files
 %.o: %.cpp
