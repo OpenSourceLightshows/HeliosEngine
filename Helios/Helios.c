@@ -424,7 +424,7 @@ static void helios_handle_off_menu(uint8_t mag, uint8_t past)
     switch (mag) {
       case TIME_TILL_GLOW_LOCK_UNLOCK:  // red lock
         g_cur_state = STATE_TOGGLE_LOCK;
-        break;
+        return;
       default:
         // just go back to sleep in hold-past off menu
         helios_enter_sleep();
