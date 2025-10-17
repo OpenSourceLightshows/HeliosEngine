@@ -62,8 +62,6 @@ enum helios_flags {
   FLAG_LOCKED = (1 << 0),
   /* Conjure mode is enabled, one click will toggle power */
   FLAG_CONJURE = (1 << 1),
-  /* Autoplay is enabled, modes will automatically cycle */
-  FLAG_AUTOPLAY = (1 << 2),
   /* Add new flags here, max 8 flags */
 
   /* ============================================== */

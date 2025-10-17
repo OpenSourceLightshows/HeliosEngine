@@ -112,7 +112,6 @@ Helios operates as a state machine defined in `Helios/Helios.h`:
 Defined in `Helios/Helios.h`:
 - `FLAG_LOCKED` - Device is locked, must unlock to turn on
 - `FLAG_CONJURE` - Conjure mode enabled (single click toggles on/off)
-- `FLAG_AUTOPLAY` - Timer mode, automatically cycles modes
 
 ### Key Components
 
