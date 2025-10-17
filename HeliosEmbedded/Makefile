@@ -117,7 +117,6 @@ CFLAGS = -g \
 	 -Wall \
 	 -flto \
 	 -mrelax \
-	 -std=c11 \
 	 -fshort-enums \
 	 -fpack-struct \
 	 -fdata-sections \
