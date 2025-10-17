@@ -16,13 +16,12 @@ static void pattern_begin_dash(pattern_t *pat);
 static void pattern_next_state(pattern_t *pat, uint8_t timing);
 static void pattern_blend_blink_on(pattern_t *pat);
 static void pattern_interpolate(uint8_t *current, const uint8_t next, uint8_t blend_speed);
-static void pattern_tick_fade(pattern_t *pat);
 
 /* ==================================
  *  Pattern Args Functions */
 
 void pattern_args_init(pattern_args_t *args, uint8_t on, uint8_t off, uint8_t gap,
-                      uint8_t dash, uint8_t group, uint8_t blend, uint8_t fade)
+                      uint8_t dash, uint8_t group, uint8_t blend)
 {
   args->on_dur = on;
   args->off_dur = off;
@@ -30,16 +29,15 @@ void pattern_args_init(pattern_args_t *args, uint8_t on, uint8_t off, uint8_t ga
   args->dash_dur = dash;
   args->group_size = group;
   args->blend_speed = blend;
-  args->fade_dur = fade;
 }
 
 /* ==================================
  *  Pattern Functions */
 
 void pattern_init(pattern_t *pat, uint8_t onDur, uint8_t offDur, uint8_t gap,
-                 uint8_t dash, uint8_t group, uint8_t blend, uint8_t fade)
+                 uint8_t dash, uint8_t group, uint8_t blend)
 {
-  pattern_args_init(&pat->m_args, onDur, offDur, gap, dash, group, blend, fade);
+  pattern_args_init(&pat->m_args, onDur, offDur, gap, dash, group, blend);
   pat->m_patternFlags = 0;
   colorset_init(&pat->m_colorset);
   pat->m_groupCounter = 0;
@@ -47,22 +45,17 @@ void pattern_init(pattern_t *pat, uint8_t onDur, uint8_t offDur, uint8_t gap,
   timer_init_default(&pat->m_blinkTimer);
   rgb_init(&pat->m_cur);
   rgb_init(&pat->m_next);
-  pat->m_fadeValue = 0;
-  pat->m_fadeStartTime = 0;
 }
 
 void pattern_init_with_args(pattern_t *pat, const pattern_args_t *args)
 {
   pattern_init(pat, args->on_dur, args->off_dur, args->gap_dur,
-              args->dash_dur, args->group_size, args->blend_speed, args->fade_dur);
+              args->dash_dur, args->group_size, args->blend_speed);
 }
 
 void pattern_init_state(pattern_t *pat)
 {
   colorset_reset_index(&pat->m_colorset);
-
-  /* Reset the fade start time to the current time */
-  pat->m_fadeStartTime = time_get_current_time();
 
   /* the default state to begin with */
   pat->m_state = STATE_BLINK_ON;
@@ -81,56 +74,11 @@ void pattern_init_state(pattern_t *pat)
     /* convert current/next colors to HSV but only if we are doing a blend */
     pat->m_cur = colorset_get_next(&pat->m_colorset);
     pat->m_next = colorset_get_next(&pat->m_colorset);
-  } else if (pat->m_args.fade_dur) {
-    /* if there is a fade dur and no blend need to iterate colorset */
-    colorset_get_next(&pat->m_colorset);
-  }
-
-  /* Initialize the fluctuating fade value */
-  pat->m_fadeValue = 0;
-}
-
-static void pattern_tick_fade(pattern_t *pat)
-{
-  uint32_t now = time_get_current_time();
-  /* Calculate relative time since pattern was initialized */
-  uint32_t relativeTime = now - pat->m_fadeStartTime;
-  uint32_t duration = pat->m_args.fade_dur * 10;
-
-  /* only tick forward every fade_dur ticks */
-  if (!relativeTime || (relativeTime % duration) != 0) {
-    return;
-  }
-
-  /* count the number of steps based on relative time */
-  uint32_t steps = relativeTime / duration;
-  uint32_t range = pat->m_args.off_dur;
-
-  /* make sure the range is non-zero */
-  if (range == 0) {
-    pat->m_fadeValue = 0;
-    return;
-  }
-
-  uint32_t double_range = range * 2;
-  uint32_t step = steps % double_range;
-
-  /* Triangle wave: up from 0 to range, then down to 0 */
-  pat->m_fadeValue = (step < range) ? step : (double_range - step - 1);
-
-  /* iterate color when at lowest point */
-  if (step == 0) {
-    colorset_get_next(&pat->m_colorset);
   }
 }
 
 void pattern_play(pattern_t *pat)
 {
-  /* tick forward the fade logic each tick */
-  if (pattern_is_fade(pat)) {
-    pattern_tick_fade(pat);
-  }
-
   /* Sometimes the pattern needs to cycle multiple states in a single frame so
    * instead of using a loop or recursion I have just used a simple goto */
 replay:
@@ -143,8 +91,7 @@ replay:
     if (pat->m_args.on_dur > 0) {
       pattern_on_blink_on(pat);
       --pat->m_groupCounter;
-      /* When in ON state, use current fading on-time */
-      pattern_next_state(pat, pat->m_args.on_dur + pat->m_fadeValue);
+      pattern_next_state(pat, pat->m_args.on_dur);
       return;
     }
     pat->m_state = STATE_BLINK_OFF;
@@ -154,7 +101,7 @@ replay:
     if (pat->m_groupCounter > 0 || (!pat->m_args.gap_dur && !pat->m_args.dash_dur)) {
       if (pat->m_args.off_dur > 0) {
         pattern_on_blink_off(pat);
-        pattern_next_state(pat, pat->m_args.off_dur - pat->m_fadeValue);
+        pattern_next_state(pat, pat->m_args.off_dur);
         return;
       }
       if (pat->m_groupCounter > 0 && pat->m_args.on_dur > 0) {
@@ -234,13 +181,6 @@ static void pattern_on_blink_on(pattern_t *pat)
 {
   if (pattern_is_blend(pat)) {
     pattern_blend_blink_on(pat);
-    return;
-  }
-
-  /* Check if this is a fading duration pattern */
-  if (pattern_is_fade(pat)) {
-    rgb_color_t cur_col = colorset_cur(&pat->m_colorset);
-    led_set_rgb(&cur_col);
     return;
   }
 
@@ -340,11 +280,6 @@ uint8_t pattern_has_flags(const pattern_t *pat, uint32_t flags)
 uint8_t pattern_is_blend(const pattern_t *pat)
 {
   return pat->m_args.blend_speed > 0;
-}
-
-uint8_t pattern_is_fade(const pattern_t *pat)
-{
-  return pat->m_args.fade_dur > 0;
 }
 
 static void pattern_blend_blink_on(pattern_t *pat)

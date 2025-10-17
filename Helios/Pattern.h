@@ -22,12 +22,11 @@ struct pattern_args_t {
   uint8_t dash_dur;
   uint8_t group_size;
   uint8_t blend_speed;
-  uint8_t fade_dur;
 };
 
 /* Initialize pattern args with all parameters */
 void pattern_args_init(pattern_args_t *args, uint8_t on, uint8_t off, uint8_t gap,
-                       uint8_t dash, uint8_t group, uint8_t blend, uint8_t fade);
+                       uint8_t dash, uint8_t group, uint8_t blend);
 
 /* The various different blinking states the pattern can be in */
 enum pattern_state
@@ -86,20 +85,11 @@ struct pattern_t
   /* current color and target blend color */
   rgb_color_t m_cur;
   rgb_color_t m_next;
-
-  /* ==================================
-   *  Fade Members */
-
-  /* shifting value to represent current fade */
-  uint8_t m_fadeValue;
-
-  /* Add a member variable to store when the pattern was last initialized */
-  uint32_t m_fadeStartTime;
 };
 
 /* try to not set on duration to 0 */
 void pattern_init(pattern_t *pat, uint8_t onDur, uint8_t offDur, uint8_t gap,
-                 uint8_t dash, uint8_t group, uint8_t blend, uint8_t fade);
+                 uint8_t dash, uint8_t group, uint8_t blend);
 void pattern_init_with_args(pattern_t *pat, const pattern_args_t *args);
 
 /* init the pattern to initial state */
@@ -134,9 +124,6 @@ uint8_t pattern_has_flags(const pattern_t *pat, uint32_t flags);
 
 /* whether blend speed is non 0 */
 uint8_t pattern_is_blend(const pattern_t *pat);
-
-/* whether fade speed is non 0 */
-uint8_t pattern_is_fade(const pattern_t *pat);
 
 #ifdef __cplusplus
 }

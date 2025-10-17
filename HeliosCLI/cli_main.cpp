@@ -115,8 +115,8 @@ int main(int argc, char *argv[])
     // parse the list of args into an array of ints
     std::vector<uint32_t> vals;
     std::istringstream ss(initial_pattern_args_str);
-    // push 7 args into the array (on_dur, off_dur, gap_dur, dash_dur, group_size, blend_speed, fade_dur)
-    while (vals.size() < 7) {
+    // push 6 args into the array (on_dur, off_dur, gap_dur, dash_dur, group_size, blend_speed)
+    while (vals.size() < 6) {
       std::string arg;
       uint32_t val = 0;
       // try to parse out a number
@@ -128,7 +128,7 @@ int main(int argc, char *argv[])
     }
     // construct pattern args from the array of values
     pattern_args_t args;
-    pattern_args_init(&args, vals[0], vals[1], vals[2], vals[3], vals[4], vals[5], vals[6]);
+    pattern_args_init(&args, vals[0], vals[1], vals[2], vals[3], vals[4], vals[5]);
     // set the args of the current pattern
     pattern_t* pat = helios_cur_pattern();
     pattern_set_args(pat, &args);
