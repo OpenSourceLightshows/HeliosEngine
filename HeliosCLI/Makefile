@@ -5,16 +5,14 @@
 .PHONY: all tests clean pngs bmps clean_storage
 
 # compiler tool definitions
-CXX=g++
-CC=gcc
+CC=g++
 AR=ar cru
 
 MAKE=make
 RM=rm -rf
 RANLIB=ranlib
 
-CXXFLAGS=-O2 -g -Wall -std=c++11
-CFLAGS=-O2 -g -Wall -std=c11
+CFLAGS=-O2 -g -Wall -std=c++11
 
 # compiler defines
 DEFINES=\
@@ -31,11 +29,9 @@ INCLUDES=\
 # only set them if they're not empty to prevent unnecessary whitespace
 ifneq ($(DEFINES),)
     CFLAGS+=$(DEFINES)
-    CXXFLAGS+=$(DEFINES)
 endif
 ifneq ($(INCLUDES),)
     CFLAGS+=$(INCLUDES)
-    CXXFLAGS+=$(INCLUDES)
 endif
 
 # local NONSTANDARD libraries to link with
@@ -56,18 +52,20 @@ LIBS=\
 # source files
 # local source files first, other sources after
 ifeq ($(OS),Windows_NT)
-	CPP_SRC = $(shell find ../Helios -type f -name \\*.cpp) $(shell find . -type f -name \\*.cpp -not -path "./venv/*")
+	SRC = $(shell find ../Helios -type f -name \\*.cpp) \
+        $(shell find . -type f -name \\*.cpp)
 else
-	CPP_SRC = $(shell find ../Helios -type f -name '*.cpp') $(shell find . -type f -name '*.cpp' -not -path "./venv/*")
+	SRC = $(shell find ../Helios -type f -name '*.cpp') \
+        $(shell find . -type f -name '*.cpp')
 endif
 
-SRC = $(CPP_SRC)
+# object files are source files with .c replaced with .o
+OBJS=\
+	$(SRC:.cpp=.o) \
 
-# object files are source files with .cpp replaced with .o
-OBJS = $(CPP_SRC:.cpp=.o)
-
-# dependency files
-DFILES = $(CPP_SRC:.cpp=.d)
+# dependency files are source files with .c replaced with .d
+DFILES=\
+	$(SRC:.cpp=.d) \
 
 # target dependencies
 # this includes any script generated c/h files,
@@ -91,11 +89,11 @@ tests: $(TESTS)
 
 # target for vortex lib
 helios: compute_version $(DEPS)
-	$(CXX) $(CXXFLAGS) $(DEPS) -o $@ $(LLIBS)
+	$(CC) $(CFLAGS) $(DEPS) -o $@ $(LLIBS)
 
-# catch-all make target to generate .o and .d files from .cpp
+# catch-all make target to generate .o and .d files
 %.o: %.cpp
-	$(CXX) $(CXXFLAGS) -MMD -c $< -o $@
+	$(CC) $(CFLAGS) -MMD -c $< -o $@
 
 # catch-all for static libraries in the form of:
 # <directory>/<library.a>
@@ -112,7 +110,7 @@ clean:
 	@$(RM) $(DFILES) $(OBJS) $(TARGETS) $(TESTS)
 
 compute_version:
-	$(eval LATEST_TAG ?= $(shell git fetch --depth=1 origin +refs/tags/*:refs/tags/* &> /dev/null && git tag --list | sort -V | tail -n1))
+	$(eval LATEST_TAG ?= $(shell git fetch --depth=1 origin +refs/tags/*:refs/tags/* &> /dev/null && git tag --list | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$$' | sort -V | tail -n1))
 	$(eval HELIOS_VERSION_MAJOR ?= $(shell echo $(LATEST_TAG) | cut -d. -f1))
 	$(eval HELIOS_VERSION_MINOR ?= $(shell echo $(LATEST_TAG) | cut -d. -f2))
 	$(eval LAST_HELIOS_BUILD_NUMBER ?= $(shell echo $(LATEST_TAG) | cut -d. -f3))
