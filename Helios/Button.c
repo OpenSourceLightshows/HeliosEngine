@@ -42,7 +42,8 @@ static uint8_t m_holdClick = 0;
 static uint8_t m_pinState = 0;
 static uint8_t m_enableWake = 0;
 /* Simple input queue for CLI - using a fixed-size circular buffer */
-#define INPUT_QUEUE_SIZE 64
+/* Larger queue size for CLI to handle long test sequences */
+#define INPUT_QUEUE_SIZE 4096
 static char m_inputQueue[INPUT_QUEUE_SIZE];
 static uint32_t m_queueHead = 0;
 static uint32_t m_queueTail = 0;
@@ -88,7 +89,7 @@ void button_enable_wake(void)
   GIMSK |= (1 << PCIE);
   sei();
 #else /* HELIOS_CLI */
-  m_enableWake = 0;
+  m_enableWake = 1;
 #endif
 }
 

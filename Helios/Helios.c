@@ -179,6 +179,8 @@ void helios_enter_sleep(void)
   g_cur_state = STATE_SLEEP;
   // enable the sleep uint8_t
   g_sleeping = 1;
+  // Enable wake on button press/click for CLI
+  button_enable_wake();
 #endif
 }
 
