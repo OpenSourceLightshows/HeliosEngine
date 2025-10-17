@@ -186,6 +186,8 @@ void helios_enter_sleep(void)
   cur_state = STATE_SLEEP;
   /* enable the sleep bool */
   sleeping = 1;
+  /* Enable wake on button press/click for CLI */
+  button_enable_wake();
 #endif
 }
 
