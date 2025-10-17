@@ -36,16 +36,50 @@ uint8_t helios_is_asleep(void);
 pattern_t *helios_cur_pattern(void);
 #endif
 
+enum helios_state {
+  STATE_MODES,
+  STATE_COLOR_SELECT_SLOT,
+  STATE_COLOR_SELECT_QUADRANT,
+  STATE_COLOR_SELECT_HUE,
+  STATE_COLOR_SELECT_SAT,
+  STATE_COLOR_SELECT_VAL,
+  STATE_PATTERN_SELECT,
+  STATE_TOGGLE_CONJURE,
+  STATE_TOGGLE_LOCK,
+  STATE_SET_DEFAULTS,
+  STATE_SET_GLOBAL_BRIGHTNESS,
+  STATE_SHIFT_MODE,
+  STATE_RANDOMIZE,
+#ifdef HELIOS_CLI
+  STATE_SLEEP,
+#endif
+};
+
 enum helios_flags {
+  /* No flags are set */
   FLAG_NONE = 0,
+  /* The device is locked and must be unlocked to turn on */
   FLAG_LOCKED = (1 << 0),
+  /* Conjure mode is enabled, one click will toggle power */
+  FLAG_CONJURE = (1 << 1),
+  /* Autoplay is enabled, modes will automatically cycle */
+  FLAG_AUTOPLAY = (1 << 2),
+  /* Add new flags here, max 8 flags */
+
+  /* ============================================== */
+  /* Auto increment to count the number of flags */
+  INTERNAL_FLAGS_END,
+  /* Calculate mask for invalid Flags based on the
+   * inverse of all flags listed above here */
+  FLAGS_INVALID = (uint8_t)(~((1 << (INTERNAL_FLAGS_END - 1)) - 1))
 };
 
 /* get/set global flags */
-void helios_set_flag(enum helios_flags flag);
-uint8_t helios_has_flag(enum helios_flags flag);
-void helios_clear_flag(enum helios_flags flag);
-void helios_toggle_flag(enum helios_flags flag);
+void helios_set_flags(enum helios_flags flag);
+uint8_t helios_has_flags(enum helios_flags flag);
+uint8_t helios_has_any_flags(enum helios_flags flag);
+void helios_clear_flags(enum helios_flags flag);
+void helios_toggle_flags(enum helios_flags flag);
 
 #ifdef __cplusplus
 }
