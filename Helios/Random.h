@@ -7,7 +7,11 @@ extern "C" {
 
 #include <stdint.h>
 
+// Forward declaration (with include guard to prevent SDCC conflicts)
+#ifndef RANDOM_T_FORWARD_DECLARED
+#define RANDOM_T_FORWARD_DECLARED
 typedef struct random_t random_t;
+#endif
 
 struct random_t
 {

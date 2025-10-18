@@ -12,7 +12,10 @@ extern "C" {
 
 // Forward declarations
 typedef struct pattern_args_t pattern_args_t;
+#ifndef PATTERN_T_FORWARD_DECLARED
+#define PATTERN_T_FORWARD_DECLARED
 typedef struct pattern_t pattern_t;
+#endif
 
 // for specifying things like default args
 struct pattern_args_t {

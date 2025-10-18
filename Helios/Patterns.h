@@ -7,8 +7,11 @@ extern "C" {
 
 #include <inttypes.h>
 
-// Forward declaration
+// Forward declaration (avoid duplicate if Pattern.h is included)
+#ifndef PATTERN_T_FORWARD_DECLARED
+#define PATTERN_T_FORWARD_DECLARED
 typedef struct pattern_t pattern_t;
+#endif
 
 // List of patterns that can be built, both single and multi-led patterns are found in this list.
 // Within both single and multi LED pattern lists there are 'core' patterns which are associated

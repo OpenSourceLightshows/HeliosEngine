@@ -9,9 +9,16 @@ extern "C" {
 
 #include "HeliosConfig.h"
 
-// Forward declaration
+// Forward declarations (with include guards to prevent SDCC conflicts)
+#ifndef RANDOM_T_FORWARD_DECLARED
+#define RANDOM_T_FORWARD_DECLARED
 typedef struct random_t random_t;
+#endif
+
+#ifndef COLORSET_T_FORWARD_DECLARED
+#define COLORSET_T_FORWARD_DECLARED
 typedef struct colorset_t colorset_t;
+#endif
 
 enum colorset_value_style
 {

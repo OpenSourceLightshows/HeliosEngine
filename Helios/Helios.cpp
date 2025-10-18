@@ -11,10 +11,14 @@
 #include "Button.h"
 #include "Led.h"
 
-#ifdef HELIOS_EMBEDDED
+#if defined(HELIOS_EMBEDDED) && !defined(HELIOS_8051)
 #include <avr/sleep.h>
 #include <avr/interrupt.h>
 #include <avr/wdt.h>
+#endif
+
+#ifdef HELIOS_8051
+#include "ca51f152.h"
 #endif
 
 #ifdef HELIOS_CLI
@@ -36,20 +40,27 @@ enum color_select_option {
 };
 
 // Global state variables
-static enum helios_state g_cur_state;
-static enum helios_flags g_global_flags;
-static uint8_t g_menu_selection;
-static uint8_t g_cur_mode;
-static uint8_t g_selected_slot;
-static uint8_t g_selected_base_quad;
-static uint8_t g_selected_hue;
-static uint8_t g_selected_sat;
-static uint8_t g_selected_val;
-static pattern_t g_pat;
-static uint8_t g_keepgoing;
+#ifdef HELIOS_8051
+// 8051 has limited internal RAM, so use external RAM for all static variables
+#define STATIC_VAR static __xdata
+#else
+#define STATIC_VAR static
+#endif
+
+STATIC_VAR enum helios_state g_cur_state;
+STATIC_VAR enum helios_flags g_global_flags;
+STATIC_VAR uint8_t g_menu_selection;
+STATIC_VAR uint8_t g_cur_mode;
+STATIC_VAR uint8_t g_selected_slot;
+STATIC_VAR uint8_t g_selected_base_quad;
+STATIC_VAR uint8_t g_selected_hue;
+STATIC_VAR uint8_t g_selected_sat;
+STATIC_VAR uint8_t g_selected_val;
+STATIC_VAR pattern_t g_pat;
+STATIC_VAR uint8_t g_keepgoing;
 
 #ifdef HELIOS_CLI
-static uint8_t g_sleeping;
+STATIC_VAR uint8_t g_sleeping;
 #endif
 
 volatile char helios_version[] = HELIOS_VERSION_STR;
@@ -80,7 +91,8 @@ uint8_t helios_init(void)
     return 0;
   }
   // then initialize the hardware for embedded helios
-#ifdef HELIOS_EMBEDDED
+#if defined(HELIOS_EMBEDDED) && !defined(HELIOS_8051)
+  // AVR ATtiny85 initialization
   // Set PB0, PB1, PB4 as output
   DDRB |= (1 << DDB0) | (1 << DDB1) | (1 << DDB4);
   // Timer0 Configuration for PWM
@@ -95,6 +107,37 @@ uint8_t helios_init(void)
   TIMSK |= (1 << TOIE0);
   // Enable interrupts
   sei();
+#endif
+
+#ifdef HELIOS_8051
+  // 8051 CA51F152XX initialization
+  // Configure GPIO pins for LED output (P1.0, P1.1, P1.2 for RGB)
+  // P1.0 = Red, P1.1 = Green, P1.2 = Blue
+  P1M0 = 0x00;  // Push-pull output mode
+  P1M1 = 0x00;
+
+  // Configure button pin as input (P3.3)
+  P3M0 &= ~(1 << 3);  // Standard bidirectional I/O
+  P3M1 &= ~(1 << 3);
+
+  // Configure Timer0 for PWM (8-bit auto-reload)
+  TMOD &= 0xF0;  // Clear Timer0 bits
+  TMOD |= 0x02;  // Timer0 mode 2: 8-bit auto-reload
+  TH0 = 0x00;    // Auto-reload value
+  TL0 = 0x00;    // Initial value
+  TR0 = 1;       // Start Timer0
+
+  // Configure Timer1 for timekeeping
+  TMOD &= 0x0F;  // Clear Timer1 bits
+  TMOD |= 0x10;  // Timer1 mode 1: 16-bit timer
+  TH1 = 0x00;
+  TL1 = 0x00;
+  TR1 = 1;       // Start Timer1
+
+  // Enable interrupts
+  ET0 = 1;       // Enable Timer0 interrupt
+  ET1 = 1;       // Enable Timer1 interrupt
+  EA = 1;        // Enable global interrupts
 #endif
   return 1;
 }
@@ -156,7 +199,8 @@ void helios_tick(void)
 
 void helios_enter_sleep(void)
 {
-#ifdef HELIOS_EMBEDDED
+#if defined(HELIOS_EMBEDDED) && !defined(HELIOS_8051)
+  // AVR ATtiny85 sleep mode
   // clear the led colors
   led_clear();
   // Set all pins to input
@@ -175,7 +219,21 @@ void helios_enter_sleep(void)
   DDRB |= (1 << DDB0) | (1 << DDB1) | (1 << DDB4);
   // wakeup here, re-init
   helios_init_components();
+#elif defined(HELIOS_8051)
+  // 8051 CA51F152XX sleep mode
+  // clear the led colors
+  led_clear();
+  // Enable wake on interrupt for the button
+  button_enable_wake();
+  // Enter power-down mode using PCON register
+  // PCON: Bit 1 (PD) = Power Down, Bit 0 (IDL) = Idle
+  PCON |= 0x02;  // Set PD bit for power-down mode
+  // ... external interrupt will wake us here
+
+  // wakeup here, re-init components
+  helios_init_components();
 #else
+  // CLI mode
   g_cur_state = STATE_SLEEP;
   // enable the sleep uint8_t
   g_sleeping = 1;
@@ -419,6 +477,9 @@ static void helios_handle_state_modes(void)
 
 static void helios_handle_off_menu(uint8_t mag, uint8_t past)
 {
+  // Suppress unused parameter warning for 'past' in some builds
+  (void)past;
+
   // if still locked then handle the unlocking menu which is just if mag == 5
   if (helios_has_flags(FLAG_LOCKED)) {
     switch (mag) {

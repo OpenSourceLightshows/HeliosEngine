@@ -9,14 +9,20 @@
 #ifdef HELIOS_EMBEDDED
 #ifdef HELIOS_ARDUINO
 #include <arduino.h>
+#elif defined(HELIOS_8051)
+#include "ca51f152.h"
+// LED pins on 8051 (CA51F152XX)
+#define LED_PIN_R 0 // P1.0 - Red channel
+#define LED_PIN_G 1 // P1.1 - Green channel
+#define LED_PIN_B 2 // P1.2 - Blue channel
 #else
 #include <avr/sleep.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
-#endif
 #define PWM_PIN_R PB0 // Red channel (pin 5)
 #define PWM_PIN_G PB1 // Green channel (pin 6)
 #define PWM_PIN_B PB4 // Blue channel (pin 3)
+#endif
 #endif
 
 #define SCALE8(i, scale)  (((uint16_t)i * (uint16_t)(scale)) >> 8)
@@ -25,11 +31,18 @@
 static void led_set_pwm(uint8_t pwmPin, uint8_t pwmValue, volatile uint8_t *controlRegister,
     uint8_t controlBit, volatile uint8_t *compareRegister);
 
+#ifdef HELIOS_8051
+// 8051 has limited internal RAM, so use external RAM for all static variables
+#define STATIC_VAR static __xdata
+#else
+#define STATIC_VAR static
+#endif
+
 // array of led color values
-static rgb_color_t m_ledColor;
-static rgb_color_t m_realColor;
+STATIC_VAR rgb_color_t m_ledColor;
+STATIC_VAR rgb_color_t m_realColor;
 // global brightness
-static uint8_t m_brightness = DEFAULT_BRIGHTNESS;
+STATIC_VAR uint8_t m_brightness = DEFAULT_BRIGHTNESS;
 
 uint8_t led_init(void)
 {
@@ -126,7 +139,7 @@ void led_hold(const rgb_color_t *col)
 static void led_set_pwm(uint8_t pwmPin, uint8_t pwmValue, volatile uint8_t *controlRegister,
     uint8_t controlBit, volatile uint8_t *compareRegister)
 {
-#ifdef HELIOS_EMBEDDED
+#if defined(HELIOS_EMBEDDED) && !defined(HELIOS_8051)
   if (pwmValue == 0) {
     // digitalWrite(pin, LOW)
     *controlRegister &= ~controlBit;  // Disable PWM
@@ -172,7 +185,39 @@ void led_update(void)
   analogWrite(PWM_PIN_R, m_realColor.red);
   analogWrite(PWM_PIN_G, m_realColor.green);
   analogWrite(PWM_PIN_B, m_realColor.blue);
+#elif defined(HELIOS_8051)
+  // 8051 software PWM implementation using direct pin manipulation
+  // For simplicity, using direct GPIO for now (can be enhanced with hardware PWM)
+  // This is a basic implementation - full hardware PWM would require PCA configuration
+
+  // Set pins based on brightness threshold (simple on/off for now)
+  // A full PWM implementation would use Timer2 or PCA for hardware PWM
+  if (m_realColor.red > 127) {
+    P1 |= (1 << LED_PIN_R);
+  } else if (m_realColor.red > 0) {
+    // Medium brightness - could implement software PWM here
+    P1 |= (1 << LED_PIN_R);
+  } else {
+    P1 &= ~(1 << LED_PIN_R);
+  }
+
+  if (m_realColor.green > 127) {
+    P1 |= (1 << LED_PIN_G);
+  } else if (m_realColor.green > 0) {
+    P1 |= (1 << LED_PIN_G);
+  } else {
+    P1 &= ~(1 << LED_PIN_G);
+  }
+
+  if (m_realColor.blue > 127) {
+    P1 |= (1 << LED_PIN_B);
+  } else if (m_realColor.blue > 0) {
+    P1 |= (1 << LED_PIN_B);
+  } else {
+    P1 &= ~(1 << LED_PIN_B);
+  }
 #else
+  // AVR ATtiny85
   // backup SREG and turn off interrupts
   uint8_t oldSREG = SREG;
   cli();

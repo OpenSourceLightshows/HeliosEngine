@@ -4,11 +4,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-Helios Engine is an embedded LED control system designed for the ATTiny85 microcontroller. The codebase is split into three main components:
-- **Helios/**: Core engine code (C) shared between embedded and CLI
-- **HeliosEmbedded/**: ATTiny85 firmware implementation
+Helios Engine is an embedded LED control system supporting multiple microcontroller platforms. The codebase is split into several main components:
+- **Helios/**: Core engine code (C/C++) shared between all platforms
+- **HeliosEmbedded/**: ATTiny85 (AVR) firmware implementation
+- **Helios8051/**: CA51F152XX (8051) firmware implementation
 - **HeliosCLI/**: Command-line tool for simulation and testing (C++)
 - **HeliosLib/**: Static library build of Helios core
+
+### Supported Platforms
+
+| Platform | MCU | Architecture | Flash | RAM | EEPROM |
+|----------|-----|--------------|-------|-----|--------|
+| HeliosEmbedded | ATTiny85 | AVR | 8KB | 512B | 512B |
+| Helios8051 | CA51F152XX | 8051 | 16KB | 256B | None (flash emulation) |
 
 ## Build Commands
 
@@ -38,6 +46,16 @@ make                    # Build static library
 make wasm              # Build WebAssembly version
 make clean             # Clean build artifacts
 ```
+
+### Building for 8051 (CA51F152XX)
+```bash
+cd Helios8051
+make                    # Build firmware for CA51F152XX
+make upload             # Compile and upload to CA51F152XX
+make clean              # Clean build artifacts
+```
+
+Note: The 8051 build requires SDCC (Small Device C Compiler) to be installed.
 
 ### Clock Speed Configuration
 The ATTiny85 firmware supports 8MHz and 16MHz (1MHz not supported). Edit `HeliosEmbedded/Makefile` and set:
@@ -225,10 +243,42 @@ ATTiny85 has only 8KB flash and 512 bytes SRAM. Code must be:
 - Changing storage format requires major version bump
 
 ### Cross-Platform Compatibility
-- Core Helios code is pure C for maximum portability
+- Core Helios code is pure C/C++ for maximum portability
 - Use `#ifdef HELIOS_CLI` for CLI-specific code
-- Use `#ifdef HELIOS_EMBEDDED` for embedded-specific code
-- Platform abstraction in LED and Button implementations
+- Use `#ifdef HELIOS_EMBEDDED` for embedded-specific code (both AVR and 8051)
+- Use `#ifdef HELIOS_8051` for 8051-specific code
+- Platform abstraction in LED, Button, and Storage implementations
+
+#### Platform-Specific Macros
+- **HELIOS_CLI**: Command-line interface build
+- **HELIOS_EMBEDDED**: Any embedded platform (AVR or 8051)
+- **HELIOS_8051**: 8051 architecture specific
+- **HELIOS_ARDUINO**: Arduino-compatible AVR build
+
+#### Memory Model Differences
+
+**AVR (ATtiny85)**:
+- Uses `PROGMEM` for flash storage of constants
+- Direct EEPROM access via registers
+- 512 bytes RAM, 512 bytes EEPROM
+
+**8051 (CA51F152XX)**:
+- Uses `__code` attribute for flash storage
+- Flash emulation for persistent storage
+- 256 bytes RAM (requires aggressive optimization)
+- Storage buffer in `__xdata` (external RAM space)
+- Const data marked with `FLASH_CONST` macro
+
+Example of platform-portable const data:
+```c
+#ifdef HELIOS_8051
+#define FLASH_CONST __code
+#else
+#define FLASH_CONST
+#endif
+
+static const uint32_t FLASH_CONST color_table[] = {...};
+```
 
 ## CI/CD
 

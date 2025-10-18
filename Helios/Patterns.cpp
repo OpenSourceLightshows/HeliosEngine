@@ -4,25 +4,32 @@
 #include "Pattern.h"
 #include "ColorConstants.h"
 
+// For 8051, use __code to store const data in flash instead of RAM
+#ifdef HELIOS_8051
+#define FLASH_CONST __code
+#else
+#define FLASH_CONST
+#endif
+
 // define arrays of colors, you can reuse these if you have multiple
 // modes that use the same colorset -- these demonstrate the max amount
 // of colors in each set but you can absolutely list a lesser amount
-static const uint32_t color_codes0[] = {RGB_RED, RGB_ORANGE, RGB_YELLOW, RGB_TURQUOISE, RGB_BLUE, RGB_PINK};
-static const uint32_t color_codes1[] = {RGB_RED, RGB_CORAL_ORANGE_SAT_MEDIUM, RGB_ORANGE, RGB_YELLOW_SAT_LOW};
-static const uint32_t color_codes2[] = {RGB_PURPLE_BRI_LOWEST, RGB_MAGENTA, RGB_HOT_PINK_SAT_MEDIUM, RGB_PINK_SAT_LOWEST};
-static const uint32_t color_codes3[] = {RGB_WHITE, RGB_BLUE_BRI_LOWEST, RGB_BLUE_BRI_LOWEST, RGB_BLUE_BRI_LOWEST, RGB_BLUE_BRI_LOWEST, RGB_BLUE_BRI_LOWEST};
-static const uint32_t color_codes4[] = {RGB_MAGENTA_BRI_LOWEST, RGB_ROYAL_BLUE_BRI_LOW, RGB_TURQUOISE, RGB_ROYAL_BLUE_BRI_LOW, RGB_MAGENTA_BRI_LOWEST, RGB_OFF};
-static const uint32_t color_codes5[] = {RGB_RED, RGB_HOT_PINK, RGB_ROYAL_BLUE, RGB_BLUE, RGB_GREEN, RGB_YELLOW};
+static const uint32_t FLASH_CONST color_codes0[] = {RGB_RED, RGB_ORANGE, RGB_YELLOW, RGB_TURQUOISE, RGB_BLUE, RGB_PINK};
+static const uint32_t FLASH_CONST color_codes1[] = {RGB_RED, RGB_CORAL_ORANGE_SAT_MEDIUM, RGB_ORANGE, RGB_YELLOW_SAT_LOW};
+static const uint32_t FLASH_CONST color_codes2[] = {RGB_PURPLE_BRI_LOWEST, RGB_MAGENTA, RGB_HOT_PINK_SAT_MEDIUM, RGB_PINK_SAT_LOWEST};
+static const uint32_t FLASH_CONST color_codes3[] = {RGB_WHITE, RGB_BLUE_BRI_LOWEST, RGB_BLUE_BRI_LOWEST, RGB_BLUE_BRI_LOWEST, RGB_BLUE_BRI_LOWEST, RGB_BLUE_BRI_LOWEST};
+static const uint32_t FLASH_CONST color_codes4[] = {RGB_MAGENTA_BRI_LOWEST, RGB_ROYAL_BLUE_BRI_LOW, RGB_TURQUOISE, RGB_ROYAL_BLUE_BRI_LOW, RGB_MAGENTA_BRI_LOWEST, RGB_OFF};
+static const uint32_t FLASH_CONST color_codes5[] = {RGB_RED, RGB_HOT_PINK, RGB_ROYAL_BLUE, RGB_BLUE, RGB_GREEN, RGB_YELLOW};
 
 // Define Colorset configurations for each slot
 struct default_colorset_t {
   uint8_t num_cols;
-  const uint32_t *cols;
+  const uint32_t FLASH_CONST *cols;
 };
 
 // the array of colorset entries, make sure the number on the left reflects
 // the number of colors in the array on the right
-static const struct default_colorset_t default_colorsets[] = {
+static const struct default_colorset_t FLASH_CONST default_colorsets[] = {
   { 6, color_codes0 },  // 0 Lightside
   { 4, color_codes1 },  // 1 Sauna
   { 4, color_codes2 },  // 2 Butterfly

@@ -159,15 +159,15 @@ CFLAGS+=$(INCLUDES)
 # Source files
 ifeq ($(OS),Windows_NT) # Windows
 SRCS = \
-       $(shell find ../Helios -maxdepth 1 -type f -name '\*.cpp') main.cpp
+       $(shell find ../Helios -maxdepth 1 -type f -name '\*.cpp') main.c
 else # linux
 SRCS = \
-       $(shell find ../Helios -maxdepth 1 -type f -name \*.cpp) main.cpp
+       $(shell find ../Helios -maxdepth 1 -type f -name \*.cpp) main.c
 endif
 
-OBJS = $(SRCS:.cpp=.o)
+OBJS = $(patsubst %.cpp,%.o,$(patsubst %.c,%.o,$(SRCS)))
 
-DFILES = $(SRCS:.cpp=.d)
+DFILES = $(patsubst %.cpp,%.d,$(patsubst %.c,%.d,$(SRCS)))
 
 #######################
 ### BUILD TARGETS #####
@@ -194,6 +194,9 @@ $(TARGET).elf: compute_version $(OBJS)
 
 %.o: %.S
 	$(CC) $(ASMFLAGS) -c $< -o $@
+
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
 %.o: %.cpp
 	$(CC) $(CFLAGS) -c $< -o $@

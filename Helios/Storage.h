@@ -20,8 +20,11 @@ extern "C" {
 #define STORAGE_CURRENT_MODE_INDEX 1
 #define STORAGE_BRIGHTNESS_INDEX 2
 
-// Forward declaration
+// Forward declaration (with include guard to prevent SDCC conflicts)
+#ifndef PATTERN_T_FORWARD_DECLARED
+#define PATTERN_T_FORWARD_DECLARED
 typedef struct pattern_t pattern_t;
+#endif
 
 uint8_t storage_init(void);
 

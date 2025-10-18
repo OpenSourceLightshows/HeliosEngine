@@ -4,7 +4,14 @@
 #include "Pattern.h"
 
 #ifdef HELIOS_EMBEDDED
+#ifdef HELIOS_8051
+#include "ca51f152.h"
+// For 8051, we'll use a reserved area of flash memory at the end of ROM
+// CA51F152XX has 16KB flash, we'll reserve last 256 bytes for storage
+#define FLASH_STORAGE_START 0x3F00  // Start of storage area (16KB - 256 bytes)
+#else
 #include <avr/io.h>
+#endif
 #endif
 
 #ifdef HELIOS_CLI
@@ -23,19 +30,35 @@ static void storage_write_crc(uint8_t pos);
 static void storage_write_byte(uint8_t address, uint8_t data);
 static uint8_t storage_read_byte(uint8_t address);
 
-#ifdef HELIOS_EMBEDDED
+#if defined(HELIOS_EMBEDDED) && !defined(HELIOS_8051)
 static inline uint8_t storage_internal_read(uint8_t address);
 static inline void storage_internal_write(uint8_t address, uint8_t data);
 #endif
 
+#ifdef HELIOS_8051
+// 8051 flash read/write functions
+static uint8_t storage_flash_read(uint8_t address);
+static void storage_flash_write(uint8_t address, uint8_t data);
+#endif
+
+#ifdef HELIOS_8051
+// 8051 has limited internal RAM, so use external RAM for all static variables
+#define STATIC_VAR static __xdata
+#else
+#define STATIC_VAR static
+#endif
+
 #ifdef HELIOS_CLI
 // whether storage is enabled, default enabled
-static uint8_t m_enableStorage = 1;
+STATIC_VAR uint8_t m_enableStorage = 1;
 #endif
 
 uint8_t storage_init(void)
 {
-#ifdef HELIOS_CLI
+#ifdef HELIOS_8051
+  // Initialize flash area for 8051 (no RAM buffer needed)
+  return 1;
+#elif defined(HELIOS_CLI)
   if (!m_enableStorage) {
     return 1;
   }
@@ -55,8 +78,10 @@ uint8_t storage_init(void)
     }
     fclose(f);
   }
-#endif
   return 1;
+#else
+  return 1;
+#endif
 }
 
 uint8_t storage_read_pattern(uint8_t slot, pattern_t *pat)
@@ -170,7 +195,13 @@ static void storage_write_crc(uint8_t pos)
 
 static void storage_write_byte(uint8_t address, uint8_t data)
 {
-#ifdef HELIOS_EMBEDDED
+#ifdef HELIOS_8051
+  // For 8051, write directly to flash (no RAM buffer)
+  if (storage_flash_read(address) == data) {
+    return;
+  }
+  storage_flash_write(address, data);
+#elif defined(HELIOS_EMBEDDED)
   // reads out the byte of the eeprom first to see if it's different
   // before writing out the byte -- this is faster than always writing
   if (storage_read_byte(address) == data) {
@@ -208,7 +239,10 @@ static void storage_write_byte(uint8_t address, uint8_t data)
 
 static uint8_t storage_read_byte(uint8_t address)
 {
-#ifdef HELIOS_EMBEDDED
+#ifdef HELIOS_8051
+  // For 8051, read directly from flash (no RAM buffer)
+  return storage_flash_read(address);
+#elif defined(HELIOS_EMBEDDED)
   // do a three way read because the attiny85 eeprom basically doesn't work
   uint8_t b1 = storage_internal_read(address);
   uint8_t b2 = storage_internal_read(address);
@@ -253,7 +287,7 @@ static uint8_t storage_read_byte(uint8_t address)
 #endif
 }
 
-#ifdef HELIOS_EMBEDDED
+#if defined(HELIOS_EMBEDDED) && !defined(HELIOS_8051)
 static inline void storage_internal_write(uint8_t address, uint8_t data)
 {
   while (EECR & (1<<EEPE)) {
@@ -281,6 +315,88 @@ static inline uint8_t storage_internal_read(uint8_t address)
   EECR |= (1<<EERE);
   // Return data from data register
   return EEDR;
+}
+#endif
+
+#ifdef HELIOS_8051
+// 8051 CA51F152XX flash storage implementation
+// Complete implementation using data area as EEPROM replacement
+
+STATIC_VAR uint8_t storage_flash_initialized = 0;
+
+static void storage_flash_init_area(void)
+{
+  if (!storage_flash_initialized) {
+    // Reserve 256 bytes (4 sectors of 64 bytes) for data storage
+    // This sets data area from 0x3F00-0x3FFF (logical 0x0000-0x00FF)
+    PADRD = 255;  // 256 bytes for data area
+    storage_flash_initialized = 1;
+  }
+}
+
+static uint8_t storage_flash_read(uint8_t address)
+{
+  uint8_t data;
+
+  // Initialize flash area if not done
+  storage_flash_init_area();
+
+  // Read from data area using flash controller
+  FSCMD = 0;                      // Reset command
+  LOCK = CMD_DATA_AREA_UNLOCK;    // Unlock data area
+  PTSH = 0;                       // High address (data area uses logical addressing)
+  PTSL = address;                 // Set read address
+  FSCMD = CMD_DATA_READ;          // Set read command
+  data = FSDAT;                   // Read data byte
+  FSCMD = 0;                      // Reset command
+  LOCK = CMD_FLASH_LOCK;          // Lock flash
+
+  return data;
+}
+
+static void storage_flash_write(uint8_t address, uint8_t data)
+{
+  uint8_t sector = address / 64;  // Each sector is 64 bytes
+  uint8_t page_data[64];
+  uint8_t i;
+
+  // Initialize flash area if not done
+  storage_flash_init_area();
+
+  // Step 1: Read existing sector data (64 bytes)
+  for (i = 0; i < 64; i++) {
+    page_data[i] = storage_flash_read((sector * 64) + i);
+  }
+
+  // Step 2: Modify the byte we want to change
+  page_data[address % 64] = data;
+
+  // Step 3: Erase the sector
+  FSCMD = 0;                                          // Reset command
+  LOCK = CMD_DATA_AREA_UNLOCK;                        // Unlock data area
+  FSCMD = CMD_SET_LATCH;                              // Set erase latch
+  PTSH = (uint8_t)((sector * 0x40) >> 8);             // Set sector high address
+  PTSL = (uint8_t)(sector * 0x40);                    // Set sector low address
+  FSCMD = CMD_DATA_ERASE;                             // Execute erase command
+  LOCK = CMD_FLASH_LOCK;                              // Lock flash
+
+  // Step 4: Write modified page back to flash
+  FSCMD = 0;                                          // Reset command
+  LOCK = CMD_DATA_AREA_UNLOCK;                        // Unlock data area
+  PTSH = 0;                                           // Set page latch start
+  PTSL = 0;                                           // Set page latch start
+  FSCMD = CMD_SET_LATCH;                              // Set write latch
+
+  // Write all 64 bytes to page latch
+  for (i = 0; i < 64; i++) {
+    FSDAT = page_data[i];                             // Write page data
+  }
+
+  // Set target address and execute write
+  PTSH = (uint8_t)((sector * 0x40) >> 8);             // Set target high address
+  PTSL = (uint8_t)(sector * 0x40);                    // Set target low address
+  FSCMD = CMD_DATA_WRITE;                             // Execute write command
+  LOCK = CMD_FLASH_LOCK;                              // Lock flash
 }
 #endif
 

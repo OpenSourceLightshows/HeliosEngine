@@ -3,6 +3,11 @@
 #include "HeliosConfig.h"
 
 #ifdef HELIOS_EMBEDDED
+#ifdef HELIOS_8051
+#include "ca51f152.h"
+// Button connected to P3.3 (INT1)
+#define BUTTON_PIN 3
+#else
 #include <avr/interrupt.h>
 #include <avr/io.h>
 #ifdef HELIOS_ARDUINO
@@ -10,6 +15,7 @@
 #endif
 #define BUTTON_PIN 3
 #define BUTTON_PORT 2
+#endif
 #endif
 
 // Forward declaration
@@ -28,29 +34,36 @@ static uint8_t button_process_pre_input(void);
 static uint8_t button_process_post_input(void);
 #endif
 
+#ifdef HELIOS_8051
+// 8051 has limited internal RAM, so use external RAM for all static variables
+#define STATIC_VAR static __xdata
+#else
+#define STATIC_VAR static
+#endif
+
 // static members of Button
-static uint32_t m_pressTime = 0;
-static uint32_t m_releaseTime = 0;
-static uint32_t m_holdDuration = 0;
-static uint32_t m_releaseDuration = 0;
-static uint8_t m_releaseCount = 0;
-static uint8_t m_buttonState = 0;
-static uint8_t m_newPress = 0;
-static uint8_t m_newRelease = 0;
-static uint8_t m_isPressed = 0;
-static uint8_t m_shortClick = 0;
-static uint8_t m_longClick = 0;
-static uint8_t m_holdClick = 0;
+STATIC_VAR uint32_t m_pressTime = 0;
+STATIC_VAR uint32_t m_releaseTime = 0;
+STATIC_VAR uint32_t m_holdDuration = 0;
+STATIC_VAR uint32_t m_releaseDuration = 0;
+STATIC_VAR uint8_t m_releaseCount = 0;
+STATIC_VAR uint8_t m_buttonState = 0;
+STATIC_VAR uint8_t m_newPress = 0;
+STATIC_VAR uint8_t m_newRelease = 0;
+STATIC_VAR uint8_t m_isPressed = 0;
+STATIC_VAR uint8_t m_shortClick = 0;
+STATIC_VAR uint8_t m_longClick = 0;
+STATIC_VAR uint8_t m_holdClick = 0;
 
 #ifdef HELIOS_CLI
-static uint8_t m_pinState = 0;
-static uint8_t m_enableWake = 0;
+STATIC_VAR uint8_t m_pinState = 0;
+STATIC_VAR uint8_t m_enableWake = 0;
 // an input queue for the button, each tick one even is processed
 // out of this queue and used to produce input
 #define INPUT_QUEUE_SIZE 4096
-static char m_inputQueue[INPUT_QUEUE_SIZE];
-static uint32_t m_queueHead = 0;
-static uint32_t m_queueTail = 0;
+STATIC_VAR char m_inputQueue[INPUT_QUEUE_SIZE];
+STATIC_VAR uint32_t m_queueHead = 0;
+STATIC_VAR uint32_t m_queueTail = 0;
 #endif
 
 // initialize a new button object with a pin number
@@ -77,6 +90,10 @@ uint8_t button_init(void)
 #ifdef HELIOS_EMBEDDED
 #ifdef HELIOS_ARDUINO
   pinMode(3, INPUT);
+#elif defined(HELIOS_8051)
+  // Configure P3.3 as input (already done in helios_init)
+  // Disable external interrupt 1 initially
+  EX1 = 0;
 #else
   // turn off wake
   PCMSK &= ~(1 << PCINT3);
@@ -90,21 +107,37 @@ uint8_t button_init(void)
 void button_enable_wake(void)
 {
 #ifdef HELIOS_EMBEDDED
+#ifdef HELIOS_8051
+  // Configure INT1 to trigger on falling edge (button press)
+  IT1 = 1;  // Edge triggered
+  EX1 = 1;  // Enable external interrupt 1
+  EA = 1;   // Enable global interrupts
+#else
   // Configure INT0 to trigger on falling edge
   PCMSK |= (1 << PCINT3);
   GIMSK |= (1 << PCIE);
   sei();
+#endif
 #else // HELIOS_CLI
   m_enableWake = 1;
 #endif
 }
 
 #ifdef HELIOS_EMBEDDED
+#ifdef HELIOS_8051
+// External interrupt 1 ISR for button wake
+void int1_isr(void) __interrupt(2) {
+  // Disable interrupt
+  EX1 = 0;
+  helios_wakeup();
+}
+#else
 ISR(PCINT0_vect) {
   PCMSK &= ~(1 << PCINT3);
   GIMSK &= ~(1 << PCIE);
   helios_wakeup();
 }
+#endif
 #endif
 
 // directly poll the pin for whether it's pressed right now
@@ -113,6 +146,9 @@ uint8_t button_check(void)
 #ifdef HELIOS_EMBEDDED
 #ifdef HELIOS_ARDUINO
   return digitalRead(3) == HIGH;
+#elif defined(HELIOS_8051)
+  // Read P3.3 state (active high assumed)
+  return (P3 & (1 << BUTTON_PIN)) != 0;
 #else
   return (PINB & (1 << 3)) != 0;
 #endif
