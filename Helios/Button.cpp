@@ -43,18 +43,17 @@ static uint8_t m_longClick = 0;
 static uint8_t m_holdClick = 0;
 
 #ifdef HELIOS_CLI
-// Note: For embedded builds, we exclude std::queue and CLI-only features.
-// The CLI input queue functionality is omitted for embedded targets.
 static uint8_t m_pinState = 0;
 static uint8_t m_enableWake = 0;
-// Simple input queue for CLI - using a fixed-size circular buffer
-// Larger queue size for CLI to handle long test sequences
-#define INPUT_QUEUE_SIZE 8192
+// an input queue for the button, each tick one even is processed
+// out of this queue and used to produce input
+#define INPUT_QUEUE_SIZE 4096
 static char m_inputQueue[INPUT_QUEUE_SIZE];
 static uint32_t m_queueHead = 0;
 static uint32_t m_queueTail = 0;
 #endif
 
+// initialize a new button object with a pin number
 uint8_t button_init(void)
 {
   m_pressTime = 0;
@@ -87,6 +86,7 @@ uint8_t button_init(void)
   return 1;
 }
 
+// enable wake on press
 void button_enable_wake(void)
 {
 #ifdef HELIOS_EMBEDDED
