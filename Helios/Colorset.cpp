@@ -5,7 +5,7 @@
 #include <string.h>
 
 // when no color is selected in the colorset the index is this
-// then when you call getNext() for the first time it returns
+// then when you call colorset_getNext() for the first time it returns
 // the 0th color in the colorset and after the index will be 0
 #define INDEX_INVALID 255
 
@@ -222,7 +222,8 @@ rgb_color_t colorset_get(const colorset_t *set, uint8_t index)
 
 void colorset_set(colorset_t *set, uint8_t index, rgb_color_t col)
 {
-  //
+  // special case for 'setting' a color at the edge of the palette,
+  // ie adding a new color when you set an index higher than the max
   if (index >= set->m_numColors) {
     if (!colorset_add_color(set, col)) {
       // ERROR_LOGF("Failed to add new color at index %u", index);
@@ -245,9 +246,11 @@ void colorset_skip(colorset_t *set, int32_t amount)
   // first modulate the amount to skip to be within +/- the number of colors
   amount %= (int32_t)set->m_numColors;
 
-  //
+  // max = 3
+  // m_curIndex = 2
+  // amount = -10
   set->m_curIndex = ((int32_t)set->m_curIndex + (int32_t)amount) % (int32_t)set->m_numColors;
-  if (set->m_curIndex > set->m_numColors) { //
+  if (set->m_curIndex > set->m_numColors) { // must have wrapped
     // simply wrap it back
     set->m_curIndex += set->m_numColors;
   }

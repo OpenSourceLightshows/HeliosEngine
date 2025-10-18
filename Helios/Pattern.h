@@ -58,17 +58,20 @@ enum pattern_state
 
 struct pattern_t
 {
-  //
+  // ==================================
+  //  Pattern Parameters
   pattern_args_t m_args;
 
-  //
+  // ==================================
+  //  Pattern Members
 
   // any flags the pattern has
   uint8_t m_patternFlags;
   // a copy of the colorset that this pattern is initialized with
   colorset_t m_colorset;
 
-  //
+  // ==================================
+  //  Blink Members
   uint8_t m_groupCounter;
 
   // the state of the current pattern
@@ -77,13 +80,15 @@ struct pattern_t
   // the blink timer used to measure blink timings
   helios_timer_t m_blinkTimer;
 
-  //
+  // ==================================
+  //  Blend Members
 
   // current color and target blend color
   rgb_color_t m_cur;
   rgb_color_t m_next;
 
-  //
+  // ==================================
+  //  Fade Members
 
   // shifting value to represent current fade
   uint8_t m_fadeValue;

@@ -20,10 +20,15 @@ void time_cleanup(void);
 // Tick the clock forward to millis()
 void time_tick_clock(void);
 
-//
+// Get the current tick, offset by any active simulation (simulation only exists in vortexlib)
+// Exposing this as inline or macro seems to save on space a non negligible amount, it is used a lot
+// and exposing in the header probably allows the compiler to optimize away repetitive calls
 uint32_t time_get_current_time(void);
 
-//
+// Current microseconds since startup, only use this for things like measuring rapid data transfer timings.
+// If you just need to perform regular time checks for a pattern or some logic then use time_get_current_time() and measure
+// time in ticks, use the SEC_TO_TICKS() or MS_TO_TICKS() macros to convert timings to measures of ticks for
+// purpose of comparing against time_get_current_time()
 uint32_t time_microseconds(void);
 
 // Delay for some number of microseconds or milliseconds, these are bad
