@@ -4,14 +4,18 @@
 #include <avr/sleep.h>
 
 #if !defined(HELIOS_CLI) && !defined(HELIOS_ARDUINO)
-// this is the main thread for non-arduino embedded builds
+/* this is the main thread for non-arduino embedded builds */
 int main(int argc, char *argv[])
 {
-  Helios::init();
-  // the main thread just initializes Helios then continuously calls tick
-  while (Helios::keep_going()) {
-    Helios::tick();
+  (void)argc; /* unused */
+  (void)argv; /* unused */
+
+  helios_init();
+  /* the main thread just initializes Helios then continuously calls tick */
+  while (helios_keep_going()) {
+    helios_tick();
   }
   return 0;
 }
 #endif
+

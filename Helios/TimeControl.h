@@ -1,6 +1,10 @@
 #ifndef TIME_CONTROL_H
 #define TIME_CONTROL_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <inttypes.h>
 
 #include "HeliosConfig.h"
@@ -9,51 +13,35 @@
 #define MS_TO_TICKS(ms) (uint32_t)(((uint32_t)(ms) * TICKRATE) / 1000)
 #define SEC_TO_TICKS(s) (uint32_t)((uint32_t)(s) * TICKRATE)
 
-class Time
-{
-  // private unimplemented constructor
-  Time();
+// Initialize time system
+uint8_t time_init(void);
+void time_cleanup(void);
 
-public:
-  // opting for static class here because there should only ever be one
-  // Settings control object and I don't like singletons
-  static bool init();
-  static void cleanup();
+// Tick the clock forward to millis()
+void time_tick_clock(void);
 
-  // tick the clock forward to millis()
-  static void tickClock();
+// Get the current tick, offset by any active simulation (simulation only exists in vortexlib)
+// Exposing this as inline or macro seems to save on space a non negligible amount, it is used a lot
+// and exposing in the header probably allows the compiler to optimize away repetitive calls
+uint32_t time_get_current_time(void);
 
-  // get the current tick, offset by any active simulation (simulation only exists in vortexlib)
-  // Exposing this in the header seems to save on space a non negligible amount, it is used a lot
-  // and exposing in the header probably allows the compiler to optimize away repititive calls
-  static uint32_t getCurtime() { return m_curTick; }
+// Current microseconds since startup, only use this for things like measuring rapid data transfer timings.
+// If you just need to perform regular time checks for a pattern or some logic then use time_get_current_time() and measure
+// time in ticks, use the SEC_TO_TICKS() or MS_TO_TICKS() macros to convert timings to measures of ticks for
+// purpose of comparing against time_get_current_time()
+uint32_t time_microseconds(void);
 
-  // Current microseconds since startup, only use this for things like measuring rapid data transfer timings.
-  // If you just need to perform regular time checks for a pattern or some logic then use getCurtime() and measure
-  // time in ticks, use the SEC_TO_TICKS() or MS_TO_TICKS() macros to convert timings to measures of ticks for
-  // purpose of comparing against getCurtime()
-  static uint32_t microseconds();
-
-  // delay for some number of microseconds or milliseconds, these are bad
-  static void delayMicroseconds(uint32_t us);
-  static void delayMilliseconds(uint32_t ms);
+// Delay for some number of microseconds or milliseconds, these are bad
+void time_delay_microseconds(uint32_t us);
+void time_delay_milliseconds(uint32_t ms);
 
 #ifdef HELIOS_CLI
-  // toggle timestep on/off
-  static void enableTimestep(bool enabled) { m_enableTimestep = enabled; }
+// Toggle timestep on/off
+void time_enable_timestep(uint8_t enabled);
 #endif
 
-private:
-  // global tick counter
-  static uint32_t m_curTick;
-  // the last frame timestamp
-  static uint32_t m_prevTime;
-
-#ifdef HELIOS_CLI
-  // whether timestep is enabled
-  static bool m_enableTimestep;
-#endif
-};
-
+#ifdef __cplusplus
+}
 #endif
 
+#endif
