@@ -8,7 +8,7 @@
 
 #include <string.h> /* for memcpy */
 
-/* Forward declarations for internal functions */
+// Forward declarations for internal functions
 static void pattern_on_blink_on(pattern_t *pat);
 static void pattern_on_blink_off(pattern_t *pat);
 static void pattern_begin_gap(pattern_t *pat);
@@ -61,52 +61,52 @@ void pattern_init_state(pattern_t *pat)
 {
   colorset_reset_index(&pat->m_colorset);
 
-  /* Reset the fade start time to the current time */
+  // Reset the fade start time to the current time
   pat->m_fadeStartTime = time_get_current_time();
 
-  /* the default state to begin with */
+  // the default state to begin with
   pat->m_state = STATE_BLINK_ON;
   /* if a dash is present then always start with the dash because
    * it consumes the first color in the colorset */
   if (pat->m_args.dash_dur > 0) {
     pat->m_state = STATE_BEGIN_DASH;
   }
-  /* if there's no on duration or dash duration the led is just disabled */
+  // if there's no on duration or dash duration the led is just disabled
   if ((!pat->m_args.on_dur && !pat->m_args.dash_dur) || !colorset_num_colors(&pat->m_colorset)) {
     pat->m_state = STATE_DISABLED;
   }
   pat->m_groupCounter = pat->m_args.group_size ? pat->m_args.group_size : (colorset_num_colors(&pat->m_colorset) - (pat->m_args.dash_dur != 0));
 
   if (pat->m_args.blend_speed > 0) {
-    /* convert current/next colors to HSV but only if we are doing a blend */
+    // convert current/next colors to HSV but only if we are doing a blend
     pat->m_cur = colorset_get_next(&pat->m_colorset);
     pat->m_next = colorset_get_next(&pat->m_colorset);
   } else if (pat->m_args.fade_dur) {
-    /* if there is a fade dur and no blend need to iterate colorset */
+    // if there is a fade dur and no blend need to iterate colorset
     colorset_get_next(&pat->m_colorset);
   }
 
-  /* Initialize the fluctuating fade value */
+  // Initialize the fluctuating fade value
   pat->m_fadeValue = 0;
 }
 
 static void pattern_tick_fade(pattern_t *pat)
 {
   uint32_t now = time_get_current_time();
-  /* Calculate relative time since pattern was initialized */
+  // Calculate relative time since pattern was initialized
   uint32_t relativeTime = now - pat->m_fadeStartTime;
   uint32_t duration = pat->m_args.fade_dur * 10;
 
-  /* only tick forward every fade_dur ticks */
+  // only tick forward every fade_dur ticks
   if (!relativeTime || (relativeTime % duration) != 0) {
     return;
   }
 
-  /* count the number of steps based on relative time */
+  // count the number of steps based on relative time
   uint32_t steps = relativeTime / duration;
   uint32_t range = pat->m_args.off_dur;
 
-  /* make sure the range is non-zero */
+  // make sure the range is non-zero
   if (range == 0) {
     pat->m_fadeValue = 0;
     return;
@@ -115,10 +115,10 @@ static void pattern_tick_fade(pattern_t *pat)
   uint32_t double_range = range * 2;
   uint32_t step = steps % double_range;
 
-  /* Triangle wave: up from 0 to range, then down to 0 */
+  // Triangle wave: up from 0 to range, then down to 0
   pat->m_fadeValue = (step < range) ? step : (double_range - step - 1);
 
-  /* iterate color when at lowest point */
+  // iterate color when at lowest point
   if (step == 0) {
     colorset_get_next(&pat->m_colorset);
   }
@@ -126,7 +126,7 @@ static void pattern_tick_fade(pattern_t *pat)
 
 void pattern_play(pattern_t *pat)
 {
-  /* tick forward the fade logic each tick */
+  // tick forward the fade logic each tick
   if (pattern_is_fade(pat)) {
     pattern_tick_fade(pat);
   }
@@ -135,7 +135,7 @@ void pattern_play(pattern_t *pat)
    * instead of using a loop or recursion I have just used a simple goto */
 replay:
 
-  /* its kinda evolving as i go */
+  // its kinda evolving as i go
   switch (pat->m_state) {
   case STATE_DISABLED:
     return;
@@ -143,7 +143,7 @@ replay:
     if (pat->m_args.on_dur > 0) {
       pattern_on_blink_on(pat);
       --pat->m_groupCounter;
-      /* When in ON state, use current fading on-time */
+      // When in ON state, use current fading on-time
       pattern_next_state(pat, pat->m_args.on_dur + pat->m_fadeValue);
       return;
     }
@@ -191,7 +191,7 @@ replay:
   }
 
   if (!timer_alarm(&pat->m_blinkTimer)) {
-    /* no alarm triggered just stay in current state, return and don't transition states */
+    // no alarm triggered just stay in current state, return and don't transition states
     return;
   }
 
@@ -208,10 +208,10 @@ replay:
      * left in the group we need to cycle back to blink on instead of to the next state */
     pat->m_state = (pat->m_groupCounter > 0) ? STATE_BLINK_ON : STATE_BEGIN_GAP;
   } else {
-    /* this is the standard case, iterate to the next state */
+    // this is the standard case, iterate to the next state
     pat->m_state = (enum pattern_state)(pat->m_state + 1);
   }
-  /* poor-mans recurse with the new state change (this transitions to a new state within the same tick) */
+  // poor-mans recurse with the new state change (this transitions to a new state within the same tick)
   goto replay;
 }
 
@@ -237,7 +237,7 @@ static void pattern_on_blink_on(pattern_t *pat)
     return;
   }
 
-  /* Check if this is a fading duration pattern */
+  // Check if this is a fading duration pattern
   if (pattern_is_fade(pat)) {
     rgb_color_t cur_col = colorset_cur(&pat->m_colorset);
     led_set_rgb(&cur_col);
@@ -298,11 +298,11 @@ uint8_t pattern_equals(const pattern_t *pat, const pattern_t *other)
   if (!other) {
     return 0;
   }
-  /* compare the colorset */
+  // compare the colorset
   if (!colorset_equals(&pat->m_colorset, &other->m_colorset)) {
     return 0;
   }
-  /* compare the args of each pattern for equality */
+  // compare the args of each pattern for equality
   if (memcmp(&pat->m_args, &other->m_args, sizeof(pattern_args_t)) != 0) {
     return 0;
   }
@@ -354,11 +354,11 @@ static void pattern_blend_blink_on(pattern_t *pat)
   if (rgb_equals(&pat->m_cur, &pat->m_next)) {
     pat->m_next = colorset_get_next(&pat->m_colorset);
   }
-  /* interpolate to the next color */
+  // interpolate to the next color
   pattern_interpolate(&pat->m_cur.red, pat->m_next.red, pat->m_args.blend_speed);
   pattern_interpolate(&pat->m_cur.green, pat->m_next.green, pat->m_args.blend_speed);
   pattern_interpolate(&pat->m_cur.blue, pat->m_next.blue, pat->m_args.blend_speed);
-  /* set the color */
+  // set the color
   led_set_rgb(&pat->m_cur);
 }
 

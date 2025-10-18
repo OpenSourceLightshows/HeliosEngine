@@ -22,7 +22,7 @@ enum hsv_to_rgb_algorithm
 extern enum hsv_to_rgb_algorithm g_hsv_rgb_alg;
 #endif
 
-/* Forward declarations */
+// Forward declarations
 typedef struct hsv_color_t hsv_color_t;
 typedef struct rgb_color_t rgb_color_t;
 
@@ -40,7 +40,7 @@ struct rgb_color_t
   uint8_t blue;
 };
 
-/* HSVColor functions */
+// HSVColor functions
 void hsv_init(hsv_color_t *hsv);
 void hsv_init3(hsv_color_t *hsv, uint8_t hue, uint8_t sat, uint8_t val);
 void hsv_init_from_raw(hsv_color_t *hsv, uint32_t dwVal);
@@ -53,7 +53,7 @@ uint8_t hsv_empty(const hsv_color_t *hsv);
 void hsv_clear(hsv_color_t *hsv);
 uint32_t hsv_raw(const hsv_color_t *hsv);
 
-/* RGBColor functions */
+// RGBColor functions
 void rgb_init(rgb_color_t *rgb);
 void rgb_init3(rgb_color_t *rgb, uint8_t red, uint8_t green, uint8_t blue);
 void rgb_init_from_raw(rgb_color_t *rgb, uint32_t dwVal);
@@ -72,18 +72,18 @@ uint32_t rgb_raw(const rgb_color_t *rgb);
  * ex: 0.0 = black, 0.5 = half brightness, 1.0 = no change,
  *     1.5 = 50% brighter, 2.0 = twice as bright, 255.0 = white */
 void rgb_scale_brightness(rgb_color_t *rgb, float scale);
-/* Bring up the brightness of a color to a minimum level */
+// Bring up the brightness of a color to a minimum level
 void rgb_bring_up_brightness(rgb_color_t *rgb, uint8_t min_brightness);
 #endif
 
-/* Conversion functions */
+// Conversion functions
 /* Stolen from FastLED hsv to rgb full rainbow where all colours
  * are given equal weight, this makes for-example yellow larger
  * best to use this function as it is the legacy choice */
 rgb_color_t hsv_to_rgb_rainbow(const hsv_color_t *rhs);
-/* Generic hsv to rgb conversion nothing special */
+// Generic hsv to rgb conversion nothing special
 rgb_color_t hsv_to_rgb_generic(const hsv_color_t *rhs);
-/* Convert rgb to hsv with generic fast method */
+// Convert rgb to hsv with generic fast method
 hsv_color_t rgb_to_hsv_generic(const rgb_color_t *rhs);
 
 #ifdef __cplusplus

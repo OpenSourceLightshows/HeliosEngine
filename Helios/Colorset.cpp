@@ -20,7 +20,7 @@ void colorset_init_multi(colorset_t *set, rgb_color_t c1, rgb_color_t c2, rgb_co
     rgb_color_t c4, rgb_color_t c5, rgb_color_t c6, rgb_color_t c7, rgb_color_t c8)
 {
   colorset_init(set);
-  /* would be nice if we could do this another way */
+  // would be nice if we could do this another way
   if (!rgb_empty(&c1)) colorset_add_color(set, c1);
   if (!rgb_empty(&c2)) colorset_add_color(set, c2);
   if (!rgb_empty(&c3)) colorset_add_color(set, c3);
@@ -54,7 +54,7 @@ void colorset_copy(colorset_t *dest, const colorset_t *src)
 
 uint8_t colorset_equals(const colorset_t *a, const colorset_t *b)
 {
-  /* only compare the palettes for equality */
+  // only compare the palettes for equality
   return (a->m_numColors == b->m_numColors) &&
          (memcmp(a->m_palette, b->m_palette, a->m_numColors * sizeof(rgb_color_t)) == 0);
 }
@@ -86,7 +86,7 @@ uint8_t colorset_add_color(colorset_t *set, rgb_color_t col)
   if (set->m_numColors >= NUM_COLOR_SLOTS) {
     return 0;
   }
-  /* insert new color and increment number of colors */
+  // insert new color and increment number of colors
   set->m_palette[set->m_numColors] = col;
   set->m_numColors++;
   return 1;
@@ -159,7 +159,7 @@ void colorset_remove_color(colorset_t *set, uint8_t index)
 
 void colorset_randomize_colors(colorset_t *set, random_t *ctx, uint8_t numColors, enum colorset_color_mode mode)
 {
-  /* if they specify randomly pick the color mode then roll it */
+  // if they specify randomly pick the color mode then roll it
   if (mode >= COLOR_MODE_RANDOMLY_PICK) {
     mode = (enum colorset_color_mode)(random_next8(ctx, 0, 255) % COLOR_MODE_COUNT);
   }
@@ -173,7 +173,7 @@ void colorset_randomize_colors(colorset_t *set, random_t *ctx, uint8_t numColors
     colorGap = random_next8(ctx, 16, 256 / (numColors - 1));
   }
   enum colorset_value_style valStyle = (enum colorset_value_style)random_next8(ctx, 0, VAL_STYLE_COUNT);
-  /* the doubleStyle decides if some colors are added to the set twice */
+  // the doubleStyle decides if some colors are added to the set twice
   uint8_t doubleStyle = 0;
   if (numColors <= 7) {
     doubleStyle = random_next8(ctx, 0, 1);
@@ -194,7 +194,7 @@ void colorset_randomize_colors(colorset_t *set, random_t *ctx, uint8_t numColors
       hueToUse = (randomizedHue + (256 / numColors) * i);
     }
     colorset_add_color_with_value_style(set, ctx, hueToUse, valueToUse, valStyle, numColors, i);
-    /* double all colors or only first color */
+    // double all colors or only first color
     if (doubleStyle == 2 || (doubleStyle == 1 && !i)) {
       colorset_add_color_with_value_style(set, ctx, hueToUse, valueToUse, valStyle, numColors, i);
     }
@@ -225,7 +225,7 @@ void colorset_set(colorset_t *set, uint8_t index, rgb_color_t col)
    * ie adding a new color when you set an index higher than the max */
   if (index >= set->m_numColors) {
     if (!colorset_add_color(set, col)) {
-      /* ERROR_LOGF("Failed to add new color at index %u", index); */
+      // ERROR_LOGF("Failed to add new color at index %u", index);
     }
     return;
   }
@@ -237,12 +237,12 @@ void colorset_skip(colorset_t *set, int32_t amount)
   if (!set->m_numColors) {
     return;
   }
-  /* if the colorset hasn't started yet */
+  // if the colorset hasn't started yet
   if (set->m_curIndex == INDEX_INVALID) {
     set->m_curIndex = 0;
   }
 
-  /* first modulate the amount to skip to be within +/- the number of colors */
+  // first modulate the amount to skip to be within +/- the number of colors
   amount %= (int32_t)set->m_numColors;
 
   /* max = 3
@@ -250,7 +250,7 @@ void colorset_skip(colorset_t *set, int32_t amount)
    * amount = -10 */
   set->m_curIndex = ((int32_t)set->m_curIndex + (int32_t)amount) % (int32_t)set->m_numColors;
   if (set->m_curIndex > set->m_numColors) { /* must have wrapped */
-    /* simply wrap it back */
+    // simply wrap it back
     set->m_curIndex += set->m_numColors;
   }
 }
@@ -293,13 +293,13 @@ rgb_color_t colorset_get_prev(colorset_t *set)
     rgb_init_from_raw(&result, RGB_OFF);
     return result;
   }
-  /* handle wrapping at 0 */
+  // handle wrapping at 0
   if (set->m_curIndex == 0 || set->m_curIndex == INDEX_INVALID) {
     set->m_curIndex = colorset_num_colors(set) - 1;
   } else {
     set->m_curIndex--;
   }
-  /* return the color */
+  // return the color
   return set->m_palette[set->m_curIndex];
 }
 
@@ -310,11 +310,11 @@ rgb_color_t colorset_get_next(colorset_t *set)
     rgb_init_from_raw(&result, RGB_OFF);
     return result;
   }
-  /* iterate current index, let it wrap at max uint8 */
+  // iterate current index, let it wrap at max uint8
   set->m_curIndex++;
-  /* then modulate the result within max colors */
+  // then modulate the result within max colors
   set->m_curIndex %= colorset_num_colors(set);
-  /* return the color */
+  // return the color
   return set->m_palette[set->m_curIndex];
 }
 
@@ -326,7 +326,7 @@ rgb_color_t colorset_peek(const colorset_t *set, int32_t offset)
     return result;
   }
   uint8_t nextIndex = 0;
-  /* get index of the next color */
+  // get index of the next color
   if (offset >= 0) {
     nextIndex = (set->m_curIndex + offset) % colorset_num_colors(set);
   } else {
@@ -336,7 +336,7 @@ rgb_color_t colorset_peek(const colorset_t *set, int32_t offset)
     }
     nextIndex = ((set->m_curIndex + colorset_num_colors(set)) + (int)offset) % colorset_num_colors(set);
   }
-  /* return the color */
+  // return the color
   return set->m_palette[nextIndex];
 }
 

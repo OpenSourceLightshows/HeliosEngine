@@ -15,12 +15,12 @@ extern "C" {
  * TODO: implement the global config CRC again it got removed at some point */
 #define CONFIG_CRC_INDEX (STORAGE_SIZE - 1)
 
-/* Storage Config Indexes relative to the CONFIG_START_INDEX */
+// Storage Config Indexes relative to the CONFIG_START_INDEX
 #define STORAGE_GLOBAL_FLAG_INDEX 0
 #define STORAGE_CURRENT_MODE_INDEX 1
 #define STORAGE_BRIGHTNESS_INDEX 2
 
-/* Forward declaration */
+// Forward declaration
 typedef struct pattern_t pattern_t;
 
 uint8_t storage_init(void);
@@ -45,7 +45,7 @@ void storage_write_brightness(uint8_t brightness);
 uint8_t storage_crc8(uint8_t pos, uint8_t size);
 
 #ifdef HELIOS_CLI
-/* toggle storage on/off */
+// toggle storage on/off
 void storage_enable_storage(uint8_t enabled);
 #endif
 

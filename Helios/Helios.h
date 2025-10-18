@@ -11,7 +11,7 @@ extern "C" {
 #include "Colorset.h"
 #include "Pattern.h"
 
-/* Forward declaration */
+// Forward declaration
 typedef struct pattern_t pattern_t;
 typedef struct colorset_t colorset_t;
 
@@ -41,7 +41,7 @@ enum helios_flags {
   FLAG_LOCKED = (1 << 0),
 };
 
-/* get/set global flags */
+// get/set global flags
 void helios_set_flag(enum helios_flags flag);
 uint8_t helios_has_flag(enum helios_flags flag);
 void helios_clear_flag(enum helios_flags flag);
