@@ -14,7 +14,7 @@ static const uint32_t color_codes3[] = {RGB_WHITE, RGB_BLUE_BRI_LOWEST, RGB_BLUE
 static const uint32_t color_codes4[] = {RGB_MAGENTA_BRI_LOWEST, RGB_ROYAL_BLUE_BRI_LOW, RGB_TURQUOISE, RGB_ROYAL_BLUE_BRI_LOW, RGB_MAGENTA_BRI_LOWEST, RGB_OFF};
 static const uint32_t color_codes5[] = {RGB_RED, RGB_HOT_PINK, RGB_ROYAL_BLUE, RGB_BLUE, RGB_GREEN, RGB_YELLOW};
 
-/* Define Colorset configurations for each slot */
+// Define Colorset configurations for each slot
 struct default_colorset_t {
   uint8_t num_cols;
   const uint32_t *cols;
@@ -68,12 +68,12 @@ void patterns_make_default(uint8_t index, pattern_t *pat)
       args.off_dur = 50;
       break;
   }
-  /* assign default args */
+  // assign default args
   pattern_set_args(pat, &args);
-  /* build the set out of the defaults */
+  // build the set out of the defaults
   colorset_t set;
   colorset_init_array(&set, default_colorsets[index].num_cols, default_colorsets[index].cols);
-  /* assign default colorset */
+  // assign default colorset
   pattern_set_colorset(pat, &set);
 }
 

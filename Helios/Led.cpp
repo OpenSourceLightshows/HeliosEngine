@@ -21,19 +21,19 @@
 
 #define SCALE8(i, scale)  (((uint16_t)i * (uint16_t)(scale)) >> 8)
 
-/* Forward declaration */
+// Forward declaration
 static void led_set_pwm(uint8_t pwmPin, uint8_t pwmValue, volatile uint8_t *controlRegister,
     uint8_t controlBit, volatile uint8_t *compareRegister);
 
-/* array of led color values */
+// array of led color values
 static rgb_color_t m_ledColor;
 static rgb_color_t m_realColor;
-/* global brightness */
+// global brightness
 static uint8_t m_brightness = DEFAULT_BRIGHTNESS;
 
 uint8_t led_init(void)
 {
-  /* clear the led colors */
+  // clear the led colors
   rgb_init_from_raw(&m_ledColor, RGB_OFF);
   rgb_init_from_raw(&m_realColor, RGB_OFF);
 #ifdef HELIOS_EMBEDDED
@@ -42,7 +42,7 @@ uint8_t led_init(void)
   pinMode(1, OUTPUT);
   pinMode(4, OUTPUT);
 #else
-  /* pin ctrl done in helios_init */
+  // pin ctrl done in helios_init
 #endif
 #endif
   return 1;
@@ -91,23 +91,23 @@ void led_strobe(uint16_t on_time, uint16_t off_time, const rgb_color_t *off_col,
 void led_breath(uint8_t hue, uint32_t duration, uint8_t magnitude, uint8_t sat, uint8_t val)
 {
   if (!duration) {
-    /* don't divide by 0 */
+    // don't divide by 0
     return;
   }
-  /* Determine the phase in the cycle */
+  // Determine the phase in the cycle
   uint32_t phase = time_get_current_time() % (2 * duration);
-  /* Calculate hue shift */
+  // Calculate hue shift
   int32_t hueShift;
   if (phase < duration) {
-    /* Ascending phase - from hue to hue + magnitude */
+    // Ascending phase - from hue to hue + magnitude
     hueShift = (phase * magnitude) / duration;
   } else {
-    /* Descending phase - from hue + magnitude to hue */
+    // Descending phase - from hue + magnitude to hue
     hueShift = ((2 * duration - phase) * magnitude) / duration;
   }
-  /* Apply hue shift - ensure hue stays within valid range */
+  // Apply hue shift - ensure hue stays within valid range
   uint8_t shiftedHue = hue + hueShift;
-  /* Apply the hsv color as a strobing hue shift */
+  // Apply the hsv color as a strobing hue shift
   hsv_color_t hsv;
   rgb_color_t off, on;
   hsv_init3(&hsv, shiftedHue, sat, val);
@@ -128,15 +128,15 @@ static void led_set_pwm(uint8_t pwmPin, uint8_t pwmValue, volatile uint8_t *cont
 {
 #ifdef HELIOS_EMBEDDED
   if (pwmValue == 0) {
-    /* digitalWrite(pin, LOW) */
+    // digitalWrite(pin, LOW)
     *controlRegister &= ~controlBit;  /* Disable PWM */
     PORTB &= ~(1 << pwmPin);  /* Set the pin low */
   } else if (pwmValue == 255) {
-    /* digitalWrite(pin, HIGH) */
+    // digitalWrite(pin, HIGH)
     *controlRegister &= ~controlBit;  /* Disable PWM */
     PORTB |= (1 << pwmPin);  /* Set the pin high */
   } else {
-    /* analogWrite(pin, value) */
+    // analogWrite(pin, value)
     *controlRegister |= controlBit;  /* Enable PWM */
     *compareRegister = pwmValue;  /* Set PWM duty cycle */
   }
@@ -167,22 +167,22 @@ void led_set_brightness(uint8_t brightness)
 void led_update(void)
 {
 #ifdef HELIOS_EMBEDDED
-  /* write out the rgb values to analog pins */
+  // write out the rgb values to analog pins
 #ifdef HELIOS_ARDUINO
   analogWrite(PWM_PIN_R, m_realColor.red);
   analogWrite(PWM_PIN_G, m_realColor.green);
   analogWrite(PWM_PIN_B, m_realColor.blue);
 #else
-  /* backup SREG and turn off interrupts */
+  // backup SREG and turn off interrupts
   uint8_t oldSREG = SREG;
   cli();
 
-  /* set the PWM for R/G/B output */
+  // set the PWM for R/G/B output
   led_set_pwm(PWM_PIN_R, m_realColor.red, &TCCR0A, (1 << COM0A1), &OCR0A);
   led_set_pwm(PWM_PIN_G, m_realColor.green, &TCCR0A, (1 << COM0B1), &OCR0B);
   led_set_pwm(PWM_PIN_B, m_realColor.blue, &GTCCR, (1 << COM1B1), &OCR1B);
 
-  /* turn interrupts back on */
+  // turn interrupts back on
   SREG = oldSREG;
 #endif
 #endif

@@ -8,7 +8,7 @@
 
 #include <string.h> /* for memcpy */
 
-/* Forward declarations for internal functions */
+// Forward declarations for internal functions
 static void pattern_on_blink_on(pattern_t *pat);
 static void pattern_on_blink_off(pattern_t *pat);
 static void pattern_begin_gap(pattern_t *pat);
@@ -57,21 +57,21 @@ void pattern_init_state(pattern_t *pat)
 {
   colorset_reset_index(&pat->m_colorset);
 
-  /* the default state to begin with */
+  // the default state to begin with
   pat->m_state = STATE_BLINK_ON;
   /* if a dash is present then always start with the dash because
    * it consumes the first color in the colorset */
   if (pat->m_args.dash_dur > 0) {
     pat->m_state = STATE_BEGIN_DASH;
   }
-  /* if there's no on duration or dash duration the led is just disabled */
+  // if there's no on duration or dash duration the led is just disabled
   if ((!pat->m_args.on_dur && !pat->m_args.dash_dur) || !colorset_num_colors(&pat->m_colorset)) {
     pat->m_state = STATE_DISABLED;
   }
   pat->m_groupCounter = pat->m_args.group_size ? pat->m_args.group_size : (colorset_num_colors(&pat->m_colorset) - (pat->m_args.dash_dur != 0));
 
   if (pat->m_args.blend_speed > 0) {
-    /* convert current/next colors to HSV but only if we are doing a blend */
+    // convert current/next colors to HSV but only if we are doing a blend
     pat->m_cur = colorset_get_next(&pat->m_colorset);
     pat->m_next = colorset_get_next(&pat->m_colorset);
   }
@@ -83,7 +83,7 @@ void pattern_play(pattern_t *pat)
    * instead of using a loop or recursion I have just used a simple goto */
 replay:
 
-  /* its kinda evolving as i go */
+  // its kinda evolving as i go
   switch (pat->m_state) {
   case STATE_DISABLED:
     return;
@@ -138,7 +138,7 @@ replay:
   }
 
   if (!timer_alarm(&pat->m_blinkTimer)) {
-    /* no alarm triggered just stay in current state, return and don't transition states */
+    // no alarm triggered just stay in current state, return and don't transition states
     return;
   }
 
@@ -155,10 +155,10 @@ replay:
      * left in the group we need to cycle back to blink on instead of to the next state */
     pat->m_state = (pat->m_groupCounter > 0) ? STATE_BLINK_ON : STATE_BEGIN_GAP;
   } else {
-    /* this is the standard case, iterate to the next state */
+    // this is the standard case, iterate to the next state
     pat->m_state = (enum pattern_state)(pat->m_state + 1);
   }
-  /* poor-mans recurse with the new state change (this transitions to a new state within the same tick) */
+  // poor-mans recurse with the new state change (this transitions to a new state within the same tick)
   goto replay;
 }
 
@@ -238,11 +238,11 @@ uint8_t pattern_equals(const pattern_t *pat, const pattern_t *other)
   if (!other) {
     return 0;
   }
-  /* compare the colorset */
+  // compare the colorset
   if (!colorset_equals(&pat->m_colorset, &other->m_colorset)) {
     return 0;
   }
-  /* compare the args of each pattern for equality */
+  // compare the args of each pattern for equality
   if (memcmp(&pat->m_args, &other->m_args, sizeof(pattern_args_t)) != 0) {
     return 0;
   }
@@ -289,11 +289,11 @@ static void pattern_blend_blink_on(pattern_t *pat)
   if (rgb_equals(&pat->m_cur, &pat->m_next)) {
     pat->m_next = colorset_get_next(&pat->m_colorset);
   }
-  /* interpolate to the next color */
+  // interpolate to the next color
   pattern_interpolate(&pat->m_cur.red, pat->m_next.red, pat->m_args.blend_speed);
   pattern_interpolate(&pat->m_cur.green, pat->m_next.green, pat->m_args.blend_speed);
   pattern_interpolate(&pat->m_cur.blue, pat->m_next.blue, pat->m_args.blend_speed);
-  /* set the color */
+  // set the color
   led_set_rgb(&pat->m_cur);
 }
 

@@ -15,7 +15,7 @@
 #include <fcntl.h>
 #endif
 
-/* Forward declarations for internal functions */
+// Forward declarations for internal functions
 static uint8_t storage_crc_pos(uint8_t pos);
 static uint8_t storage_read_crc(uint8_t pos);
 static uint8_t storage_check_crc(uint8_t pos);
@@ -29,7 +29,7 @@ static inline void storage_internal_write(uint8_t address, uint8_t data);
 #endif
 
 #ifdef HELIOS_CLI
-/* whether storage is enabled, default enabled */
+// whether storage is enabled, default enabled
 static uint8_t m_enableStorage = 1;
 #endif
 
@@ -39,15 +39,15 @@ uint8_t storage_init(void)
   if (!m_enableStorage) {
     return 1;
   }
-  /* if the storage filename doesn't exist then create it */
+  // if the storage filename doesn't exist then create it
   if (access(STORAGE_FILENAME, O_RDWR) != 0 && errno == ENOENT) {
-    /* The file doesn't exist, so try creating it */
+    // The file doesn't exist, so try creating it
     FILE *f = fopen(STORAGE_FILENAME, "w+b");
     if (!f) {
       perror("Error creating storage file for write");
       return 0;
     }
-    /* fill the storage with 0s */
+    // fill the storage with 0s
     uint32_t i;
     for (i = 0; i < STORAGE_SIZE; ++i){
       uint8_t b = 0x0;
@@ -146,25 +146,25 @@ uint8_t storage_crc8(uint8_t pos, uint8_t size)
 
 static uint8_t storage_crc_pos(uint8_t pos)
 {
-  /* crc the entire slot except last byte */
+  // crc the entire slot except last byte
   return storage_crc8(pos, PATTERN_SIZE);
 }
 
 static uint8_t storage_read_crc(uint8_t pos)
 {
-  /* read the last byte of the slot */
+  // read the last byte of the slot
   return storage_read_byte(pos + PATTERN_SIZE);
 }
 
 static uint8_t storage_check_crc(uint8_t pos)
 {
-  /* compare the last byte to the calculated crc */
+  // compare the last byte to the calculated crc
   return (storage_read_crc(pos) == storage_crc_pos(pos));
 }
 
 static void storage_write_crc(uint8_t pos)
 {
-  /* compare the last byte to the calculated crc */
+  // compare the last byte to the calculated crc
   storage_write_byte(pos + PATTERN_SIZE, storage_crc_pos(pos));
 }
 
@@ -177,11 +177,11 @@ static void storage_write_byte(uint8_t address, uint8_t data)
     return;
   }
   storage_internal_write(address, data);
-  /* double check that shit */
+  // double check that shit
   if (storage_read_byte(address) != data) {
-    /* do it again because eeprom is stupid */
+    // do it again because eeprom is stupid
     storage_internal_write(address, data);
-    /* god forbid it doesn't write again */
+    // god forbid it doesn't write again
   }
 #else /* HELIOS_CLI */
   if (!m_enableStorage) {
@@ -192,7 +192,7 @@ static void storage_write_byte(uint8_t address, uint8_t data)
     perror("Error opening storage file");
     return;
   }
-  /* Seek to the specified address */
+  // Seek to the specified address
   if (fseek(f, address, SEEK_SET) != 0) {
     perror("Error opening storage file for write");
     fclose(f);
@@ -209,7 +209,7 @@ static void storage_write_byte(uint8_t address, uint8_t data)
 static uint8_t storage_read_byte(uint8_t address)
 {
 #ifdef HELIOS_EMBEDDED
-  /* do a three way read because the attiny85 eeprom basically doesn't work */
+  // do a three way read because the attiny85 eeprom basically doesn't work
   uint8_t b1 = storage_internal_read(address);
   uint8_t b2 = storage_internal_read(address);
   if (b1 == b2) {
@@ -233,18 +233,18 @@ static uint8_t storage_read_byte(uint8_t address)
   }
   FILE *f = fopen(STORAGE_FILENAME, "rb"); /* Open file for reading in binary mode */
   if (!f) {
-    /* this error is ok, just means no storage */
-    /* perror("Error opening file for read"); */
+    // this error is ok, just means no storage
+    // perror("Error opening file for read");
     return val;
   }
-  /* Seek to the specified address */
+  // Seek to the specified address
   if (fseek(f, address, SEEK_SET) != 0) {
-    /* error */
+    // error
     perror("Failed to seek");
     fclose(f);
     return val;
   }
-  /* Read a byte of data */
+  // Read a byte of data
   if (!fread(&val, sizeof(uint8_t), 1, f)) {
     perror("Failed to read byte");
   }
@@ -257,29 +257,29 @@ static uint8_t storage_read_byte(uint8_t address)
 static inline void storage_internal_write(uint8_t address, uint8_t data)
 {
   while (EECR & (1<<EEPE)) {
-    /* Wait for completion of previous write */
+    // Wait for completion of previous write
   }
-  /* Set Programming mode */
+  // Set Programming mode
   EECR = (0<<EEPM1)|(0<<EEPM0);
-  /* Set up address and data registers */
+  // Set up address and data registers
   EEAR = address;
   EEDR = data;
-  /* Write logical one to EEMPE */
+  // Write logical one to EEMPE
   EECR |= (1<<EEMPE);
-  /* Start eeprom write by setting EEPE */
+  // Start eeprom write by setting EEPE
   EECR |= (1<<EEPE);
 }
 
 static inline uint8_t storage_internal_read(uint8_t address)
 {
   while (EECR & (1<<EEPE)) {
-    /* Wait for completion of previous write */
+    // Wait for completion of previous write
   }
-  /* Set up address register */
+  // Set up address register
   EEAR = address;
-  /* Start eeprom read by writing EERE */
+  // Start eeprom read by writing EERE
   EECR |= (1<<EERE);
-  /* Return data from data register */
+  // Return data from data register
   return EEDR;
 }
 #endif

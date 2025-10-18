@@ -22,7 +22,7 @@ void random_seed(random_t *rng, uint32_t newseed)
 
 uint16_t random_next16(random_t *rng, uint16_t minValue, uint16_t maxValue)
 {
-  /* walk the LCG forward to the next step */
+  // walk the LCG forward to the next step
   rng->m_seed = (rng->m_seed * 1103515245 + 12345) & 0x7FFFFFFF;
   uint32_t range = maxValue - minValue;
   if (range != 0xFFFFFFFF) {

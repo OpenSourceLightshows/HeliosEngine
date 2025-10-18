@@ -23,11 +23,11 @@
 
 #include <stdlib.h>
 
-/* Internal macros */
+// Internal macros
 #define NUM_MENUS_HUE_SAT_VAL 4
 #define NUM_MENUS_QUADRANT 7
 
-/* Color select options for internal menu logic */
+// Color select options for internal menu logic
 enum color_select_option {
   OPTION_NONE = 0,
   SELECTED_ADD,
@@ -35,7 +35,7 @@ enum color_select_option {
   SELECTED_SLOT
 };
 
-/* Global state variables */
+// Global state variables
 static enum helios_state g_cur_state;
 static enum helios_flags g_global_flags;
 static uint8_t g_menu_selection;
@@ -54,7 +54,7 @@ static uint8_t g_sleeping;
 
 volatile char helios_version[] = HELIOS_VERSION_STR;
 
-/* Forward declarations for internal helper functions */
+// Forward declarations for internal helper functions
 static uint8_t helios_init_components(void);
 static void helios_handle_state(void);
 static void helios_handle_state_modes(void);
@@ -933,7 +933,7 @@ static void helios_show_selection(rgb_color_t color)
   led_set_rgb(&color);
 }
 
-/* Flag manipulation functions */
+// Flag manipulation functions
 void helios_set_flags(enum helios_flags flag)
 {
   g_global_flags = (enum helios_flags)(g_global_flags | flag);
