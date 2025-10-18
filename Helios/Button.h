@@ -56,12 +56,12 @@ uint8_t button_release_count(void);
 void button_enable_wake(void);
 
 #ifdef HELIOS_CLI
-// 
+//
 void button_do_short_click(void);
 void button_do_long_click(void);
 void button_do_hold_click(void);
 
-// 
+//
 void button_do_press(void);
 void button_do_release(void);
 void button_do_toggle(void);

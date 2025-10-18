@@ -193,37 +193,37 @@ void rgb_scale_brightness(rgb_color_t *rgb, float scale)
 }
 #endif
 
-// 
+//
 
 #if ALTERNATIVE_HSV_RGB == 1
 #define SCALE8(i, scale)  (((uint16_t)i * (uint16_t)(scale)) >> 8)
 #define FIXFRAC8(N,D) (((N)*256)/(D))
 
-// 
+//
 rgb_color_t hsv_to_rgb_rainbow(const hsv_color_t *rhs)
 {
   rgb_color_t col;
-  // 
+  //
   const uint8_t Y1 = 1;
   const uint8_t Y2 = 0;
 
-  // 
+  //
   const uint8_t G2 = 0;
 
-  // 
+  //
   const uint8_t Gscale = 185;
 
   uint8_t hue = rhs->hue;
   uint8_t sat = rhs->sat;
   uint8_t val = rhs->val;
 
-  uint8_t offset = hue & 0x1F; // 
+  uint8_t offset = hue & 0x1F; //
 
   // offset8 = offset * 8
   uint8_t offset8 = offset;
   offset8 <<= 3;
 
-  uint8_t third = SCALE8(offset8, (256 / 3)); // 
+  uint8_t third = SCALE8(offset8, (256 / 3)); //
   uint8_t r, g, b;
   if (!(hue & 0x80)) {
     // 0XX
@@ -247,7 +247,7 @@ rgb_color_t hsv_to_rgb_rainbow(const hsv_color_t *rhs)
         if (Y2) {
           r = 170 + third;
           // uint8_t twothirds = (third << 1);
-          uint8_t twothirds = SCALE8(offset8, ((256 * 2) / 3)); // 
+          uint8_t twothirds = SCALE8(offset8, ((256 * 2) / 3)); //
           g = 85 + twothirds;
           b = 0;
         }
@@ -260,7 +260,7 @@ rgb_color_t hsv_to_rgb_rainbow(const hsv_color_t *rhs)
         // case 2: Y -> G
         if (Y1) {
           // uint8_t twothirds = (third << 1);
-          uint8_t twothirds = SCALE8(offset8, ((256 * 2) / 3)); // 
+          uint8_t twothirds = SCALE8(offset8, ((256 * 2) / 3)); //
           r = 171 - twothirds;
           g = 170 + third;
           b = 0;
@@ -288,8 +288,8 @@ rgb_color_t hsv_to_rgb_rainbow(const hsv_color_t *rhs)
         // case 4: A -> B
         r = 0;
         // uint8_t twothirds = (third << 1);
-        uint8_t twothirds = SCALE8(offset8, ((256 * 2) / 3)); // 
-        g = 171 - twothirds; // 
+        uint8_t twothirds = SCALE8(offset8, ((256 * 2) / 3)); //
+        g = 171 - twothirds; //
         b = 85 + twothirds;
       } else {
         // 101
@@ -315,11 +315,11 @@ rgb_color_t hsv_to_rgb_rainbow(const hsv_color_t *rhs)
     }
   }
 
-  // 
+  //
   if (G2) g = g >> 1;
   if (Gscale) g = SCALE8(g, Gscale);
 
-  // 
+  //
   if (sat != 255) {
     if (sat == 0) {
       r = 255; b = 255; g = 255;
@@ -351,7 +351,7 @@ rgb_color_t hsv_to_rgb_rainbow(const hsv_color_t *rhs)
     }
   }
 
-  // 
+  //
   col.red = r;
   col.green = g;
   col.blue = b;

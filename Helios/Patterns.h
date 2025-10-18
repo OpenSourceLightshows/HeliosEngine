@@ -10,9 +10,9 @@ extern "C" {
 // Forward declaration
 typedef struct pattern_t pattern_t;
 
-// 
+//
 enum pattern_id {
-  // 
+  //
   PATTERN_NONE = -1,
 
   // first pattern of all
@@ -29,7 +29,7 @@ enum pattern_id {
   // Meta pattern constants
   INTERNAL_PATTERNS_END,
   PATTERN_LAST = (INTERNAL_PATTERNS_END - 1),
-  PATTERN_COUNT = (PATTERN_LAST - PATTERN_FIRST) + 1,  // 
+  PATTERN_COUNT = (PATTERN_LAST - PATTERN_FIRST) + 1,  //
 };
 
 void patterns_make_default(uint8_t index, pattern_t *pat);

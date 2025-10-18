@@ -9,7 +9,7 @@ extern "C" {
 
 #include "Colortypes.h"
 
-// 
+//
 
 uint8_t led_init(void);
 void led_cleanup(void);
@@ -27,7 +27,7 @@ void led_adjust_brightness(uint8_t fadeBy);
 // strobe between two colors with a simple on/off timing
 void led_strobe(uint16_t on_time, uint16_t off_time, const rgb_color_t *col1, const rgb_color_t *col2);
 
-// 
+//
 void led_breath(uint8_t hue, uint32_t duration, uint8_t magnitude, uint8_t sat, uint8_t val);
 
 // a very specialized api to hold all leds on a color for 250ms

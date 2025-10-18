@@ -20,10 +20,10 @@ void time_cleanup(void);
 // Tick the clock forward to millis()
 void time_tick_clock(void);
 
-// 
+//
 uint32_t time_get_current_time(void);
 
-// 
+//
 uint32_t time_microseconds(void);
 
 // Delay for some number of microseconds or milliseconds, these are bad

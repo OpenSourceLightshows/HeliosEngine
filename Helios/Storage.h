@@ -8,9 +8,9 @@ extern "C" {
 #include <inttypes.h>
 #include "HeliosConfig.h"
 
-// 
+//
 #define CONFIG_START_INDEX (STORAGE_SIZE - 2)
-// 
+//
 #define CONFIG_CRC_INDEX (STORAGE_SIZE - 1)
 
 // Storage Config Indexes relative to the CONFIG_START_INDEX

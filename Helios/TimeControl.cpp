@@ -59,7 +59,7 @@ void time_tick_clock(void)
   }
 #endif
 
-  // 
+  //
   uint32_t elapsed_us;
   uint32_t us;
   do {
@@ -72,7 +72,7 @@ void time_tick_clock(void)
       // otherwise calculate regular difference
       elapsed_us = (uint32_t)(us - m_prevTime);
     }
-    // 
+    //
   } while (elapsed_us < (1000000 / TICKRATE));
 
   // store current time
@@ -87,7 +87,7 @@ uint32_t time_get_current_time(void)
 #ifdef HELIOS_EMBEDDED
 volatile uint32_t timer0_overflow_count = 0;
 ISR(TIMER0_OVF_vect) {
-  timer0_overflow_count++;  // 
+  timer0_overflow_count++;  //
 }
 #endif
 
@@ -102,7 +102,7 @@ uint32_t time_microseconds(void)
 #ifdef HELIOS_ARDUINO
   return micros();
 #else
-  // 
+  //
   uint8_t oldSREG = SREG;
   cli();
   // multiply by 8 early to avoid floating point math or division
@@ -125,36 +125,36 @@ time_delay_microseconds(uint32_t us)
   // For the ATtiny85 running at 16MHz
 
   // The loop takes 3 cycles per iteration
-  us *= 2; // 
+  us *= 2; //
 
-  // 
-  us -= 5; // 
+  //
+  us -= 5; //
 
   // Assembly loop for delay
   __asm__ __volatile__(
       "1: sbiw %0, 1"
-      "\n\t" // 
+      "\n\t" //
       "nop"
-      "\n\t"                         // 
-      "brne 1b" : "=w"(us) : "0"(us) // 
+      "\n\t"                         //
+      "brne 1b" : "=w"(us) : "0"(us) //
   );
 
 #elif F_CPU >= 8000000L
   // For the ATtiny85 running at 8MHz
 
   // The loop takes 4 cycles per iteration
-  us <<= 1; // 
+  us <<= 1; //
 
-  // 
-  us -= 6; // 
+  //
+  us -= 6; //
 
   // Assembly loop for delay
   __asm__ __volatile__(
       "1: sbiw %0, 1"
-      "\n\t" // 
+      "\n\t" //
       "rjmp .+0"
-      "\n\t"                         // 
-      "brne 1b" : "=w"(us) : "0"(us) // 
+      "\n\t"                         //
+      "brne 1b" : "=w"(us) : "0"(us) //
   );
 #endif
 

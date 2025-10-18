@@ -23,7 +23,7 @@ void timer_init_default(helios_timer_t *timer);
 // Init a timer with a number of alarms and optionally start it
 void timer_init(helios_timer_t *timer, uint8_t alarm);
 
-// 
+//
 void timer_start(helios_timer_t *timer, uint32_t offset);
 
 // Delete all alarms from the timer and reset

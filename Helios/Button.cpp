@@ -43,17 +43,17 @@ static uint8_t m_longClick = 0;
 static uint8_t m_holdClick = 0;
 
 #ifdef HELIOS_CLI
-// 
 static uint8_t m_pinState = 0;
 static uint8_t m_enableWake = 0;
-// Simple input queue for CLI - using a fixed-size circular buffer
-// Larger queue size for CLI to handle long test sequences
+// an input queue for the button, each tick one even is processed
+// out of this queue and used to produce input
 #define INPUT_QUEUE_SIZE 4096
 static char m_inputQueue[INPUT_QUEUE_SIZE];
 static uint32_t m_queueHead = 0;
 static uint32_t m_queueTail = 0;
 #endif
 
+// initialize a new button object with a pin number
 uint8_t button_init(void)
 {
   m_pressTime = 0;
@@ -86,6 +86,7 @@ uint8_t button_init(void)
   return 1;
 }
 
+// enable wake on press
 void button_enable_wake(void)
 {
 #ifdef HELIOS_EMBEDDED
@@ -93,7 +94,7 @@ void button_enable_wake(void)
   PCMSK |= (1 << PCINT3);
   GIMSK |= (1 << PCIE);
   sei();
-#else // 
+#else // HELIOS_CLI
   m_enableWake = 1;
 #endif
 }
@@ -106,6 +107,7 @@ ISR(PCINT0_vect) {
 }
 #endif
 
+// directly poll the pin for whether it's pressed right now
 uint8_t button_check(void)
 {
 #ifdef HELIOS_EMBEDDED
@@ -115,13 +117,15 @@ uint8_t button_check(void)
   return (PINB & (1 << 3)) != 0;
 #endif
 #elif defined(HELIOS_CLI)
-  // 
+  // then just return the pin state as-is, the input event may have
+  // adjusted this value
   return m_pinState;
 #else
   return 0;
 #endif
 }
 
+// detect if the button is being held for a long hold (past long click)
 uint8_t button_hold_pressing(void)
 {
   uint16_t holDur = (uint16_t)(button_hold_duration());
@@ -131,6 +135,7 @@ uint8_t button_hold_pressing(void)
   return 0;
 }
 
+// poll the button pin and update the state of the button object
 void button_update(void)
 {
 #ifdef HELIOS_CLI
@@ -163,7 +168,8 @@ void button_update(void)
   m_holdClick = (m_newRelease && (m_holdDuration >= HOLD_CLICK_START) && (m_holdDuration <= HOLD_CLICK_END));
 
 #ifdef HELIOS_CLI
-  // 
+  // if there was no pre-input event this tick, process a post input event
+  // to ensure there is only one event per tick processed
   if (!processed_pre) {
     button_process_post_input();
   }
@@ -239,23 +245,24 @@ static uint8_t button_process_pre_input(void)
   }
   char command = m_inputQueue[m_queueHead];
   switch (command) {
-  case 'p': // 
+  case 'p': // press
     button_do_press();
     break;
-  case 'r': // 
+  case 'r': // release
     button_do_release();
     break;
-  case 't': // 
+  case 't': // toggle
     button_do_toggle();
     break;
-  case 'q': // 
+  case 'q': // quit
     helios_terminate();
     break;
-  case 'w': // 
+  case 'w': // wait
     // wait is pre input I guess
     break;
   default:
-    // 
+    // return here! do not pop the queue
+    // do not process post input events
     return 0;
   }
   // now pop whatever pre-input command was processed
@@ -272,10 +279,10 @@ static uint8_t button_process_post_input(void)
   // process input queue from the command line
   char command = m_inputQueue[m_queueHead];
   switch (command) {
-  case 'c': // 
+  case 'c': // click button
     button_do_short_click();
     break;
-  case 'l': // 
+  case 'l': // long click button
     button_do_long_click();
     break;
   default:
@@ -313,7 +320,8 @@ void button_do_hold_click(void)
   m_releaseCount++;
 }
 
-// 
+// this will actually press down the button, it's your responsibility to wait
+// for the appropriate number of ticks and then release the button
 void button_do_press(void)
 {
   m_pinState = 1;

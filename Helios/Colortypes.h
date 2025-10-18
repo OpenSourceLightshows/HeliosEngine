@@ -17,7 +17,7 @@ enum hsv_to_rgb_algorithm
   HSV_TO_RGB_RAINBOW
 };
 
-// 
+//
 extern enum hsv_to_rgb_algorithm g_hsv_rgb_alg;
 #endif
 
@@ -67,14 +67,14 @@ void rgb_adjust_brightness(rgb_color_t *rgb, uint8_t fadeBy);
 uint32_t rgb_raw(const rgb_color_t *rgb);
 
 #ifdef HELIOS_CLI
-// 
+//
 void rgb_scale_brightness(rgb_color_t *rgb, float scale);
 // Bring up the brightness of a color to a minimum level
 void rgb_bring_up_brightness(rgb_color_t *rgb, uint8_t min_brightness);
 #endif
 
 // Conversion functions
-// 
+//
 rgb_color_t hsv_to_rgb_rainbow(const hsv_color_t *rhs);
 // Generic hsv to rgb conversion nothing special
 rgb_color_t hsv_to_rgb_generic(const hsv_color_t *rhs);
