@@ -17,8 +17,7 @@ enum hsv_to_rgb_algorithm
   HSV_TO_RGB_RAINBOW
 };
 
-/* global hsv to rgb algorithm selector, switch this to control
- * all hsv to rgb conversions */
+// 
 extern enum hsv_to_rgb_algorithm g_hsv_rgb_alg;
 #endif
 
@@ -68,18 +67,14 @@ void rgb_adjust_brightness(rgb_color_t *rgb, uint8_t fadeBy);
 uint32_t rgb_raw(const rgb_color_t *rgb);
 
 #ifdef HELIOS_CLI
-/* Return a scaled brightness version of the current color
- * ex: 0.0 = black, 0.5 = half brightness, 1.0 = no change,
- *     1.5 = 50% brighter, 2.0 = twice as bright, 255.0 = white */
+// 
 void rgb_scale_brightness(rgb_color_t *rgb, float scale);
 // Bring up the brightness of a color to a minimum level
 void rgb_bring_up_brightness(rgb_color_t *rgb, uint8_t min_brightness);
 #endif
 
 // Conversion functions
-/* Stolen from FastLED hsv to rgb full rainbow where all colours
- * are given equal weight, this makes for-example yellow larger
- * best to use this function as it is the legacy choice */
+// 
 rgb_color_t hsv_to_rgb_rainbow(const hsv_color_t *rhs);
 // Generic hsv to rgb conversion nothing special
 rgb_color_t hsv_to_rgb_generic(const hsv_color_t *rhs);

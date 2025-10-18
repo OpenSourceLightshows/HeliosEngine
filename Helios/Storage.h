@@ -8,11 +8,9 @@ extern "C" {
 #include <inttypes.h>
 #include "HeliosConfig.h"
 
-/* the index of the first config byte, the config bytes start at the end
- * then work their way backwards (so 'config index 0' is the last byte) */
+// 
 #define CONFIG_START_INDEX (STORAGE_SIZE - 2)
-/* the crc of the config bytes is the very last byte in storage
- * TODO: implement the global config CRC again it got removed at some point */
+// 
 #define CONFIG_CRC_INDEX (STORAGE_SIZE - 1)
 
 // Storage Config Indexes relative to the CONFIG_START_INDEX

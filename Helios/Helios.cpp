@@ -73,14 +73,14 @@ static enum helios_flags global_flags;
 static uint8_t menu_selection;
 static uint8_t cur_mode;
 static uint8_t selected_base_group;
-static uint8_t num_colors_selected;  /* Track number of colors selected in current session */
+static uint8_t num_colors_selected;  // 
 static pattern_t pat;
 static uint8_t keepgoing;
 static uint32_t last_mode_switch_time;
 static colorset_t new_colorset;
 
 #ifdef HELIOS_CLI
-static uint8_t sleeping;  /* Only used in CLI mode */
+static uint8_t sleeping;  // 
 #endif
 
 volatile char helios_version[] = HELIOS_VERSION_STR;
@@ -144,20 +144,16 @@ static uint8_t helios_init_components(void)
 
 void helios_tick(void)
 {
-  /* sample the button and re-calculate all button globals
-   * the button globals should not change anywhere else */
+  // 
   button_update();
 
-  /* handle the current state of the system, ie whatever state
-   * we're in we check for the appropriate input events for that
-   * state by checking button globals, then run the appropriate logic */
+  // 
   helios_handle_state();
 
   // Update the Leds once per frame
   led_update();
 
-  /* finally tick the clock forward and then sleep till the entire
-   * tick duration has been consumed */
+  // 
   time_tick_clock();
 }
 
@@ -196,8 +192,7 @@ void helios_wakeup(void)
 #ifdef HELIOS_EMBEDDED
   // nothing needed here, this interrupt firing will make the mainthread resume
 #else
-  /* if the button was held down then they are entering off-menus
-   * but if we re-initialize the button it will clear this state */
+  // 
   uint8_t pressed = button_is_pressed();
   // re-initialize some stuff
   time_init();
@@ -370,8 +365,7 @@ static void helios_handle_state_modes(void)
   }
   // check how long the button is held
   uint32_t holdDur = button_hold_duration();
-  /* calculate a magnitude which corresponds to how many times past the MENU_HOLD_TIME
-   * the user has held the button, so 0 means haven't held fully past one yet, etc */
+  // 
   uint8_t magnitude = (uint8_t)(holdDur / MENU_HOLD_TIME);
   // whether the user has held the button longer than a short click
   uint8_t heldPast = (holdDur > SHORT_CLICK_THRESHOLD);
@@ -389,23 +383,23 @@ static void helios_handle_state_modes(void)
     if (hasReleased) {
       switch (magnitude) {
         default:
-        case 0: led_clear(); break;                                     /* Turn off */
-        case 1: rgb_init_from_raw(&color, RGB_TURQUOISE_BRI_LOW); led_set_rgb(&color); break;  /* Color Selection */
-        case 2: rgb_init_from_raw(&color, RGB_MAGENTA_BRI_LOW); led_set_rgb(&color); break;    /* Pattern Selection */
+        case 0: led_clear(); break;                                     // 
+        case 1: rgb_init_from_raw(&color, RGB_TURQUOISE_BRI_LOW); led_set_rgb(&color); break;  // 
+        case 2: rgb_init_from_raw(&color, RGB_MAGENTA_BRI_LOW); led_set_rgb(&color); break;    // 
       }
     } else {
       if (helios_has_flag(FLAG_LOCKED)) {
         switch (magnitude) {
           default:
           case 0: led_clear(); break;
-          case TIME_TILL_GLOW_LOCK_UNLOCK: rgb_init_from_raw(&color, RGB_RED_BRI_LOW); led_set_rgb(&color); break; /* Exit */
+          case TIME_TILL_GLOW_LOCK_UNLOCK: rgb_init_from_raw(&color, RGB_RED_BRI_LOW); led_set_rgb(&color); break; // 
         }
       } else {
         switch (magnitude) {
           default:
-          case 0: led_clear(); break;         /* nothing */
-          case 1: rgb_init_from_raw(&color, RGB_RED_BRI_LOW); led_set_rgb(&color); break; /* Enter Glow Lock */
-          case 2: rgb_init_from_raw(&color, RGB_BLUE_BRI_LOW); led_set_rgb(&color); break; /* Master Reset */
+          case 0: led_clear(); break;         // 
+          case 1: rgb_init_from_raw(&color, RGB_RED_BRI_LOW); led_set_rgb(&color); break; // 
+          case 2: rgb_init_from_raw(&color, RGB_BLUE_BRI_LOW); led_set_rgb(&color); break; // 
         }
       }
     }
@@ -425,11 +419,11 @@ static void helios_handle_state_modes(void)
 
 static void helios_handle_off_menu(uint8_t mag, uint8_t past)
 {
-  (void)past; /* unused */
+  (void)past; // 
   // if still locked then handle the unlocking menu which is just if mag == 5
   if (helios_has_flag(FLAG_LOCKED)) {
     switch (mag) {
-      case TIME_TILL_GLOW_LOCK_UNLOCK:  /* red lock */
+      case TIME_TILL_GLOW_LOCK_UNLOCK:  // 
         cur_state = STATE_TOGGLE_LOCK;
         break;
       default:
@@ -443,13 +437,13 @@ static void helios_handle_off_menu(uint8_t mag, uint8_t past)
 
   // otherwise if not locked handle the off menu
   switch (mag) {
-    case 1:  /* red lock */
+    case 1:  // 
       cur_state = STATE_TOGGLE_LOCK;
       led_clear();
-      return; /* RETURN HERE */
-    case 2:  /* blue reset defaults */
+      return; // 
+    case 2:  // 
       cur_state = STATE_SET_DEFAULTS;
-      return; /* RETURN HERE */
+      return; // 
     default:
       // just go back to sleep in hold-past off menu
       helios_enter_sleep();
@@ -461,7 +455,7 @@ static void helios_handle_off_menu(uint8_t mag, uint8_t past)
 static void helios_handle_on_menu(uint8_t mag, uint8_t past)
 {
   switch (mag) {
-    case 0:  /* off */
+    case 0:  // 
       // but only if we held for more than a short click
       if (past) {
         helios_enter_sleep();
@@ -469,7 +463,7 @@ static void helios_handle_on_menu(uint8_t mag, uint8_t past)
         return;
       }
       break;
-    case 1:  /* color select */
+    case 1:  // 
       cur_state = STATE_COLOR_GROUP_SELECTION;
       // reset the menu selection and colors selected
       menu_selection = 0;
@@ -483,12 +477,12 @@ static void helios_handle_on_menu(uint8_t mag, uint8_t past)
       g_hsv_rgb_alg = HSV_TO_RGB_RAINBOW;
 #endif
       break;
-    case 2:  /* pat select */
+    case 2:  // 
       cur_state = STATE_PATTERN_SELECT;
       // reset the menu selection
       menu_selection = 0;
       break;
-    default:  /* hold past */
+    default:  // 
       break;
   }
 }
