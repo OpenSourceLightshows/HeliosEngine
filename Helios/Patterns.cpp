@@ -4,10 +4,12 @@
 #include "Pattern.h"
 #include "ColorConstants.h"
 
-// 
-static const uint32_t color_codes0[] = {RGB_RED, RGB_TURQUOISE_BRI_MEDIUM, RGB_WHITE_BRI_LOW}; // 
-static const uint32_t color_codes1[] = {RGB_MAGENTA_BRI_LOW, RGB_ICE_BLUE_BRI_LOW, RGB_GREEN_BRI_LOW}; // 
-static const uint32_t color_codes2[] = {RGB_YELLOW_BRI_LOW, RGB_PURPLE}; // 
+// define arrays of colors, you can reuse these if you have multiple
+// modes that use the same colorset -- these demonstrate the max amount
+// of colors in each set but you can absolutely list a lesser amount
+static const uint32_t color_codes0[] = {RGB_RED, RGB_TURQUOISE_BRI_MEDIUM, RGB_WHITE_BRI_LOW}; // Electric Storm
+static const uint32_t color_codes1[] = {RGB_MAGENTA_BRI_LOW, RGB_ICE_BLUE_BRI_LOW, RGB_GREEN_BRI_LOW}; // Cyber Pulse
+static const uint32_t color_codes2[] = {RGB_YELLOW_BRI_LOW, RGB_PURPLE}; // Sunset Eclipse
 
 // Define Colorset configurations for each slot
 struct default_colorset_t {
@@ -15,11 +17,12 @@ struct default_colorset_t {
   const uint32_t *cols;
 };
 
-// 
+// the array of colorset entries, make sure the number on the left reflects
+// the number of colors in the array on the right
 static const struct default_colorset_t default_colorsets[] = {
-  { 3, color_codes0 },  // 
-  { 3, color_codes1 },  // 
-  { 2, color_codes2 },  // 
+  { 3, color_codes0 },  // 0 Electric Storm
+  { 3, color_codes1 },  // 1 Cyber Pulse
+  { 2, color_codes2 },  // 2 Sunset Eclipse
 };
 
 void patterns_make_default(uint8_t index, pattern_t *pat)
@@ -30,16 +33,16 @@ void patterns_make_default(uint8_t index, pattern_t *pat)
   pattern_args_t args;
   pattern_args_init(&args, 0, 0, 0, 0, 0, 0, 0);
   switch (index) {
-    case 0:  // 
+    case 0:  // Electric Storm
       args.on_dur = 1;
       args.off_dur = 9;
       break;
-    case 1:  // 
+    case 1:  // Cyber Pulse
       args.on_dur = 3;
       args.off_dur = 23;
       args.blend_speed = 10;
       break;
-    case 2:  // 
+    case 2:  // Sunset Eclipse
       args.on_dur = 1;
       args.off_dur = 9;
       args.gap_dur = 6;
