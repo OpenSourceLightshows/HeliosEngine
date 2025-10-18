@@ -4,8 +4,10 @@
 #include "Pattern.h"
 #include "ColorConstants.h"
 
-//
-static const uint32_t color_codes0[] = {RGB_RED, RGB_GREEN, RGB_BLUE}; //
+// define arrays of colors, you can reuse these if you have multiple
+// modes that use the same colorset -- these demonstrate the max amount
+// of colors in each set but you can absolutely list a lesser amount
+static const uint32_t color_codes0[] = {RGB_RED, RGB_GREEN, RGB_BLUE}; // Nyx Default
 
 // Define Colorset configurations for each slot
 struct default_colorset_t {
@@ -13,9 +15,10 @@ struct default_colorset_t {
   const uint32_t *cols;
 };
 
-//
+// the array of colorset entries, make sure the number on the left reflects
+// the number of colors in the array on the right
 static const struct default_colorset_t default_colorsets[] = {
-  { 3, color_codes0 },  //
+  { 3, color_codes0 },  // 0 Nyx Default
 };
 
 void patterns_make_default(uint8_t index, pattern_t *pat)
@@ -26,7 +29,7 @@ void patterns_make_default(uint8_t index, pattern_t *pat)
   pattern_args_t args;
   pattern_args_init(&args, 0, 0, 0, 0, 0, 0, 0);
   switch (index) {
-    case 0:  //
+    case 0:  // Nyx Default
       args.on_dur = 3;
       args.off_dur = 23;
       break;
@@ -66,7 +69,7 @@ void patterns_make_pattern(enum pattern_id id, pattern_t *pat)
   case PATTERN_RAZOR:
     args.on_dur = 3;
     args.off_dur = 1;
-    args.gap_dur = 30; //
+    args.gap_dur = 30;
     break;
 
   case PATTERN_DASH_DOPS:
