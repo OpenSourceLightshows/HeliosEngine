@@ -209,6 +209,7 @@ void colorset_adjust_brightness(colorset_t *set, uint8_t fadeby)
   }
 }
 
+// get a color from the colorset
 rgb_color_t colorset_get(const colorset_t *set, uint8_t index)
 {
   rgb_color_t result;
