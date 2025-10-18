@@ -136,7 +136,7 @@ void storage_write_brightness(uint8_t brightness)
 
 uint8_t storage_crc8(uint8_t pos, uint8_t size)
 {
-  uint8_t hash = 33;  // 
+  uint8_t hash = 33;  // A non-zero initial value
   uint8_t i;
   for (i = 0; i < size; ++i) {
     hash = ((hash << 5) + hash) + storage_read_byte(pos);
@@ -171,7 +171,8 @@ static void storage_write_crc(uint8_t pos)
 static void storage_write_byte(uint8_t address, uint8_t data)
 {
 #ifdef HELIOS_EMBEDDED
-  // 
+  // reads out the byte of the eeprom first to see if it's different
+  // before writing out the byte -- this is faster than always writing
   if (storage_read_byte(address) == data) {
     return;
   }
@@ -182,7 +183,7 @@ static void storage_write_byte(uint8_t address, uint8_t data)
     storage_internal_write(address, data);
     // god forbid it doesn't write again
   }
-#else // 
+#else // HELIOS_CLI
   if (!m_enableStorage) {
     return;
   }
@@ -201,7 +202,7 @@ static void storage_write_byte(uint8_t address, uint8_t data)
     fclose(f);
     return;
   }
-  fclose(f); // 
+  fclose(f); // Close the file
 #endif
 }
 
@@ -230,7 +231,7 @@ static uint8_t storage_read_byte(uint8_t address)
   if (access(STORAGE_FILENAME, O_RDONLY) != 0) {
     return val;
   }
-  FILE *f = fopen(STORAGE_FILENAME, "rb"); // 
+  FILE *f = fopen(STORAGE_FILENAME, "rb"); // Open file for reading in binary mode
   if (!f) {
     // this error is ok, just means no storage
     // perror("Error opening file for read");
@@ -247,7 +248,7 @@ static uint8_t storage_read_byte(uint8_t address)
   if (!fread(&val, sizeof(uint8_t), 1, f)) {
     perror("Failed to read byte");
   }
-  fclose(f); // 
+  fclose(f); // Close the file
   return val;
 #endif
 }

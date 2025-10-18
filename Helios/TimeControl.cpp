@@ -59,7 +59,9 @@ void time_tick_clock(void)
   }
 #endif
 
-  // 
+  // the rest of this only runs inside vortexlib because on the duo the tick runs in the
+  // tcb timer callback instead of in a busy loop constantly checking microseconds()
+  // perform timestep
   uint32_t elapsed_us;
   uint32_t us;
   do {
@@ -72,7 +74,11 @@ void time_tick_clock(void)
       // otherwise calculate regular difference
       elapsed_us = (uint32_t)(us - m_prevTime);
     }
-    // 
+    // if building anywhere except visual studio then we can run alternate sleep code
+    // because in visual studio + windows it's better to just spin and check the high
+    // resolution clock instead of trying to sleep for microseconds.
+    // 1000us per ms, divided by tickrate gives
+    // the number of microseconds per tick
   } while (elapsed_us < (1000000 / TICKRATE));
 
   // store current time
@@ -87,7 +93,7 @@ uint32_t time_get_current_time(void)
 #ifdef HELIOS_EMBEDDED
 volatile uint32_t timer0_overflow_count = 0;
 ISR(TIMER0_OVF_vect) {
-  timer0_overflow_count++;  // 
+  timer0_overflow_count++;  // Increment on each overflow
 }
 #endif
 
@@ -102,7 +108,11 @@ uint32_t time_microseconds(void)
 #ifdef HELIOS_ARDUINO
   return micros();
 #else
-  // 
+  // The only reason that micros() is actually necessary is if Helios::tick()
+  // cannot be called in a 1Khz ISR. If Helios::tick() cannot be reliably called
+  // by an interrupt then Time::tickClock() must perform manual timestep via micros().
+  // If Helios::tick() is called by an interrupt then you don't need this function and
+  // should always just rely on the current tick to perform operations
   uint8_t oldSREG = SREG;
   cli();
   // multiply by 8 early to avoid floating point math or division
@@ -125,36 +135,38 @@ time_delay_microseconds(uint32_t us)
   // For the ATtiny85 running at 16MHz
 
   // The loop takes 3 cycles per iteration
-  us *= 2; // 
+  us *= 2; // 0.5us per iteration
 
-  // 
-  us -= 5; // 
+  // Subtract the overhead of the function call and loop setup
+  // Assuming approximately 5 cycles overhead
+  us -= 5; // Simplified subtraction
 
   // Assembly loop for delay
   __asm__ __volatile__(
       "1: sbiw %0, 1"
-      "\n\t" // 
+      "\n\t" // 2 cycles
       "nop"
-      "\n\t"                         // 
-      "brne 1b" : "=w"(us) : "0"(us) // 
+      "\n\t"                         // 1 cycle
+      "brne 1b" : "=w"(us) : "0"(us) // 2 cycles
   );
 
 #elif F_CPU >= 8000000L
   // For the ATtiny85 running at 8MHz
 
   // The loop takes 4 cycles per iteration
-  us <<= 1; // 
+  us <<= 1; // 1us per iteration
 
-  // 
-  us -= 6; // 
+  // Subtract the overhead of the function call and loop setup
+  // Assuming approximately 6 cycles overhead
+  us -= 6; // Simplified subtraction
 
   // Assembly loop for delay
   __asm__ __volatile__(
       "1: sbiw %0, 1"
-      "\n\t" // 
+      "\n\t" // 2 cycles
       "rjmp .+0"
-      "\n\t"                         // 
-      "brne 1b" : "=w"(us) : "0"(us) // 
+      "\n\t"                         // 2 cycles
+      "brne 1b" : "=w"(us) : "0"(us) // 2 cycles
   );
 #endif
 

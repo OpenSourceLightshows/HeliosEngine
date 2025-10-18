@@ -56,12 +56,19 @@ uint8_t button_release_count(void);
 void button_enable_wake(void);
 
 #ifdef HELIOS_CLI
-// 
+// These will 'inject' a short/long click without actually touching the
+// button state, it's important that code uses 'button_on_short_click' or
+// 'button_on_long_click' to capture this injected input event. Code that uses
+// for example: 'button_hold_duration() >= threshold && button_on_release()'
+// will never trigger because the injected input event doesn't actually
+// press the button or change the button state it just sets the 'shortClick'
+// or 'longClick' values accordingly
 void button_do_short_click(void);
 void button_do_long_click(void);
 void button_do_hold_click(void);
 
-// 
+// This will actually press down the button, it's your responsibility to wait
+// for the appropriate number of ticks and then release the button
 void button_do_press(void);
 void button_do_release(void);
 void button_do_toggle(void);

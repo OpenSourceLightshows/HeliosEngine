@@ -6,7 +6,7 @@
 #include "HeliosConfig.h"
 #include "Led.h"
 
-#include <string.h> // 
+#include <string.h> // for memcpy
 
 // Forward declarations for internal functions
 static void pattern_on_blink_on(pattern_t *pat);
@@ -18,7 +18,8 @@ static void pattern_blend_blink_on(pattern_t *pat);
 static void pattern_interpolate(uint8_t *current, const uint8_t next, uint8_t blend_speed);
 static void pattern_tick_fade(pattern_t *pat);
 
-// 
+// ==================================
+//  Pattern Args Functions
 
 void pattern_args_init(pattern_args_t *args, uint8_t on, uint8_t off, uint8_t gap,
                       uint8_t dash, uint8_t group, uint8_t blend, uint8_t fade)
@@ -32,7 +33,8 @@ void pattern_args_init(pattern_args_t *args, uint8_t on, uint8_t off, uint8_t ga
   args->fade_dur = fade;
 }
 
-// 
+// ==================================
+//  Pattern Functions
 
 void pattern_init(pattern_t *pat, uint8_t onDur, uint8_t offDur, uint8_t gap,
                  uint8_t dash, uint8_t group, uint8_t blend, uint8_t fade)
@@ -64,7 +66,8 @@ void pattern_init_state(pattern_t *pat)
 
   // the default state to begin with
   pat->m_state = STATE_BLINK_ON;
-  // 
+  // if a dash is present then always start with the dash because
+  // it consumes the first color in the colorset
   if (pat->m_args.dash_dur > 0) {
     pat->m_state = STATE_BEGIN_DASH;
   }
@@ -128,7 +131,8 @@ void pattern_play(pattern_t *pat)
     pattern_tick_fade(pat);
   }
 
-  // 
+  // Sometimes the pattern needs to cycle multiple states in a single frame so
+  // instead of using a loop or recursion I have just used a simple goto
 replay:
 
   // its kinda evolving as i go
@@ -145,7 +149,8 @@ replay:
     }
     pat->m_state = STATE_BLINK_OFF;
   case STATE_BLINK_OFF:
-    // 
+    // the whole 'should blink off' situation is tricky because we might need
+    // to go back to blinking on if our colorset isn't at the end yet
     if (pat->m_groupCounter > 0 || (!pat->m_args.gap_dur && !pat->m_args.dash_dur)) {
       if (pat->m_args.off_dur > 0) {
         pattern_on_blink_off(pat);
@@ -190,12 +195,17 @@ replay:
     return;
   }
 
-  // 
+  // this just transitions the state into the next state, with some edge conditions for
+  // transitioning to different states under certain circumstances. Honestly this is
+  // a nightmare to read now and idk how to fix it
   if (pat->m_state == STATE_IN_GAP2 || (pat->m_state == STATE_OFF && pat->m_groupCounter > 0)) {
-    // 
+    // this is an edge condition for when in the second gap or off in the non-last off blink
+    // then the state actually needs to jump backwards rather than iterate
     pat->m_state = pat->m_args.on_dur ? STATE_BLINK_ON : (pat->m_args.dash_dur ? STATE_BEGIN_DASH : STATE_BEGIN_GAP);
   } else if (pat->m_state == STATE_OFF && (!pat->m_groupCounter || colorset_num_colors(&pat->m_colorset) == 1)) {
-    // 
+    // this is an edge condition when the state is off but this is the last off blink in the
+    // group or there's literally only one color in the group then if there is more blinks
+    // left in the group we need to cycle back to blink on instead of to the next state
     pat->m_state = (pat->m_groupCounter > 0) ? STATE_BLINK_ON : STATE_BEGIN_GAP;
   } else {
     // this is the standard case, iterate to the next state
@@ -240,13 +250,13 @@ static void pattern_on_blink_on(pattern_t *pat)
 
 static void pattern_on_blink_off(pattern_t *pat)
 {
-  (void)pat; // 
+  (void)pat; // unused
   led_clear();
 }
 
 static void pattern_begin_gap(pattern_t *pat)
 {
-  (void)pat; // 
+  (void)pat; // unused
   led_clear();
 }
 
@@ -296,7 +306,8 @@ uint8_t pattern_equals(const pattern_t *pat, const pattern_t *other)
   if (memcmp(&pat->m_args, &other->m_args, sizeof(pattern_args_t)) != 0) {
     return 0;
   }
-  // 
+  // if those match then it's effectively the same
+  // pattern even if anything else is different
   return 1;
 }
 
@@ -338,7 +349,8 @@ uint8_t pattern_is_fade(const pattern_t *pat)
 
 static void pattern_blend_blink_on(pattern_t *pat)
 {
-  // 
+  // if we reached the next color, then cycle the colorset
+  // like normal and begin playing the next color
   if (rgb_equals(&pat->m_cur, &pat->m_next)) {
     pat->m_next = colorset_get_next(&pat->m_colorset);
   }
