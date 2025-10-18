@@ -4,7 +4,9 @@
 
 #include <string.h>
 
-//
+// when no color is selected in the colorset the index is this
+// then when you call getNext() for the first time it returns
+// the 0th color in the colorset and after the index will be 0
 #define INDEX_INVALID 255
 
 void colorset_init(colorset_t *set)
@@ -188,7 +190,7 @@ void colorset_randomize_colors(colorset_t *set, random_t *ctx, uint8_t numColors
     } else if (mode == COLOR_MODE_MONOCHROMATIC) {
       hueToUse = randomizedHue;
       valueToUse = 255 - (i * (256 / numColors));
-    } else { //
+    } else { // EVENLY_SPACED
       hueToUse = (randomizedHue + (256 / numColors) * i);
     }
     colorset_add_color_with_value_style(set, ctx, hueToUse, valueToUse, valStyle, numColors, i);
@@ -207,6 +209,7 @@ void colorset_adjust_brightness(colorset_t *set, uint8_t fadeby)
   }
 }
 
+// get a color from the colorset
 rgb_color_t colorset_get(const colorset_t *set, uint8_t index)
 {
   rgb_color_t result;
