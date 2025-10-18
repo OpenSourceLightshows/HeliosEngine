@@ -9,15 +9,15 @@ extern "C" {
 
 #include "HeliosConfig.h"
 
-/* macros to convert milliseconds and seconds to measures of ticks */
+// macros to convert milliseconds and seconds to measures of ticks
 #define MS_TO_TICKS(ms) (uint32_t)(((uint32_t)(ms) * TICKRATE) / 1000)
 #define SEC_TO_TICKS(s) (uint32_t)((uint32_t)(s) * TICKRATE)
 
-/* Initialize time system */
+// Initialize time system
 uint8_t time_init(void);
 void time_cleanup(void);
 
-/* Tick the clock forward to millis() */
+// Tick the clock forward to millis()
 void time_tick_clock(void);
 
 /* Get the current tick, offset by any active simulation (simulation only exists in vortexlib)
@@ -31,12 +31,12 @@ uint32_t time_get_current_time(void);
  * purpose of comparing against time_get_current_time() */
 uint32_t time_microseconds(void);
 
-/* Delay for some number of microseconds or milliseconds, these are bad */
+// Delay for some number of microseconds or milliseconds, these are bad
 void time_delay_microseconds(uint32_t us);
 void time_delay_milliseconds(uint32_t ms);
 
 #ifdef HELIOS_CLI
-/* Toggle timestep on/off */
+// Toggle timestep on/off
 void time_enable_timestep(uint8_t enabled);
 #endif
 

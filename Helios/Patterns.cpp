@@ -11,7 +11,7 @@ static const uint32_t color_codes0[] = {RGB_RED, RGB_TURQUOISE_BRI_MEDIUM, RGB_W
 static const uint32_t color_codes1[] = {RGB_MAGENTA_BRI_LOW, RGB_ICE_BLUE_BRI_LOW, RGB_GREEN_BRI_LOW}; /* Cyber Pulse */
 static const uint32_t color_codes2[] = {RGB_YELLOW_BRI_LOW, RGB_PURPLE}; /* Sunset Eclipse */
 
-/* Define Colorset configurations for each slot */
+// Define Colorset configurations for each slot
 struct default_colorset_t {
   uint8_t num_cols;
   const uint32_t *cols;
@@ -49,12 +49,12 @@ void patterns_make_default(uint8_t index, pattern_t *pat)
       args.dash_dur = 15;
       break;
   }
-  /* assign default args */
+  // assign default args
   pattern_set_args(pat, &args);
-  /* build the set out of the defaults */
+  // build the set out of the defaults
   colorset_t set;
   colorset_init_array(&set, default_colorsets[index].num_cols, default_colorsets[index].cols);
-  /* assign default colorset */
+  // assign default colorset
   pattern_set_colorset(pat, &set);
 }
 

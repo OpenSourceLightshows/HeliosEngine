@@ -12,7 +12,7 @@
 #define BUTTON_PORT 2
 #endif
 
-/* Forward declaration */
+// Forward declaration
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -23,12 +23,12 @@ void helios_terminate(void);
 #endif
 
 #ifdef HELIOS_CLI
-/* Forward declarations for CLI functions */
+// Forward declarations for CLI functions
 static uint8_t button_process_pre_input(void);
 static uint8_t button_process_post_input(void);
 #endif
 
-/* static members of Button */
+// static members of Button
 static uint32_t m_pressTime = 0;
 static uint32_t m_releaseTime = 0;
 static uint32_t m_holdDuration = 0;
@@ -47,8 +47,8 @@ static uint8_t m_holdClick = 0;
  * The CLI input queue functionality is omitted for embedded targets. */
 static uint8_t m_pinState = 0;
 static uint8_t m_enableWake = 0;
-/* Simple input queue for CLI - using a fixed-size circular buffer */
-/* Larger queue size for CLI to handle long test sequences */
+// Simple input queue for CLI - using a fixed-size circular buffer
+// Larger queue size for CLI to handle long test sequences
 #define INPUT_QUEUE_SIZE 4096
 static char m_inputQueue[INPUT_QUEUE_SIZE];
 static uint32_t m_queueHead = 0;
@@ -79,7 +79,7 @@ uint8_t button_init(void)
 #ifdef HELIOS_ARDUINO
   pinMode(3, INPUT);
 #else
-  /* turn off wake */
+  // turn off wake
   PCMSK &= ~(1 << PCINT3);
   GIMSK &= ~(1 << PCIE);
 #endif
@@ -90,7 +90,7 @@ uint8_t button_init(void)
 void button_enable_wake(void)
 {
 #ifdef HELIOS_EMBEDDED
-  /* Configure INT0 to trigger on falling edge */
+  // Configure INT0 to trigger on falling edge
   PCMSK |= (1 << PCINT3);
   GIMSK |= (1 << PCIE);
   sei();
@@ -136,7 +136,7 @@ uint8_t button_hold_pressing(void)
 void button_update(void)
 {
 #ifdef HELIOS_CLI
-  /* process any pre-input events in the queue */
+  // process any pre-input events in the queue
   uint8_t processed_pre = button_process_pre_input();
 #endif
 
@@ -255,14 +255,14 @@ static uint8_t button_process_pre_input(void)
     helios_terminate();
     break;
   case 'w': /* wait */
-    /* wait is pre input I guess */
+    // wait is pre input I guess
     break;
   default:
     /* return here! do not pop the queue
      * do not process post input events */
     return 0;
   }
-  /* now pop whatever pre-input command was processed */
+  // now pop whatever pre-input command was processed
   m_queueHead = (m_queueHead + 1) % INPUT_QUEUE_SIZE;
   return 1;
 }
@@ -270,10 +270,10 @@ static uint8_t button_process_pre_input(void)
 static uint8_t button_process_post_input(void)
 {
   if (m_queueHead == m_queueTail) {
-    /* probably processed the pre-input event already */
+    // probably processed the pre-input event already
     return 0;
   }
-  /* process input queue from the command line */
+  // process input queue from the command line
   char command = m_inputQueue[m_queueHead];
   switch (command) {
   case 'c': /* click button */
@@ -283,7 +283,7 @@ static uint8_t button_process_post_input(void)
     button_do_long_click();
     break;
   default:
-    /* should never happen */
+    // should never happen
     return 0;
   }
   m_queueHead = (m_queueHead + 1) % INPUT_QUEUE_SIZE;
@@ -334,7 +334,7 @@ void button_do_toggle(void)
   m_pinState = !m_pinState;
 }
 
-/* queue up an input event for the button */
+// queue up an input event for the button
 void button_queue_input(char input)
 {
   uint32_t nextTail = (m_queueTail + 1) % INPUT_QUEUE_SIZE;

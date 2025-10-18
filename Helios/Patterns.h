@@ -7,7 +7,7 @@ extern "C" {
 
 #include <inttypes.h>
 
-/* Forward declaration */
+// Forward declaration
 typedef struct pattern_t pattern_t;
 
 /* List of patterns that can be built, both single and multi-led patterns are found in this list.
@@ -20,35 +20,35 @@ enum pattern_id {
    * PATTERN_FIRST when possible */
   PATTERN_NONE = -1,
 
-  /* first pattern of all */
+  // first pattern of all
   PATTERN_FIRST = 0,
-  /* ===================================== */
+  // =====================================
 
-  /* Strobe */
+  // Strobe
   PATTERN_DOPS = PATTERN_FIRST,
   PATTERN_STROBE,
   PATTERN_HYPNOSTROBE,
   PATTERN_STROBIE,
   PATTERN_FLARE,
 
-  /* Morph */
+  // Morph
   PATTERN_MORPH_STROBIE,
 
-  /* Dash */
+  // Dash
   PATTERN_DASH_DOPS,
 
-  /* Fade */
+  // Fade
   PATTERN_FADE,
   PATTERN_MORPH_FADE,
   PATTERN_GLITCH_FADE,
 
-  /* Meta pattern constants */
+  // Meta pattern constants
   INTERNAL_PATTERNS_END,
   PATTERN_LAST = (INTERNAL_PATTERNS_END - 1),
   PATTERN_COUNT = (PATTERN_LAST - PATTERN_FIRST) + 1  /* total number of patterns */
 };
 
-/* Pattern creation functions */
+// Pattern creation functions
 void patterns_make_default(uint8_t index, pattern_t *pat);
 void patterns_make_pattern(enum pattern_id id, pattern_t *pat);
 
