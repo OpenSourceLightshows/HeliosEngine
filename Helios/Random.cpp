@@ -26,10 +26,7 @@ uint16_t random_next16(random_t *rng, uint16_t minValue, uint16_t maxValue)
   rng->m_seed = (rng->m_seed * 1103515245 + 12345) & 0x7FFFFFFF;
   uint32_t range = maxValue - minValue;
   if (range != 0xFFFFFFFF) {
-    /* shift the seed 16 bits to the right because the lower 16 bits
-     * of this LCG are apparently not uniform whatsoever, where as the
-     * upper 16 bits appear to be quite uniform as per tests. We don't
-     * really need 32bit random values so we offer max 16bits of entropy */
+    // 
     return ((rng->m_seed >> 16) % (range + 1)) + minValue;
   }
   return (rng->m_seed >> 16);

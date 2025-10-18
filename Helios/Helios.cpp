@@ -79,14 +79,14 @@ static uint8_t selected_base_group;
 static uint8_t selected_hue;
 static uint8_t selected_val;
 static uint8_t selected_sat;
-static uint8_t num_colors_selected;  /* Track number of colors selected in current session */
+static uint8_t num_colors_selected;  // 
 static pattern_t pat;
 static uint8_t keepgoing;
 static uint32_t last_mode_switch_time;
 static colorset_t new_colorset;
 
 #ifdef HELIOS_CLI
-static uint8_t sleeping;  /* Only used in CLI mode */
+static uint8_t sleeping;  // 
 #endif
 
 volatile char helios_version[] = HELIOS_VERSION_STR;
@@ -150,20 +150,16 @@ static uint8_t helios_init_components(void)
 
 void helios_tick(void)
 {
-  /* sample the button and re-calculate all button globals
-   * the button globals should not change anywhere else */
+  // 
   button_update();
 
-  /* handle the current state of the system, ie whatever state
-   * we're in we check for the appropriate input events for that
-   * state by checking button globals, then run the appropriate logic */
+  // 
   helios_handle_state();
 
   // Update the Leds once per frame
   led_update();
 
-  /* finally tick the clock forward and then sleep till the entire
-   * tick duration has been consumed */
+  // 
   time_tick_clock();
 }
 
@@ -202,8 +198,7 @@ void helios_wakeup(void)
 #ifdef HELIOS_EMBEDDED
   // nothing needed here, this interrupt firing will make the mainthread resume
 #else
-  /* if the button was held down then they are entering off-menus
-   * but if we re-initialize the button it will clear this state */
+  // 
   uint8_t pressed = button_is_pressed();
   // re-initialize some stuff
   time_init();
@@ -256,16 +251,14 @@ void helios_load_global_flags(void)
   }
   // read the global brightness from index 2 config
   uint8_t saved_brightness = storage_read_brightness();
-  /* Check if flags are valid (FLAGS_INVALID is inverse mask of valid flags)
-   * and brightness is set in storage */
+  // 
   uint8_t is_valid = !helios_has_any_flags(FLAGS_INVALID) && saved_brightness > 0;
   if (is_valid) {
     led_set_brightness(saved_brightness);
   }
 
   if (!is_valid) {
-    /* if the brightness was 0 and the flags are invalid then the storage was likely
-     * uninitialized or corrupt so write out the defaults */
+    // 
     helios_factory_reset();
   }
 }
@@ -399,14 +392,11 @@ static void helios_handle_state_modes(void)
     return;
   }
 
-  /* This handles iterating the mode forward when the autoplay feature is
-   * enabled. The modes automatically cycle forward every AUTOPLAY_DURATION ticks
-   * but only if the button isn't pressed to avoid iterating while opening menus */
+  // 
   if (helios_has_flag(FLAG_AUTOPLAY) && !button_is_pressed()) {
     uint32_t current_time = time_get_current_time();
     if (current_time - last_mode_switch_time >= AUTOPLAY_DURATION) {
-      /* If a pattern has a single cycle that is longer than the autoplay duration,
-       * prevent the mode switch from interrupting the pattern so the full cycle can be seen. */
+      // 
       colorset_t *colorset = pattern_colorset_ptr(&pat);
       if (colorset_num_colors(colorset) <= 1 || colorset_on_start(colorset)) {
         helios_load_next_mode();
@@ -438,8 +428,7 @@ static void helios_handle_state_modes(void)
   }
   // check how long the button is held
   uint32_t holdDur = button_hold_duration();
-  /* calculate a magnitude which corresponds to how many times past the MENU_HOLD_TIME
-   * the user has held the button, so 0 means haven't held fully past one yet, etc */
+  // 
   uint8_t magnitude = (uint8_t)(holdDur / MENU_HOLD_TIME);
   // whether the user has held the button longer than a short click
   uint8_t heldPast = (holdDur > SHORT_CLICK_THRESHOLD);
@@ -457,30 +446,30 @@ static void helios_handle_state_modes(void)
     if (hasReleased) {
       switch (magnitude) {
         default:
-        case 0: led_clear(); break;                                                 /* Turn off */
-        case 1: rgb_init_from_raw(&color, RGB_TURQUOISE_BRI_LOW); led_set_rgb(&color); break;     /* Color Selection */
-        case 2: rgb_init_from_raw(&color, RGB_MAGENTA_BRI_LOW); led_set_rgb(&color); break;       /* Pattern Selection */
-        case 3: rgb_init_from_raw(&color, RGB_YELLOW_BRI_LOW); led_set_rgb(&color); break;        /* Conjure Mode */
-        case 4: rgb_init_from_raw(&color, RGB_WHITE_BRI_LOW); led_set_rgb(&color); break;    /* Lock On Mode */
+        case 0: led_clear(); break;                                                 // 
+        case 1: rgb_init_from_raw(&color, RGB_TURQUOISE_BRI_LOW); led_set_rgb(&color); break;     // 
+        case 2: rgb_init_from_raw(&color, RGB_MAGENTA_BRI_LOW); led_set_rgb(&color); break;       // 
+        case 3: rgb_init_from_raw(&color, RGB_YELLOW_BRI_LOW); led_set_rgb(&color); break;        // 
+        case 4: rgb_init_from_raw(&color, RGB_WHITE_BRI_LOW); led_set_rgb(&color); break;    // 
       }
     } else {
       if (helios_has_flag(FLAG_LOCKED)) {
         switch (magnitude) {
           default:
           case 0: led_clear(); break;
-          case TIME_TILL_GLOW_LOCK_UNLOCK: rgb_init_from_raw(&color, RGB_RED_BRI_LOW); led_set_rgb(&color); break; /* Exit */
+          case TIME_TILL_GLOW_LOCK_UNLOCK: rgb_init_from_raw(&color, RGB_RED_BRI_LOW); led_set_rgb(&color); break; // 
         }
       } else {
         switch (magnitude) {
           default:
-          case 0: led_clear(); break;         /* nothing */
-          case 1: rgb_init_from_raw(&color, RGB_RED_BRI_LOW); led_set_rgb(&color); break; /* Enter Glow Lock */
-          case 2: rgb_init_from_raw(&color, RGB_BLUE_BRI_LOW); led_set_rgb(&color); break; /* Master Reset */
+          case 0: led_clear(); break;         // 
+          case 1: rgb_init_from_raw(&color, RGB_RED_BRI_LOW); led_set_rgb(&color); break; // 
+          case 2: rgb_init_from_raw(&color, RGB_BLUE_BRI_LOW); led_set_rgb(&color); break; // 
           case 3: {
             uint8_t autoplay = helios_has_flag(FLAG_AUTOPLAY);
             rgb_init_from_raw(&color, autoplay ? RGB_ORANGE_BRI_LOW : RGB_PINK_BRI_LOW);
             led_set_rgb(&color);
-          } break; /* Autoplay Toggle */
+          } break; // 
         }
       }
     }
@@ -500,11 +489,11 @@ static void helios_handle_state_modes(void)
 
 static void helios_handle_off_menu(uint8_t mag, uint8_t past)
 {
-  (void)past; /* unused */
+  (void)past; // 
   // if still locked then handle the unlocking menu which is just if mag == 5
   if (helios_has_flag(FLAG_LOCKED)) {
     switch (mag) {
-      case TIME_TILL_GLOW_LOCK_UNLOCK:  /* red lock */
+      case TIME_TILL_GLOW_LOCK_UNLOCK:  // 
         cur_state = STATE_TOGGLE_LOCK;
         break;
       default:
@@ -519,7 +508,7 @@ static void helios_handle_off_menu(uint8_t mag, uint8_t past)
   // if lock on is enabled, handle the unlocking menu
   if (helios_has_flag(FLAG_LOCK_ON)) {
     switch (mag) {
-      case TIME_TILL_GLOW_LOCK_UNLOCK:  /* red unlock */
+      case TIME_TILL_GLOW_LOCK_UNLOCK:  // 
         cur_state = STATE_TOGGLE_LOCK_ON;
         break;
       default:
@@ -532,16 +521,16 @@ static void helios_handle_off_menu(uint8_t mag, uint8_t past)
 
   // otherwise if not locked handle the off menu
   switch (mag) {
-    case 1:  /* red lock */
+    case 1:  // 
       cur_state = STATE_TOGGLE_LOCK;
       led_clear();
-      return; /* RETURN HERE */
-    case 2:  /* blue reset defaults */
+      return; // 
+    case 2:  // 
       cur_state = STATE_SET_DEFAULTS;
-      return; /* RETURN HERE */
-    case 3:  /* autoplay toggle */
+      return; // 
+    case 3:  // 
       helios_handle_state_toggle_flag(FLAG_AUTOPLAY);
-      return; /* RETURN HERE */
+      return; // 
     default:
       // just go back to sleep in hold-past off menu
       helios_enter_sleep();
@@ -553,7 +542,7 @@ static void helios_handle_off_menu(uint8_t mag, uint8_t past)
 static void helios_handle_on_menu(uint8_t mag, uint8_t past)
 {
   switch (mag) {
-    case 0:  /* off */
+    case 0:  // 
       // but only if we held for more than a short click
       if (past) {
         helios_enter_sleep();
@@ -561,7 +550,7 @@ static void helios_handle_on_menu(uint8_t mag, uint8_t past)
         return;
       }
       break;
-    case 1:  /* color select */
+    case 1:  // 
       cur_state = STATE_COLOR_GROUP_SELECTION;
       // reset the menu selection and colors selected
       menu_selection = 0;
@@ -575,20 +564,20 @@ static void helios_handle_on_menu(uint8_t mag, uint8_t past)
       g_hsv_rgb_alg = HSV_TO_RGB_RAINBOW;
 #endif
       break;
-    case 2:  /* pat select */
+    case 2:  // 
       cur_state = STATE_PATTERN_SELECT;
       // reset the menu selection
       menu_selection = 0;
       break;
-    case 3:  /* conjure mode */
+    case 3:  // 
       cur_state = STATE_TOGGLE_CONJURE;
       led_clear();
       break;
-    case 4:  /* lock on mode */
+    case 4:  // 
       cur_state = STATE_TOGGLE_LOCK_ON;
       led_clear();
       break;
-    default:  /* hold past */
+    default:  // 
       break;
   }
 }
@@ -642,7 +631,7 @@ static void helios_handle_state_color_group_selection(void)
   if (button_on_long_click()) {
     // select hue/val
     switch (menu_selection) {
-      case 0:  /* selected blank */
+      case 0:  // 
         // add blank to set
         colorset_add_color_hsv(&new_colorset, 0, 0, 0);
         num_colors_selected++;
@@ -651,14 +640,14 @@ static void helios_handle_state_color_group_selection(void)
           pattern_set_colorset(&pat, &new_colorset);
           helios_save_cur_mode();
           num_colors_selected = 0;
-          last_mode_switch_time = time_get_current_time(); /* Reset autoplay timer */
+          last_mode_switch_time = time_get_current_time(); // 
           cur_state = STATE_MODES;
           return;
         }
         cur_state = STATE_COLOR_GROUP_SELECTION;
         // RETURN HERE
         return;
-      case 1:  /* selected white */
+      case 1:  // 
         // adds white, skip hue/sat to brightness
         selected_hue = 0;
         selected_sat = 0;
@@ -666,10 +655,10 @@ static void helios_handle_state_color_group_selection(void)
         menu_selection = 0;
         cur_state = STATE_COLOR_SELECT_VAL;
         return;
-      default:  /* 2-5 */
+      default:  // 
         selected_base_group = color_group;
         selected_sat = 255;
-        selected_val = 255;  /* Reset brightness to full when starting new hue selection */
+        selected_val = 255;  // 
         cur_state = STATE_COLOR_SELECT_HUE;
         menu_selection = 0;
         return;
@@ -682,17 +671,17 @@ static void helios_handle_state_color_group_selection(void)
   rgb_init_from_raw(&col1, RGB_OFF);
 
   switch (menu_selection) {
-    case 0: /* Blank Option */
+    case 0: // 
       rgb_init_from_raw(&col2, RGB_WHITE_BRI_LOW);
       on_dur = 1;
       off_dur = 30;
       break;
-    case 1: /* White Option */
+    case 1: // 
       rgb_init_from_raw(&col2, RGB_WHITE);
       on_dur = 9;
       off_dur = 0;
       break;
-    default: { /* Color options */
+    default: { // 
       hsv_color_t temp_hsv1, temp_hsv2;
       hsv_init3(&temp_hsv1, color_menu_data[color_group].hues[0], 255, 255);
       rgb_init_from_hsv(&col1, &temp_hsv1);
@@ -737,7 +726,7 @@ static void helios_handle_state_color_group_selection(void)
         helios_save_cur_mode();
       }
       num_colors_selected = 0;
-      last_mode_switch_time = time_get_current_time(); /* Reset autoplay timer */
+      last_mode_switch_time = time_get_current_time(); // 
     }
   }
   if (menu_selection == 1) {
@@ -755,7 +744,7 @@ static void helios_handle_state_color_group_selection(void)
         pattern_set_colorset(&pat, &new_colorset);
         helios_save_cur_mode();
         num_colors_selected = 0;
-        last_mode_switch_time = time_get_current_time(); /* Reset autoplay timer */
+        last_mode_switch_time = time_get_current_time(); // 
         cur_state = STATE_MODES;
         return;
       }
@@ -772,8 +761,7 @@ static void helios_handle_state_col_select_hue_val(void)
   if (button_on_short_click()) {
     menu_selection = (menu_selection + 1) % NUM_COLORS_PER_GROUP;
   }
-  /* in the sat/val selection a longclick is next and hold is save but in
-   * the final val selection a longclick is save and there's no next */
+  // 
   uint8_t gotoNextMenu = button_on_long_click();
   uint8_t saveAndFinish = button_on_hold_click();
   switch (cur_state) {
@@ -810,7 +798,7 @@ static void helios_handle_state_col_select_hue_val(void)
       pattern_set_colorset(&pat, &new_colorset);
       helios_save_cur_mode();
       num_colors_selected = 0;
-      last_mode_switch_time = time_get_current_time(); /* Reset autoplay timer */
+      last_mode_switch_time = time_get_current_time(); // 
       cur_state = STATE_MODES;
       return;
     }
@@ -829,7 +817,7 @@ static void helios_handle_state_pat_select(void)
 {
   if (button_on_long_click()) {
     helios_save_cur_mode();
-    last_mode_switch_time = time_get_current_time(); /* Reset autoplay timer */
+    last_mode_switch_time = time_get_current_time(); // 
     cur_state = STATE_MODES;
   }
   if (button_on_short_click()) {
@@ -850,7 +838,7 @@ static void helios_handle_state_toggle_flag(enum helios_flags flag)
   // write out the new global flags and the current mode
   helios_save_global_flags();
   // switch back to modes
-  last_mode_switch_time = time_get_current_time(); /* Reset autoplay timer */
+  last_mode_switch_time = time_get_current_time(); // 
   cur_state = STATE_MODES;
 }
 
@@ -877,7 +865,7 @@ static void helios_handle_state_set_defaults(void)
     if (menu_selection == 1) {
       helios_factory_reset();
     }
-    last_mode_switch_time = time_get_current_time(); /* Reset autoplay timer */
+    last_mode_switch_time = time_get_current_time(); // 
     cur_state = STATE_MODES;
   }
   rgb_color_t temp;
