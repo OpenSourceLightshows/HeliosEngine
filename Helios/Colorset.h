@@ -55,8 +55,8 @@ struct colorset_t
   rgb_color_t m_palette[NUM_COLOR_SLOTS];
   // the actual number of colors in the set
   uint8_t m_numColors;
-  /* the current index, starts at 255 so that
-   * the very first call to colorset_getNext will iterate to 0 */
+  // the current index, starts at 255 so that
+  // the very first call to colorset_getNext will iterate to 0
   uint8_t m_curIndex;
 };
 
@@ -101,8 +101,8 @@ void colorset_adjust_brightness(colorset_t *set, uint8_t fadeby);
 // Get a color from the colorset
 rgb_color_t colorset_get(const colorset_t *set, uint8_t index);
 
-/* Set an rgb color in a slot, or add a new color if you specify
- * a slot higher than the number of colors in the colorset */
+// Set an rgb color in a slot, or add a new color if you specify
+// a slot higher than the number of colors in the colorset
 void colorset_set(colorset_t *set, uint8_t index, rgb_color_t col);
 
 // Skip some amount of colors

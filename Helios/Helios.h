@@ -67,8 +67,8 @@ enum helios_flags {
   // ==============================================
   // Auto increment to count the number of flags
   INTERNAL_FLAGS_END,
-  /* Calculate mask for invalid Flags based on the
-   * inverse of all flags listed above here */
+  // Calculate mask for invalid Flags based on the
+  // inverse of all flags listed above here
   FLAGS_INVALID = (uint8_t)(~((1 << (INTERNAL_FLAGS_END - 1)) - 1))
 };
 

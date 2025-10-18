@@ -193,49 +193,49 @@ void rgb_scale_brightness(rgb_color_t *rgb, float scale)
 }
 #endif
 
-/* ========================================================
- * Below are various functions for converting hsv <-> rgb */
+// ========================================================
+// Below are various functions for converting hsv <-> rgb
 
 #if ALTERNATIVE_HSV_RGB == 1
 #define SCALE8(i, scale)  (((uint16_t)i * (uint16_t)(scale)) >> 8)
 #define FIXFRAC8(N,D) (((N)*256)/(D))
 
-/* Stolen from FastLED hsv to rgb full rainbow where all colours
- * are given equal weight, this makes for-example yellow larger
- * best to use this function as it is the legacy choice */
+// Stolen from FastLED hsv to rgb full rainbow where all colours
+// are given equal weight, this makes for-example yellow larger
+// best to use this function as it is the legacy choice
 rgb_color_t hsv_to_rgb_rainbow(const hsv_color_t *rhs)
 {
   rgb_color_t col;
-  /* Yellow has a higher inherent brightness than
-   * any other color; 'pure' yellow is perceived to
-   * be 93% as bright as white.  In order to make
-   * yellow appear the correct relative brightness,
-   * it has to be rendered brighter than all other
-   * colors.
-   * Level Y1 is a moderate boost, the default.
-   * Level Y2 is a strong boost. */
+  // Yellow has a higher inherent brightness than
+  // any other color; 'pure' yellow is perceived to
+  // be 93% as bright as white.  In order to make
+  // yellow appear the correct relative brightness,
+  // it has to be rendered brighter than all other
+  // colors.
+  // Level Y1 is a moderate boost, the default.
+  // Level Y2 is a strong boost.
   const uint8_t Y1 = 1;
   const uint8_t Y2 = 0;
 
-  /* G2: Whether to divide all greens by two.
-   * Depends GREATLY on your particular LEDs */
+  // G2: Whether to divide all greens by two.
+  // Depends GREATLY on your particular LEDs
   const uint8_t G2 = 0;
 
-  /* Gscale: what to scale green down by.
-   * Depends GREATLY on your particular LEDs */
+  // Gscale: what to scale green down by.
+  // Depends GREATLY on your particular LEDs
   const uint8_t Gscale = 185;
 
   uint8_t hue = rhs->hue;
   uint8_t sat = rhs->sat;
   uint8_t val = rhs->val;
 
-  uint8_t offset = hue & 0x1F; /* 0..31 */
+  uint8_t offset = hue & 0x1F; // 0..31
 
   // offset8 = offset * 8
   uint8_t offset8 = offset;
   offset8 <<= 3;
 
-  uint8_t third = SCALE8(offset8, (256 / 3)); /* max = 85 */
+  uint8_t third = SCALE8(offset8, (256 / 3)); // max = 85
   uint8_t r, g, b;
   if (!(hue & 0x80)) {
     // 0XX
@@ -259,7 +259,7 @@ rgb_color_t hsv_to_rgb_rainbow(const hsv_color_t *rhs)
         if (Y2) {
           r = 170 + third;
           // uint8_t twothirds = (third << 1);
-          uint8_t twothirds = SCALE8(offset8, ((256 * 2) / 3)); /* max=170 */
+          uint8_t twothirds = SCALE8(offset8, ((256 * 2) / 3)); // max=170
           g = 85 + twothirds;
           b = 0;
         }
@@ -272,7 +272,7 @@ rgb_color_t hsv_to_rgb_rainbow(const hsv_color_t *rhs)
         // case 2: Y -> G
         if (Y1) {
           // uint8_t twothirds = (third << 1);
-          uint8_t twothirds = SCALE8(offset8, ((256 * 2) / 3)); /* max=170 */
+          uint8_t twothirds = SCALE8(offset8, ((256 * 2) / 3)); // max=170
           r = 171 - twothirds;
           g = 170 + third;
           b = 0;
@@ -300,8 +300,8 @@ rgb_color_t hsv_to_rgb_rainbow(const hsv_color_t *rhs)
         // case 4: A -> B
         r = 0;
         // uint8_t twothirds = (third << 1);
-        uint8_t twothirds = SCALE8(offset8, ((256 * 2) / 3)); /* max=170 */
-        g = 171 - twothirds; /* 170? */
+        uint8_t twothirds = SCALE8(offset8, ((256 * 2) / 3)); // max=170
+        g = 171 - twothirds; // 170?
         b = 85 + twothirds;
       } else {
         // 101
@@ -327,13 +327,13 @@ rgb_color_t hsv_to_rgb_rainbow(const hsv_color_t *rhs)
     }
   }
 
-  /* This is one of the good places to scale the green down,
-   * although the client can scale green down as well. */
+  // This is one of the good places to scale the green down,
+  // although the client can scale green down as well.
   if (G2) g = g >> 1;
   if (Gscale) g = SCALE8(g, Gscale);
 
-  /* Scale down colors if we're desaturated at all
-   * and add the brightness_floor to r, g, and b. */
+  // Scale down colors if we're desaturated at all
+  // and add the brightness_floor to r, g, and b.
   if (sat != 255) {
     if (sat == 0) {
       r = 255; b = 255; g = 255;
@@ -365,10 +365,10 @@ rgb_color_t hsv_to_rgb_rainbow(const hsv_color_t *rhs)
     }
   }
 
-  /* Here we have the old AVR "missing std X+n" problem again
-   * It turns out that fixing it winds up costing more than
-   * not fixing it.
-   * To paraphrase Dr Bronner, profile! profile! profile! */
+  // Here we have the old AVR "missing std X+n" problem again
+  // It turns out that fixing it winds up costing more than
+  // not fixing it.
+  // To paraphrase Dr Bronner, profile! profile! profile!
   col.red = r;
   col.green = g;
   col.blue = b;

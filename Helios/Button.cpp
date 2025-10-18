@@ -43,8 +43,8 @@ static uint8_t m_longClick = 0;
 static uint8_t m_holdClick = 0;
 
 #ifdef HELIOS_CLI
-/* Note: For embedded builds, we exclude std::queue and CLI-only features.
- * The CLI input queue functionality is omitted for embedded targets. */
+// Note: For embedded builds, we exclude std::queue and CLI-only features.
+// The CLI input queue functionality is omitted for embedded targets.
 static uint8_t m_pinState = 0;
 static uint8_t m_enableWake = 0;
 // Simple input queue for CLI - using a fixed-size circular buffer
@@ -94,7 +94,7 @@ void button_enable_wake(void)
   PCMSK |= (1 << PCINT3);
   GIMSK |= (1 << PCIE);
   sei();
-#else /* HELIOS_CLI */
+#else // HELIOS_CLI
   m_enableWake = 1;
 #endif
 }
@@ -116,8 +116,8 @@ uint8_t button_check(void)
   return (PINB & (1 << 3)) != 0;
 #endif
 #elif defined(HELIOS_CLI)
-  /* then just return the pin state as-is, the input event may have
-   * adjusted this value */
+  // then just return the pin state as-is, the input event may have
+  // adjusted this value
   return m_pinState;
 #else
   return 0;
@@ -165,8 +165,8 @@ void button_update(void)
   m_holdClick = (m_newRelease && (m_holdDuration >= HOLD_CLICK_START) && (m_holdDuration <= HOLD_CLICK_END));
 
 #ifdef HELIOS_CLI
-  /* if there was no pre-input event this tick, process a post input event
-   * to ensure there is only one event per tick processed */
+  // if there was no pre-input event this tick, process a post input event
+  // to ensure there is only one event per tick processed
   if (!processed_pre) {
     button_process_post_input();
   }
@@ -242,24 +242,24 @@ static uint8_t button_process_pre_input(void)
   }
   char command = m_inputQueue[m_queueHead];
   switch (command) {
-  case 'p': /* press */
+  case 'p': // press
     button_do_press();
     break;
-  case 'r': /* release */
+  case 'r': // release
     button_do_release();
     break;
-  case 't': /* toggle */
+  case 't': // toggle
     button_do_toggle();
     break;
-  case 'q': /* quit */
+  case 'q': // quit
     helios_terminate();
     break;
-  case 'w': /* wait */
+  case 'w': // wait
     // wait is pre input I guess
     break;
   default:
-    /* return here! do not pop the queue
-     * do not process post input events */
+    // return here! do not pop the queue
+    // do not process post input events
     return 0;
   }
   // now pop whatever pre-input command was processed
@@ -276,10 +276,10 @@ static uint8_t button_process_post_input(void)
   // process input queue from the command line
   char command = m_inputQueue[m_queueHead];
   switch (command) {
-  case 'c': /* click button */
+  case 'c': // click button
     button_do_short_click();
     break;
-  case 'l': /* long click button */
+  case 'l': // long click button
     button_do_long_click();
     break;
   default:
@@ -317,8 +317,8 @@ void button_do_hold_click(void)
   m_releaseCount++;
 }
 
-/* this will actually press down the button, it's your responsibility to wait
- * for the appropriate number of ticks and then release the button */
+// this will actually press down the button, it's your responsibility to wait
+// for the appropriate number of ticks and then release the button
 void button_do_press(void)
 {
   m_pinState = 1;

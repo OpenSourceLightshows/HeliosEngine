@@ -23,8 +23,8 @@ void timer_init_default(helios_timer_t *timer);
 // Init a timer with a number of alarms and optionally start it
 void timer_init(helios_timer_t *timer, uint8_t alarm);
 
-/* Start the timer but don't change current alarm, this shifts
- * the timer startTime but does not reset it's alarm state */
+// Start the timer but don't change current alarm, this shifts
+// the timer startTime but does not reset it's alarm state
 void timer_start(helios_timer_t *timer, uint32_t offset);
 
 // Delete all alarms from the timer and reset
