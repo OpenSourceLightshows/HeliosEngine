@@ -87,6 +87,7 @@ uint8_t button_init(void)
   return 1;
 }
 
+// enable wake on press
 void button_enable_wake(void)
 {
 #ifdef HELIOS_EMBEDDED
@@ -94,7 +95,7 @@ void button_enable_wake(void)
   PCMSK |= (1 << PCINT3);
   GIMSK |= (1 << PCIE);
   sei();
-#else //
+#else // HELIOS_CLI
   m_enableWake = 1;
 #endif
 }
