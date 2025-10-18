@@ -7,6 +7,7 @@ extern "C" {
 
 #include <stdint.h>
 
+// Random forward declaration for SDCC (self-referential)
 typedef struct random_t random_t;
 
 struct random_t

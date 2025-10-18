@@ -4,10 +4,17 @@
 #include "Pattern.h"
 #include "ColorConstants.h"
 
+// For 8051, use __code to store const data in flash instead of RAM
+#ifdef HELIOS_8051
+#define FLASH_CONST __code
+#else
+#define FLASH_CONST
+#endif
+
 // define arrays of colors, you can reuse these if you have multiple
 // modes that use the same colorset -- these demonstrate the max amount
 // of colors in each set but you can absolutely list a lesser amount
-static const uint32_t color_codes0[] = {RGB_RED, RGB_GREEN, RGB_BLUE}; // Nyx Default
+static const uint32_t FLASH_CONST color_codes0[] = {RGB_RED, RGB_GREEN, RGB_BLUE}; // Nyx Default
 
 // Define Colorset configurations for each slot
 struct default_colorset_t {
@@ -17,7 +24,7 @@ struct default_colorset_t {
 
 // the array of colorset entries, make sure the number on the left reflects
 // the number of colors in the array on the right
-static const struct default_colorset_t default_colorsets[] = {
+static const struct default_colorset_t FLASH_CONST default_colorsets[] = {
   { 3, color_codes0 },  // 0 Nyx Default
 };
 

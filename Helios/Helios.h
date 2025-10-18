@@ -11,9 +11,8 @@ extern "C" {
 #include "Colorset.h"
 #include "Pattern.h"
 
-// Forward declaration
-typedef struct pattern_t pattern_t;
-typedef struct colorset_t colorset_t;
+// Forward declarations removed for SDCC compatibility
+// (pattern_t and colorset_t are available via includes)
 
 uint8_t helios_init(void);
 void helios_tick(void);

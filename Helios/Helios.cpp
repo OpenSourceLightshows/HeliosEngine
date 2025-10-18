@@ -11,10 +11,14 @@
 #include "Button.h"
 #include "Led.h"
 
-#ifdef HELIOS_EMBEDDED
+#if defined(HELIOS_EMBEDDED) && !defined(HELIOS_8051)
 #include <avr/sleep.h>
 #include <avr/interrupt.h>
 #include <avr/wdt.h>
+#endif
+
+#ifdef HELIOS_8051
+#include "ca51f152.h"
 #endif
 
 #ifdef HELIOS_CLI
@@ -67,20 +71,27 @@ enum helios_state {
 #endif
 };
 
+#ifdef HELIOS_8051
+// 8051 has limited internal RAM, so use external RAM for all static variables
+#define STATIC_VAR static __xdata
+#else
+#define STATIC_VAR static
+#endif
+
 // static members
-static enum helios_state cur_state;
-static enum helios_flags global_flags;
-static uint8_t menu_selection;
-static uint8_t cur_mode;
-static uint8_t selected_base_group;
-static uint8_t num_colors_selected;  // 
-static pattern_t pat;
-static uint8_t keepgoing;
-static uint32_t last_mode_switch_time;
-static colorset_t new_colorset;
+STATIC_VAR enum helios_state cur_state;
+STATIC_VAR enum helios_flags global_flags;
+STATIC_VAR uint8_t menu_selection;
+STATIC_VAR uint8_t cur_mode;
+STATIC_VAR uint8_t selected_base_group;
+STATIC_VAR uint8_t num_colors_selected;  //
+STATIC_VAR pattern_t pat;
+STATIC_VAR uint8_t keepgoing;
+STATIC_VAR uint32_t last_mode_switch_time;
+STATIC_VAR colorset_t new_colorset;
 
 #ifdef HELIOS_CLI
-static uint8_t sleeping;  // 
+STATIC_VAR uint8_t sleeping;  //
 #endif
 
 volatile char helios_version[] = HELIOS_VERSION_STR;
@@ -92,7 +103,8 @@ uint8_t helios_init(void)
     return 0;
   }
   // then initialize the hardware for embedded helios
-#ifdef HELIOS_EMBEDDED
+#if defined(HELIOS_EMBEDDED) && !defined(HELIOS_8051)
+  // AVR ATtiny85 initialization
   // Set PB0, PB1, PB4 as output
   DDRB |= (1 << DDB0) | (1 << DDB1) | (1 << DDB4);
   // Timer0 Configuration for PWM
@@ -107,6 +119,20 @@ uint8_t helios_init(void)
   TIMSK |= (1 << TOIE0);
   // Enable interrupts
   sei();
+#endif
+
+#ifdef HELIOS_8051
+  // 8051 CA51F152XX initialization
+  // Configure GPIO pins for LED output (P1.0, P1.1, P1.2 for RGB)
+  P1M0 = 0x00;  // Push-pull output mode
+  P1M1 = 0x00;
+
+  // Configure button pin as input (P3.3)
+  P3M0 &= ~(1 << 3);
+  P3M1 &= ~(1 << 3);
+
+  // Enable interrupts
+  EA = 1;
 #endif
   return 1;
 }
@@ -159,7 +185,8 @@ void helios_tick(void)
 
 void helios_enter_sleep(void)
 {
-#ifdef HELIOS_EMBEDDED
+#if defined(HELIOS_EMBEDDED) && !defined(HELIOS_8051)
+  // AVR ATtiny85 sleep mode
   // clear the led colors
   led_clear();
   // Set all pins to input
@@ -177,6 +204,18 @@ void helios_enter_sleep(void)
   // Set PB0, PB1, PB4 as output
   DDRB |= (1 << DDB0) | (1 << DDB1) | (1 << DDB4);
   // wakeup here, re-init
+  helios_init_components();
+#elif defined(HELIOS_8051)
+  // 8051 CA51F152XX sleep mode
+  // clear the led colors
+  led_clear();
+  // Enable wake on interrupt for the button
+  button_enable_wake();
+  // Enter power-down mode using PCON register
+  PCON |= 0x02;  // Set PD bit for power-down mode
+  // ... external interrupt will wake us here
+
+  // wakeup here, re-init components
   helios_init_components();
 #else
   cur_state = STATE_SLEEP;

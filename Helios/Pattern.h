@@ -10,9 +10,8 @@ extern "C" {
 #include "Timer.h"
 #include "Patterns.h"
 
-// Forward declarations
+// Forward declarations - Note: pattern_t forward declaration moved to avoid SDCC issues
 typedef struct pattern_args_t pattern_args_t;
-typedef struct pattern_t pattern_t;
 
 // for specifying things like default args
 struct pattern_args_t {
@@ -90,11 +89,9 @@ struct pattern_t
   // ==================================
   //  Fade Members
 
-  // shifting value to represent current fade
-  uint8_t m_fadeValue;
-
-  // Add a member variable to store when the pattern was last initialized
+  // fade effect timing and value
   uint32_t m_fadeStartTime;
+  uint8_t m_fadeValue;
 };
 
 // try to not set on duration to 0
@@ -135,7 +132,7 @@ uint8_t pattern_has_flags(const pattern_t *pat, uint32_t flags);
 // whether blend speed is non 0
 uint8_t pattern_is_blend(const pattern_t *pat);
 
-// whether fade speed is non 0
+// whether fade duration is non 0
 uint8_t pattern_is_fade(const pattern_t *pat);
 
 #ifdef __cplusplus

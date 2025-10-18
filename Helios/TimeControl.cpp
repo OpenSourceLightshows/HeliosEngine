@@ -12,10 +12,14 @@
 #include "Led.h"
 
 #ifdef HELIOS_EMBEDDED
+#ifdef HELIOS_8051
+#include "ca51f152.h"
+#else
 #include <avr/sleep.h>
 #include <avr/interrupt.h>
 #ifdef HELIOS_ARDUINO
 #include <arduino.h>
+#endif
 #endif
 #endif
 
@@ -27,14 +31,21 @@
 #define NS_TO_US(ns) ((ns)/1000)
 #endif
 
+#ifdef HELIOS_8051
+// 8051 has limited internal RAM, so use external RAM for all static variables
+#define STATIC_VAR static __xdata
+#else
+#define STATIC_VAR static
+#endif
+
 // static members
-static uint32_t m_curTick = 0;
+STATIC_VAR uint32_t m_curTick = 0;
 // the last frame timestamp
-static uint32_t m_prevTime = 0;
+STATIC_VAR uint32_t m_prevTime = 0;
 
 #ifdef HELIOS_CLI
 // whether timestep is enabled, default enabled
-static uint8_t m_enableTimestep = 1;
+STATIC_VAR uint8_t m_enableTimestep = 1;
 #endif
 
 uint8_t time_init(void)
@@ -90,7 +101,7 @@ uint32_t time_get_current_time(void)
   return m_curTick;
 }
 
-#ifdef HELIOS_EMBEDDED
+#if defined(HELIOS_EMBEDDED) && !defined(HELIOS_8051)
 volatile uint32_t timer0_overflow_count = 0;
 ISR(TIMER0_OVF_vect) {
   timer0_overflow_count++;  // Increment on each overflow
@@ -104,10 +115,14 @@ uint32_t time_microseconds(void)
   clock_gettime(CLOCK_MONOTONIC, &ts);
   uint64_t us = SEC_TO_US((uint64_t)ts.tv_sec) + NS_TO_US((uint64_t)ts.tv_nsec);
   return (unsigned long)us;
-#else
-#ifdef HELIOS_ARDUINO
+#elif defined(HELIOS_ARDUINO)
   return micros();
+#elif defined(HELIOS_8051)
+  // For 8051, use a simple tick-based microsecond counter
+  // This assumes TICKRATE = 1000 (1 tick = 1ms = 1000us)
+  return m_curTick * 1000;
 #else
+  // AVR ATtiny85
   // The only reason that micros() is actually necessary is if Helios::tick()
   // cannot be called in a 1Khz ISR. If Helios::tick() cannot be reliably called
   // by an interrupt then Time::tickClock() must perform manual timestep via micros().
@@ -121,16 +136,16 @@ uint32_t time_microseconds(void)
   // then shift right to counteract the multiplication by 8
   return micros >> 6;
 #endif
-#endif
 }
 
-#ifdef HELIOS_EMBEDDED
+#if defined(HELIOS_EMBEDDED) && !defined(HELIOS_8051)
 __attribute__((noinline))
 #endif
 void
 time_delay_microseconds(uint32_t us)
 {
-#ifdef HELIOS_EMBEDDED
+#if defined(HELIOS_EMBEDDED) && !defined(HELIOS_8051)
+  // AVR ATtiny85 implementation
 #if F_CPU >= 16000000L
   // For the ATtiny85 running at 16MHz
 
@@ -171,6 +186,7 @@ time_delay_microseconds(uint32_t us)
 #endif
 
 #else
+  // For 8051 and CLI: use busy loop
   uint32_t newtime = time_microseconds() + us;
   while (time_microseconds() < newtime)
   {

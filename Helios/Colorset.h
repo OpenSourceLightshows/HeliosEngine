@@ -8,9 +8,9 @@ extern "C" {
 #include "Colortypes.h"
 
 #include "HeliosConfig.h"
+#include "Random.h"
 
-// Forward declaration
-typedef struct random_t random_t;
+// Colorset forward declaration for SDCC (self-referential)
 typedef struct colorset_t colorset_t;
 
 enum colorset_value_style
