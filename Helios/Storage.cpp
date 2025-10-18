@@ -15,16 +15,29 @@
 #include <fcntl.h>
 #endif
 
-#ifdef HELIOS_CLI
-// whether storage is enabled, default enabled
-bool Storage::m_enableStorage = true;
+// Forward declarations for internal functions
+static uint8_t storage_crc_pos(uint8_t pos);
+static uint8_t storage_read_crc(uint8_t pos);
+static uint8_t storage_check_crc(uint8_t pos);
+static void storage_write_crc(uint8_t pos);
+static void storage_write_byte(uint8_t address, uint8_t data);
+static uint8_t storage_read_byte(uint8_t address);
+
+#ifdef HELIOS_EMBEDDED
+static inline uint8_t storage_internal_read(uint8_t address);
+static inline void storage_internal_write(uint8_t address, uint8_t data);
 #endif
 
-bool Storage::init()
+#ifdef HELIOS_CLI
+// whether storage is enabled, default enabled
+static uint8_t m_enableStorage = 1;
+#endif
+
+uint8_t storage_init(void)
 {
 #ifdef HELIOS_CLI
   if (!m_enableStorage) {
-    return true;
+    return 1;
   }
   // if the storage filename doesn't exist then create it
   if (access(STORAGE_FILENAME, O_RDWR) != 0 && errno == ENOENT) {
@@ -32,107 +45,142 @@ bool Storage::init()
     FILE *f = fopen(STORAGE_FILENAME, "w+b");
     if (!f) {
       perror("Error creating storage file for write");
-      return false;
+      return 0;
     }
     // fill the storage with 0s
-    for (uint32_t i = 0; i < STORAGE_SIZE; ++i){
+    uint32_t i;
+    for (i = 0; i < STORAGE_SIZE; ++i){
       uint8_t b = 0x0;
       fwrite(&b, 1, sizeof(uint8_t), f);
     }
     fclose(f);
   }
 #endif
-  return true;
+  return 1;
 }
 
-bool Storage::read_pattern(uint8_t slot, Pattern &pat)
+uint8_t storage_read_pattern(uint8_t slot, pattern_t *pat)
 {
   uint8_t pos = slot * SLOT_SIZE;
-  if (!check_crc(pos)) {
-    return false;
+  if (!storage_check_crc(pos)) {
+    return 0;
   }
-  for (uint8_t i = 0; i < PATTERN_SIZE; ++i) {
-    ((uint8_t *)&pat)[i] = read_byte(pos + i);
+  uint8_t i;
+  for (i = 0; i < PATTERN_SIZE; ++i) {
+    ((uint8_t *)pat)[i] = storage_read_byte(pos + i);
   }
-  return true;
+  return 1;
 }
 
-void Storage::write_pattern(uint8_t slot, const Pattern &pat)
+void storage_write_pattern(uint8_t slot, const pattern_t *pat)
 {
   uint8_t pos = slot * SLOT_SIZE;
-  for (uint8_t i = 0; i < PATTERN_SIZE; ++i) {
-    uint8_t val = ((uint8_t *)&pat)[i];
+  uint8_t i;
+  for (i = 0; i < PATTERN_SIZE; ++i) {
+    uint8_t val = ((uint8_t *)pat)[i];
     uint8_t target = pos + i;
-    write_byte(target, val);
+    storage_write_byte(target, val);
   }
-  write_crc(pos);
+  storage_write_crc(pos);
 }
 
-void Storage::copy_slot(uint8_t srcSlot, uint8_t dstSlot)
+void storage_copy_slot(uint8_t srcSlot, uint8_t dstSlot)
 {
   uint8_t src = srcSlot * SLOT_SIZE;
   uint8_t dst = dstSlot * SLOT_SIZE;
-  for (uint8_t i = 0; i < SLOT_SIZE; ++i) {
-    write_byte(dst + i, read_byte(src + i));
+  uint8_t i;
+  for (i = 0; i < SLOT_SIZE; ++i) {
+    storage_write_byte(dst + i, storage_read_byte(src + i));
   }
 }
 
-uint8_t Storage::read_config(uint8_t index)
+uint8_t storage_read_config(uint8_t index)
 {
-  return read_byte(CONFIG_START_INDEX - index);
+  return storage_read_byte(CONFIG_START_INDEX - index);
 }
 
-void Storage::write_config(uint8_t index, uint8_t val)
+void storage_write_config(uint8_t index, uint8_t val)
 {
-  write_byte(CONFIG_START_INDEX - index, val);
+  storage_write_byte(CONFIG_START_INDEX - index, val);
 }
 
-uint8_t Storage::crc8(uint8_t pos, uint8_t size)
+uint8_t storage_read_global_flags(void)
+{
+  return storage_read_config(STORAGE_GLOBAL_FLAG_INDEX);
+}
+
+void storage_write_global_flags(uint8_t global_flags)
+{
+  storage_write_config(STORAGE_GLOBAL_FLAG_INDEX, global_flags);
+}
+
+uint8_t storage_read_current_mode(void)
+{
+  return storage_read_config(STORAGE_CURRENT_MODE_INDEX);
+}
+
+void storage_write_current_mode(uint8_t current_mode)
+{
+  storage_write_config(STORAGE_CURRENT_MODE_INDEX, current_mode);
+}
+
+uint8_t storage_read_brightness(void)
+{
+  return storage_read_config(STORAGE_BRIGHTNESS_INDEX);
+}
+
+void storage_write_brightness(uint8_t brightness)
+{
+  storage_write_config(STORAGE_BRIGHTNESS_INDEX, brightness);
+}
+
+uint8_t storage_crc8(uint8_t pos, uint8_t size)
 {
   uint8_t hash = 33;  // A non-zero initial value
-  for (uint8_t i = 0; i < size; ++i) {
-    hash = ((hash << 5) + hash) + read_byte(pos);
+  uint8_t i;
+  for (i = 0; i < size; ++i) {
+    hash = ((hash << 5) + hash) + storage_read_byte(pos);
   }
   return hash;
 }
 
-uint8_t Storage::crc_pos(uint8_t pos)
+static uint8_t storage_crc_pos(uint8_t pos)
 {
   // crc the entire slot except last byte
-  return crc8(pos, PATTERN_SIZE);
+  return storage_crc8(pos, PATTERN_SIZE);
 }
 
-uint8_t Storage::read_crc(uint8_t pos)
+static uint8_t storage_read_crc(uint8_t pos)
 {
   // read the last byte of the slot
-  return read_byte(pos + PATTERN_SIZE);
+  return storage_read_byte(pos + PATTERN_SIZE);
 }
 
-bool Storage::check_crc(uint8_t pos)
+static uint8_t storage_check_crc(uint8_t pos)
 {
   // compare the last byte to the calculated crc
-  return (read_crc(pos) == crc_pos(pos));
+  return (storage_read_crc(pos) == storage_crc_pos(pos));
 }
 
-void Storage::write_crc(uint8_t pos)
+static void storage_write_crc(uint8_t pos)
 {
   // compare the last byte to the calculated crc
-  write_byte(pos + PATTERN_SIZE, crc_pos(pos));
+  storage_write_byte(pos + PATTERN_SIZE, storage_crc_pos(pos));
 }
 
-void Storage::write_byte(uint8_t address, uint8_t data)
+static void storage_write_byte(uint8_t address, uint8_t data)
 {
 #ifdef HELIOS_EMBEDDED
   // reads out the byte of the eeprom first to see if it's different
   // before writing out the byte -- this is faster than always writing
-  if (read_byte(address) == data) {
+  if (storage_read_byte(address) == data) {
     return;
   }
-  internal_write(address, data);
+  storage_internal_write(address, data);
   // double check that shit
-  if (read_byte(address) != data) {
+  if (storage_read_byte(address) != data) {
     // do it again because eeprom is stupid
-    internal_write(address, data);
+    storage_internal_write(address, data);
     // god forbid it doesn't write again
   }
 #else // HELIOS_CLI
@@ -151,22 +199,23 @@ void Storage::write_byte(uint8_t address, uint8_t data)
     return;
   }
   if (!fwrite((const void *)&data, sizeof(uint8_t), 1, f)) {
+    fclose(f);
     return;
   }
   fclose(f); // Close the file
 #endif
 }
 
-uint8_t Storage::read_byte(uint8_t address)
+static uint8_t storage_read_byte(uint8_t address)
 {
 #ifdef HELIOS_EMBEDDED
   // do a three way read because the attiny85 eeprom basically doesn't work
-  uint8_t b1 = internal_read(address);
-  uint8_t b2 = internal_read(address);
+  uint8_t b1 = storage_internal_read(address);
+  uint8_t b2 = storage_internal_read(address);
   if (b1 == b2) {
     return b2;
   }
-  uint8_t b3 = internal_read(address);
+  uint8_t b3 = storage_internal_read(address);
   if (b3 == b1) {
     return b1;
   }
@@ -184,8 +233,8 @@ uint8_t Storage::read_byte(uint8_t address)
   }
   FILE *f = fopen(STORAGE_FILENAME, "rb"); // Open file for reading in binary mode
   if (!f) {
-		// this error is ok, just means no storage
-    //perror("Error opening file for read");
+    // this error is ok, just means no storage
+    // perror("Error opening file for read");
     return val;
   }
   // Seek to the specified address
@@ -205,7 +254,7 @@ uint8_t Storage::read_byte(uint8_t address)
 }
 
 #ifdef HELIOS_EMBEDDED
-inline void Storage::internal_write(uint8_t address, uint8_t data)
+static inline void storage_internal_write(uint8_t address, uint8_t data)
 {
   while (EECR & (1<<EEPE)) {
     // Wait for completion of previous write
@@ -221,7 +270,7 @@ inline void Storage::internal_write(uint8_t address, uint8_t data)
   EECR |= (1<<EEPE);
 }
 
-inline uint8_t Storage::internal_read(uint8_t address)
+static inline uint8_t storage_internal_read(uint8_t address)
 {
   while (EECR & (1<<EEPE)) {
     // Wait for completion of previous write
@@ -234,3 +283,11 @@ inline uint8_t Storage::internal_read(uint8_t address)
   return EEDR;
 }
 #endif
+
+#ifdef HELIOS_CLI
+void storage_enable_storage(uint8_t enabled)
+{
+  m_enableStorage = enabled;
+}
+#endif
+

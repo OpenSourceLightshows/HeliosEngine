@@ -22,6 +22,8 @@
 #include "Colortypes.h"
 #include "Button.h"
 #include "Led.h"
+#include "Patterns.h"
+#include "Pattern.h"
 #include "color_map.h"
 
 /*
@@ -53,7 +55,7 @@ bool timestep = true;
 bool eeprom = false;
 std::string eeprom_file;
 bool generate_bmp = false;
-std::vector<RGBColor> colorBuffer;
+std::vector<rgb_color_t> colorBuffer;
 uint32_t num_cycles = 0;
 float brightness_scale = 1.0f;
 uint8_t minumum_brightness = 75;
@@ -71,7 +73,7 @@ static bool read_inputs();
 static void show();
 static void restore_terminal();
 static void set_terminal_nonblocking();
-static bool writeBMP(const std::string& filename, const std::vector<RGBColor>& colors);
+static bool writeBMP(const std::string& filename, const std::vector<rgb_color_t>& colors);
 static void print_usage(const char* program_name);
 static bool parse_eep_file(const std::string& filename, std::vector<uint8_t>& memory);
 static bool parse_csv_hex(const std::string& filename, std::vector<uint8_t>& memory);
@@ -91,21 +93,22 @@ int main(int argc, char *argv[])
     return 0;
   }
   // toggle timestep in the engine based on the cli input
-  Time::enableTimestep(timestep);
+  time_enable_timestep(timestep);
   // toggle storage in the engine based on cli input
-  Storage::enableStorage(storage);
+  storage_enable_storage(storage);
   // run the engine initialization
-  Helios::init();
+  helios_init();
   // set the initial mode index
-  Helios::set_mode_index(initial_mode_index);
+  helios_set_mode_index(initial_mode_index);
   // Set the initial pattern based on user arguments
   if (initial_pattern_str.length() > 0) {
     // convert the string arg to integer, then treat it as a PatternID
-    PatternID id = (PatternID)strtoul(initial_pattern_str.c_str(), NULL, 10);
+    pattern_id id = (pattern_id)strtoul(initial_pattern_str.c_str(), NULL, 10);
     // pass the current pattern to make_pattern to update it's internals
-    Patterns::make_pattern(id, Helios::cur_pattern());
+    pattern_t* pat = helios_cur_pattern();
+    patterns_make_pattern(id, pat);
     // re-initialize the current pattern
-    Helios::cur_pattern().init();
+    pattern_init_state(pat);
   }
   // set initial pattern args based on user arguments
   if (initial_pattern_args_str.length() > 0) {
@@ -124,28 +127,40 @@ int main(int argc, char *argv[])
       vals.push_back(val);
     }
     // construct pattern args from the array of values
-    PatternArgs args(vals[0], vals[1], vals[2], vals[3], vals[4], vals[5], vals[6]);
+    pattern_args_t args;
+    pattern_args_init(&args, vals[0], vals[1], vals[2], vals[3], vals[4], vals[5], vals[6]);
     // set the args of the current pattern
-    Helios::cur_pattern().setArgs(args);
+    pattern_t* pat = helios_cur_pattern();
+    pattern_set_args(pat, &args);
   }
   // Set the initial colorset based on user arguments
   if (initial_colorset_str.length() > 0) {
     std::stringstream ss(initial_colorset_str);
     std::string color;
-    Colorset set;
+    colorset_t set;
+    colorset_init(&set);
     while (getline(ss, color, ',')) {
       // iterate letters and lowercase them
       std::transform(color.begin(), color.end(), color.begin(), [](unsigned char c){ return tolower(c); });
+      rgb_color_t rgb;
       if (color_map.count(color) > 0) {
-        set.addColor(color_map[color]);
+        uint32_t color_val = color_map[color];
+        rgb.red = (color_val >> 16) & 0xFF;
+        rgb.green = (color_val >> 8) & 0xFF;
+        rgb.blue = color_val & 0xFF;
       } else {
-        set.addColor(strtoul(color.c_str(), nullptr, 16));
+        uint32_t color_val = strtoul(color.c_str(), nullptr, 16);
+        rgb.red = (color_val >> 16) & 0xFF;
+        rgb.green = (color_val >> 8) & 0xFF;
+        rgb.blue = color_val & 0xFF;
       }
+      colorset_add_color(&set, rgb);
     }
     // update the colorset of the current pattern
-    Helios::cur_pattern().setColorset(set);
+    pattern_t* pat = helios_cur_pattern();
+    pattern_set_colorset(pat, &set);
     // re-initialize the current pattern
-    Helios::cur_pattern().init();
+    pattern_init_state(pat);
   }
   // just generate eeprom?
   if (eeprom) {
@@ -155,19 +170,19 @@ int main(int argc, char *argv[])
   // so that we can detect when one full cycle of the pattern has passed
   uint32_t cycle_count = 0;
   uint8_t last_index = 0;
-  while (Helios::keep_going()) {
+  while (helios_keep_going()) {
     // check for any inputs and read the next one
     read_inputs();
     // if lockstep is enabled, only run logic if the
     // input queue isn't actually empty
-    if (lockstep && !Button::inputQueueSize()) {
+    if (lockstep && !button_input_queue_size()) {
       // just keep waiting for an input
       continue;
     }
     // run the main loop
-    Helios::tick();
+    helios_tick();
     // don't render anything if asleep, but technically it's still running...
-    if (Helios::is_asleep()) {
+    if (helios_is_asleep()) {
       continue;
     }
     // watch for a full cycle if it was requested by the command line
@@ -175,7 +190,8 @@ int main(int argc, char *argv[])
       // grab the current index of the colorset, which might be the same for
       // several tick in a row, so we must check whether it just changed this
       // tick by comparing it to the index we saved last tick
-      uint8_t cur_index = Helios::cur_pattern().colorset().curIndex();
+      pattern_t* pat = helios_cur_pattern();
+      uint8_t cur_index = pat->m_colorset.m_curIndex;
       if (cur_index == 0 && last_index != 0) {
         // only if the current index is 0 (start of colorset) and the last index was
         // not 0 then the colorset *just* started iterating through it's colors, so
@@ -184,7 +200,7 @@ int main(int argc, char *argv[])
       }
       // then if we run more than the chosen number of cycles just quit
       if (cycle_count >= num_cycles) {
-        Helios::terminate();
+        helios_terminate();
         break;
       }
       last_index = cur_index;
@@ -389,7 +405,7 @@ static bool read_inputs()
     }
     for (uint32_t i = 0; i < repeatAmount; ++i) {
       // otherwise just queue up the command
-      Button::queueInput(command);
+      button_queue_input(command);
     }
   }
   return true;
@@ -402,8 +418,9 @@ static void show()
     if (generate_bmp) {
       // still need to generate the BMP by recoring all the output colors
       // even if they have chosen the -q for quiet option
-      RGBColor currentColor = {Led::get().red, Led::get().green, Led::get().blue};
-      RGBColor scaledColor = currentColor.scaleBrightness(brightness_scale);
+      rgb_color_t currentColor = led_get();
+      rgb_color_t scaledColor = currentColor;
+      rgb_scale_brightness(&scaledColor, brightness_scale);
       colorBuffer.push_back(scaledColor);
     }
     return;
@@ -414,8 +431,9 @@ static void show()
     out += "\r";
   }
   // Get the current color and scale its brightness up
-  RGBColor currentColor = {Led::get().red, Led::get().green, Led::get().blue};
-  RGBColor scaledColor = currentColor.scaleBrightness(brightness_scale);
+  rgb_color_t currentColor = led_get();
+  rgb_color_t scaledColor = currentColor;
+  rgb_scale_brightness(&scaledColor, brightness_scale);
   if (output_type == OUTPUT_TYPE_COLOR) {
     out += "\x1B[0m["; // opening |
     out += "\x1B[48;2;"; // colorcode start
@@ -473,7 +491,7 @@ static void set_terminal_nonblocking()
   atexit(restore_terminal);
 }
 
-bool writeBMP(const std::string& filename, const std::vector<RGBColor>& colors)
+bool writeBMP(const std::string& filename, const std::vector<rgb_color_t>& colors)
 {
   if (colors.empty()) {
     std::cerr << "Invalid image dimensions or empty color array." << std::endl;
@@ -525,7 +543,7 @@ bool writeBMP(const std::string& filename, const std::vector<RGBColor>& colors)
   // write out data
   for (int32_t y = height - 1; y >= 0; --y) {
     for (int32_t x = 0; x < width; ++x) {
-      const RGBColor& color = colors[y * width + x];
+      const rgb_color_t& color = colors[y * width + x];
       // BGR format
       const unsigned char pixel[3] = { color.blue, color.green, color.red };
       file.write((const char *)pixel, 3);
@@ -717,33 +735,34 @@ static void dump_eeprom(const std::string& filename)
   for (size_t slot = 0; slot < NUM_MODE_SLOTS; ++slot) {
     size_t pos = slot * SLOT_SIZE;
 
-    Pattern pat;
-    memcpy((void*)&pat, &memory[pos], sizeof(Pattern));
+    pattern_t pat;
+    memcpy((void*)&pat, &memory[pos], sizeof(pattern_t));
 
     printf("Slot %zu:\n", slot);
     printf("  Colorset: ");
-    for (size_t i = 0; i < pat.getColorset().numColors(); ++i) {
-      RGBColor color = pat.getColorset()[i];
+    for (size_t i = 0; i < pat.m_colorset.m_numColors; ++i) {
+      rgb_color_t color = colorset_get(&pat.m_colorset, i);
       char hexCode[8];
       snprintf(hexCode, sizeof(hexCode), "#%02X%02X%02X", color.red, color.green, color.blue);
       printf("\033[48;2;%d;%d;%dm  \033[0m (%s) ", color.red, color.green, color.blue, hexCode);
     }
     printf("\n");
 
-    PatternArgs args = pat.getArgs();
+    pattern_args_t args = pat.m_args;
     printf("  Args: on_dur=%d, off_dur=%d, gap_dur=%d, dash_dur=%d, group_size=%d, blend_speed=%d\n",
         args.on_dur, args.off_dur, args.gap_dur, args.dash_dur, args.group_size, args.blend_speed);
-    printf("  Flags: %02X\n", pat.getFlags());
+    printf("  Flags: %02X\n", pat.m_patternFlags);
   }
 
   uint8_t flags = (uint8_t)memory[CONFIG_START_INDEX - STORAGE_GLOBAL_FLAG_INDEX];
-  bool locked = (flags & Helios::FLAG_LOCKED) != 0;
-  bool conjure = (flags & Helios::FLAG_CONJURE) != 0;
+  bool locked = (flags & FLAG_LOCKED) != 0;
+  bool conjure = (flags & FLAG_CONJURE) != 0;
+  bool autoplay = (flags & FLAG_AUTOPLAY) != 0;
   uint8_t modeIdx = (uint8_t)memory[CONFIG_START_INDEX - STORAGE_CURRENT_MODE_INDEX];
   uint8_t brightness = (uint8_t)memory[CONFIG_START_INDEX - STORAGE_BRIGHTNESS_INDEX];
 
   printf("Brightness: %u\n", brightness);
   printf("Mode Index: %u\n", modeIdx);
-  printf("Flags: 0x%02X (locked=%u conjure=%u)\n", flags, locked, conjure);
+  printf("Flags: 0x%02X (locked=%u, conjure=%u, autoplay=%u)\n", flags, locked, conjure, autoplay);
 }
 

@@ -1,119 +1,85 @@
+#ifndef BUTTON_H
+#define BUTTON_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 
-#ifdef HELIOS_CLI
-#include <queue>
-#endif
+// Initialize button
+uint8_t button_init(void);
 
-class Button
-{
-public:
-  // initialize a new button object with a pin number
-  static bool init();
-  // directly poll the pin for whether it's pressed right now
-  static bool check();
-  // poll the button pin and update the state of the button object
-  static void update();
+// Directly poll the pin for whether it's pressed right now
+uint8_t button_check(void);
 
-  // whether the button was pressed this tick
-  static bool onPress() { return m_newPress; }
-  // whether the button was released this tick
-  static bool onRelease() { return m_newRelease; }
-  // whether the button is currently pressed
-  static bool isPressed() { return m_isPressed; }
+// Poll the button pin and update the state of the button object
+void button_update(void);
 
-  // whether the button was shortclicked this tick
-  static bool onShortClick() { return m_shortClick; }
-  // whether the button was long clicked this tick
-  static bool onLongClick() { return m_longClick; }
-  // whether the button was hold clicked this tick
-  static bool onHoldClick() { return m_holdClick; }
+// Whether the button was pressed this tick
+uint8_t button_on_press(void);
 
-  // detect if the button is being held past long click
-  static bool holdPressing();
+// Whether the button was released this tick
+uint8_t button_on_release(void);
 
-  // when the button was last pressed
-  static uint32_t pressTime() { return m_pressTime; }
-  // when the button was last released
-  static uint32_t releaseTime() { return m_releaseTime; }
+// Whether the button is currently pressed
+uint8_t button_is_pressed(void);
 
-  // how long the button is currently or was last held down (in ticks)
-  static uint32_t holdDuration() { return m_holdDuration; }
-  // how long the button is currently or was last released for (in ticks)
-  static uint32_t releaseDuration() { return m_releaseDuration; }
+// Whether the button was shortclicked this tick
+uint8_t button_on_short_click(void);
 
-  // the number of releases
-  static uint8_t releaseCount() { return m_releaseCount; }
+// Whether the button was long clicked this tick
+uint8_t button_on_long_click(void);
 
-  // enable wake on press
-  static void enableWake();
+// Whether the button was hold clicked this tick
+uint8_t button_on_hold_click(void);
 
-#ifdef HELIOS_CLI
-  // these will 'inject' a short/long click without actually touching the
-  // button state, it's important that code uses 'onShortClick' or
-  // 'onLongClick' to capture this injected input event. Code that uses
-  // for example: 'button.holdDuration() >= threshold && button.onRelease()'
-  // will never trigger because the injected input event doesn't actually
-  // press the button or change the button state it just sets the 'shortClick'
-  // or 'longClick' values accordingly
-  static void doShortClick();
-  static void doLongClick();
-  static void doHoldClick();
+// Detect if the button is being held past long click
+uint8_t button_hold_pressing(void);
 
-  // this will actually press down the button, it's your responsibility to wait
-  // for the appropriate number of ticks and then release the button
-  static void doPress();
-  static void doRelease();
-  static void doToggle();
+// When the button was last pressed
+uint32_t button_press_time(void);
 
-  // queue up an input event for the button
-  static void queueInput(char input);
-  static uint32_t inputQueueSize();
-#endif
+// When the button was last released
+uint32_t button_release_time(void);
 
-private:
-  // ========================================
-  // state data that is populated each check
+// How long the button is currently or was last held down (in ticks)
+uint32_t button_hold_duration(void);
 
-  // the timestamp of when the button was pressed
-  static uint32_t m_pressTime;
-  // the timestamp of when the button was released
-  static uint32_t m_releaseTime;
+// How long the button is currently or was last released for (in ticks)
+uint32_t button_release_duration(void);
 
-  // the last hold duration
-  static uint32_t m_holdDuration;
-  // the last release duration
-  static uint32_t m_releaseDuration;
+// The number of releases
+uint8_t button_release_count(void);
 
-  // the number of times released, will overflow at 255
-  static uint8_t m_releaseCount;
-
-  // the active state of the button
-  static bool m_buttonState;
-
-  // whether pressed this tick
-  static bool m_newPress;
-  // whether released this tick
-  static bool m_newRelease;
-  // whether currently pressed
-  static bool m_isPressed;
-  // whether a short click occurred
-  static bool m_shortClick;
-  // whether a long click occurred
-  static bool m_longClick;
-  // whether a long hold occurred
-  static bool m_holdClick;
+// Enable wake on press
+void button_enable_wake(void);
 
 #ifdef HELIOS_CLI
-  // process pre or post input events from the queue
-  static bool processPreInput();
-  static bool processPostInput();
+// These will 'inject' a short/long click without actually touching the
+// button state, it's important that code uses 'button_on_short_click' or
+// 'button_on_long_click' to capture this injected input event. Code that uses
+// for example: 'button_hold_duration() >= threshold && button_on_release()'
+// will never trigger because the injected input event doesn't actually
+// press the button or change the button state it just sets the 'shortClick'
+// or 'longClick' values accordingly
+void button_do_short_click(void);
+void button_do_long_click(void);
+void button_do_hold_click(void);
 
-  // an input queue for the button, each tick one even is processed
-  // out of this queue and used to produce input
-  static std::queue<char> m_inputQueue;
-  // the virtual pin state that is polled instead of a digital pin
-  static bool m_pinState;
-  // whether the button is waiting to wake the device
-  static bool m_enableWake;
+// This will actually press down the button, it's your responsibility to wait
+// for the appropriate number of ticks and then release the button
+void button_do_press(void);
+void button_do_release(void);
+void button_do_toggle(void);
+
+// Queue up an input event for the button
+void button_queue_input(char input);
+uint32_t button_input_queue_size(void);
 #endif
-};
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

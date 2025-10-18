@@ -46,8 +46,8 @@ endif
 ### TOOLCHAIN SETUP ###
 #######################
 
-CC = ${BINDIR}avr-g++
-LD = ${BINDIR}avr-g++
+CC = ${BINDIR}avr-gcc
+LD = ${BINDIR}avr-gcc
 OBJCOPY = ${BINDIR}avr-objcopy -v
 AR = ${BINDIR}avr-gcc-ar
 SIZE = ${BINDIR}avr-size
@@ -117,15 +117,12 @@ CFLAGS = -g \
 	 -Wall \
 	 -flto \
 	 -mrelax \
-	 -std=gnu++17 \
 	 -fshort-enums \
 	 -fpack-struct \
-	 -fno-exceptions \
 	 -fdata-sections \
 	 -funsigned-char \
 	 -ffunction-sections\
 	 -funsigned-bitfields \
-	 -fno-threadsafe-statics \
 	 -mcall-prologues \
 	 -D__AVR_ATtiny85__ \
 	 -mmcu=$(AVRDUDE_CHIP) \
