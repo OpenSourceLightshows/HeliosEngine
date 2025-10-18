@@ -107,6 +107,7 @@ ISR(PCINT0_vect) {
 }
 #endif
 
+// directly poll the pin for whether it's pressed right now
 uint8_t button_check(void)
 {
 #ifdef HELIOS_EMBEDDED
@@ -124,6 +125,7 @@ uint8_t button_check(void)
 #endif
 }
 
+// detect if the button is being held for a long hold (past long click)
 uint8_t button_hold_pressing(void)
 {
   uint16_t holDur = (uint16_t)(button_hold_duration());
@@ -133,6 +135,7 @@ uint8_t button_hold_pressing(void)
   return 0;
 }
 
+// poll the button pin and update the state of the button object
 void button_update(void)
 {
 #ifdef HELIOS_CLI
