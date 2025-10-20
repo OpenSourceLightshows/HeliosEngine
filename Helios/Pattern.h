@@ -6,13 +6,12 @@ extern "C" {
 #endif
 
 #include "Colorset.h"
+#include "HeliosTypes.h"
 
 #include "Timer.h"
 #include "Patterns.h"
 
-// Forward declarations
-typedef struct pattern_args_t pattern_args_t;
-typedef struct pattern_t pattern_t;
+// Type definitions are in HeliosTypes.h
 
 // for specifying things like default args
 struct pattern_args_t {

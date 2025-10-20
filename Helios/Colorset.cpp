@@ -76,10 +76,13 @@ uint32_t colorset_crc32(const colorset_t *set)
   return hash;
 }
 
+#ifndef HELIOS_STM8
+// SDCC doesn't support returning structs by value well
 rgb_color_t colorset_get_at_index(const colorset_t *set, int index)
 {
   return colorset_get(set, index);
 }
+#endif
 
 uint8_t colorset_add_color(colorset_t *set, rgb_color_t col)
 {
@@ -210,6 +213,8 @@ void colorset_adjust_brightness(colorset_t *set, uint8_t fadeby)
 }
 
 // get a color from the colorset
+#ifndef HELIOS_STM8
+// SDCC doesn't support returning structs by value well
 rgb_color_t colorset_get(const colorset_t *set, uint8_t index)
 {
   rgb_color_t result;
@@ -219,6 +224,7 @@ rgb_color_t colorset_get(const colorset_t *set, uint8_t index)
   }
   return set->m_palette[index];
 }
+#endif
 
 void colorset_set(colorset_t *set, uint8_t index, rgb_color_t col)
 {
@@ -256,6 +262,7 @@ void colorset_skip(colorset_t *set, int32_t amount)
   }
 }
 
+#ifndef HELIOS_STM8
 rgb_color_t colorset_cur(const colorset_t *set)
 {
   rgb_color_t result;
@@ -265,6 +272,7 @@ rgb_color_t colorset_cur(const colorset_t *set)
   }
   return set->m_palette[set->m_curIndex];
 }
+#endif
 
 void colorset_set_cur_index(colorset_t *set, uint8_t index)
 {
@@ -287,6 +295,7 @@ uint8_t colorset_cur_index(const colorset_t *set)
   return set->m_curIndex;
 }
 
+#ifndef HELIOS_STM8
 rgb_color_t colorset_get_prev(colorset_t *set)
 {
   rgb_color_t result;
@@ -319,6 +328,9 @@ rgb_color_t colorset_get_next(colorset_t *set)
   return set->m_palette[set->m_curIndex];
 }
 
+#endif
+
+#ifndef HELIOS_STM8
 rgb_color_t colorset_peek(const colorset_t *set, int32_t offset)
 {
   rgb_color_t result;
@@ -340,11 +352,14 @@ rgb_color_t colorset_peek(const colorset_t *set, int32_t offset)
   // return the color
   return set->m_palette[nextIndex];
 }
+#endif
 
+#ifndef HELIOS_STM8
 rgb_color_t colorset_peek_next(const colorset_t *set)
 {
   return colorset_peek(set, 1);
 }
+#endif
 
 uint8_t colorset_num_colors(const colorset_t *set)
 {

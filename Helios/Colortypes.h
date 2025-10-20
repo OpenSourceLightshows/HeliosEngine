@@ -22,9 +22,9 @@ enum hsv_to_rgb_algorithm
 extern enum hsv_to_rgb_algorithm g_hsv_rgb_alg;
 #endif
 
-// Forward declarations
-typedef struct hsv_color_t hsv_color_t;
-typedef struct rgb_color_t rgb_color_t;
+#include "HeliosTypes.h"
+
+// Type definitions are in HeliosTypes.h
 
 struct hsv_color_t
 {

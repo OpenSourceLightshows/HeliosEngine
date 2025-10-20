@@ -8,12 +8,11 @@ extern "C" {
 #include <stdint.h>
 
 #include "HeliosConfig.h"
+#include "HeliosTypes.h"
 #include "Colorset.h"
 #include "Pattern.h"
 
-// Forward declaration
-typedef struct pattern_t pattern_t;
-typedef struct colorset_t colorset_t;
+// Type definitions are in HeliosTypes.h
 
 uint8_t helios_init(void);
 void helios_tick(void);

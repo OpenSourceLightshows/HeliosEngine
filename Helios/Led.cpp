@@ -134,6 +134,8 @@ static void led_set_pwm(uint8_t pwmPin, uint8_t pwmValue, volatile uint8_t *cont
     uint8_t controlBit, volatile uint8_t *compareRegister)
 {
 #ifdef HELIOS_EMBEDDED
+#ifndef HELIOS_STM8
+  // AVR-specific PWM control
   if (pwmValue == 0) {
     // digitalWrite(pin, LOW)
     *controlRegister &= ~controlBit;  // Disable PWM
@@ -147,6 +149,8 @@ static void led_set_pwm(uint8_t pwmPin, uint8_t pwmValue, volatile uint8_t *cont
     *controlRegister |= controlBit;  // Enable PWM
     *compareRegister = pwmValue;  // Set PWM duty cycle
   }
+#endif
+  // STM8 doesn't need this function, PWM is set directly in led_update()
 #else
   (void)pwmPin;
   (void)pwmValue;

@@ -4,22 +4,26 @@ This directory contains the STM8S001J3M3TR microcontroller implementation of the
 
 ## Current Status
 
-**⚠️ Work in Progress**: The STM8 port is structurally complete but requires additional work to compile with SDCC. The core issue is that SDCC's C compiler is stricter about forward declarations and typedef syntax compared to GCC. The codebase uses `.cpp` file extensions but is C-compatible - SDCC requires pure C syntax.
+**✅ Ready for Hardware Testing**: The STM8 port compiles successfully with SDCC and is ready for testing on actual hardware.
 
-**What's Complete:**
+**Completed:**
 - ✅ Directory structure and Makefile
 - ✅ STM8 hardware initialization (GPIO, timers, interrupts)
 - ✅ Platform-specific LED PWM control
 - ✅ Platform-specific button input handling
 - ✅ Integration with core Helios engine
 - ✅ AVR-specific code properly isolated with `#ifdef` guards
+- ✅ SDCC compatibility (resolved typedef and struct-return issues)
+- ✅ Storage optimized for 128-byte EEPROM (4 mode slots instead of 6)
+- ✅ STM8 EEPROM read/write functions
+- ✅ Complete successful build with no errors
 
-**What Needs Work:**
-- ⚠️ SDCC doesn't accept some of the forward declaration patterns used in the core Helios headers
-- ⚠️ May require refactoring core headers to separate C-only vs C++ code more clearly
-- ⚠️ Storage system may need adjustment for 128-byte EEPROM limit
-
-This directory contains the STM8S001J3M3TR microcontroller implementation of the Helios Engine.
+**Pending:**
+- ⚠️ Flash and test on actual STM8S001J3M3TR hardware
+- ⚠️ Verify EEPROM read/write operations
+- ⚠️ Test button input and LED output
+- ⚠️ Implement proper low-power sleep modes
+- ⚠️ Optimize delay functions (currently busy-wait)
 
 ## Hardware Specifications
 
@@ -141,10 +145,11 @@ The STM8S001J3M3TR has very limited resources:
 ### Optimization Notes
 
 - Code is compiled with `--opt-code-size` for maximum size optimization
-- Helios storage format limited to fewer mode slots (likely 3-4 instead of 6)
-- Pattern and color data structures may need to be reduced
-- Avoid dynamic memory allocation entirely
-- Use `uint8_t` wherever possible to save RAM
+- **Storage format optimized:** 4 mode slots instead of 6 (uses 112 bytes of 128-byte EEPROM)
+- Pattern and color data structures unchanged from AVR version
+- No dynamic memory allocation used
+- Extensive use of `uint8_t` to save RAM
+- SDCC-specific workarounds for struct-return functions (uses pointer parameters)
 
 ## Differences from AVR Version
 
@@ -153,6 +158,8 @@ The STM8S001J3M3TR has very limited resources:
 3. **Timers:** STM8 Timer 1 and Timer 2 for PWM (different registers)
 4. **Clock:** 16MHz internal RC (no external crystal needed)
 5. **EEPROM:** 128 bytes (half of ATtiny85)
+6. **Mode Slots:** 4 mode slots instead of 6 (storage optimization)
+7. **Struct Returns:** Uses pointer-based functions instead of struct returns (SDCC limitation)
 
 ## Troubleshooting
 

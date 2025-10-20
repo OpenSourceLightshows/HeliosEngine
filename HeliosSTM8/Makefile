@@ -118,10 +118,13 @@ HELIOS_SRCS = \
 	../Helios/Button.cpp \
 	../Helios/Led.cpp \
 	../Helios/Pattern.cpp \
+	../Helios/Patterns.cpp \
 	../Helios/Colorset.cpp \
-	../Helios/Color.cpp \
+	../Helios/Colortypes.cpp \
 	../Helios/TimeControl.cpp \
-	../Helios/Storage.cpp
+	../Helios/Storage.cpp \
+	../Helios/Timer.cpp \
+	../Helios/Random.cpp
 
 # STM8-specific source files
 STM8_SRCS = \

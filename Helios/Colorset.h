@@ -9,9 +9,9 @@ extern "C" {
 
 #include "HeliosConfig.h"
 
-// Forward declaration
-typedef struct random_t random_t;
-typedef struct colorset_t colorset_t;
+#include "HeliosTypes.h"
+
+// Type definitions are in HeliosTypes.h
 
 enum colorset_value_style
 {
@@ -118,11 +118,16 @@ void colorset_reset_index(colorset_t *set);
 // The current index
 uint8_t colorset_cur_index(const colorset_t *set);
 
+#ifndef HELIOS_STM8
 // Get the prev color in cycle
 rgb_color_t colorset_get_prev(colorset_t *set);
 
 // Get the next color in cycle
 rgb_color_t colorset_get_next(colorset_t *set);
+
+// Get current color
+rgb_color_t colorset_get(const colorset_t *set, uint8_t index);
+#endif
 
 // Peek at the color indexes from current but don't iterate
 rgb_color_t colorset_peek(const colorset_t *set, int32_t offset);

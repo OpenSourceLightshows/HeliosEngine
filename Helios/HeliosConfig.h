@@ -72,7 +72,12 @@
 // Mode Slots
 //
 // The number of modes on the device
+#ifdef HELIOS_STM8
+// STM8S001J3M3TR has only 128 bytes EEPROM, so reduce mode slots to fit
+#define NUM_MODE_SLOTS 4
+#else
 #define NUM_MODE_SLOTS 6
+#endif
 
 // Number of Global Brightness Options
 //
@@ -155,7 +160,12 @@
 // The total size of storage where modes and global settings are saved.
 // The EEPROM on attiny85 is 512 bytes, but due to limitations on flash
 // only the lower half of the eeprom is being used
+// The STM8S001J3M3TR has only 128 bytes EEPROM
+#ifdef HELIOS_STM8
+#define STORAGE_SIZE 128
+#else
 #define STORAGE_SIZE 256
+#endif
 
 // Colorset Size
 //

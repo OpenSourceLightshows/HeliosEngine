@@ -56,6 +56,18 @@ static uint8_t g_sleeping;
 
 volatile char helios_version[] = HELIOS_VERSION_STR;
 
+#ifdef HELIOS_STM8
+// STM8-specific helper to get color without struct return - use pointer
+static void helios_get_color_ptr(const colorset_t *set, uint8_t index, rgb_color_t *out)
+{
+  if (index >= set->m_numColors) {
+    rgb_init3(out, 0, 0, 0);
+    return;
+  }
+  *out = set->m_palette[index];
+}
+#endif
+
 // Forward declarations for internal helper functions
 static uint8_t helios_init_components(void);
 static void helios_handle_state(void);
@@ -600,8 +612,12 @@ static void helios_handle_state_col_select_slot(enum color_select_option *out_op
     *out_option = SELECTED_SLOT;
     g_selected_slot = g_menu_selection;
     // render current selection
-    rgb_color_t col = colorset_get(set, g_selected_slot);
-    rgb_color_t empty_col;
+    rgb_color_t col, empty_col;
+#ifdef HELIOS_STM8
+    helios_get_color_ptr(set, g_selected_slot, &col);
+#else
+    col = colorset_get(set, g_selected_slot);
+#endif
     rgb_init_from_raw(&empty_col, RGB_OFF);
     if (rgb_equals(&col, &empty_col)) {
       rgb_color_t temp_col1, temp_col2;

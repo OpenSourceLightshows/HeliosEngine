@@ -6,9 +6,9 @@ extern "C" {
 #endif
 
 #include <inttypes.h>
+#include "HeliosTypes.h"
 
-// Forward declaration
-typedef struct pattern_t pattern_t;
+// Type definitions are in HeliosTypes.h
 
 // List of patterns that can be built, both single and multi-led patterns are found in this list.
 // Within both single and multi LED pattern lists there are 'core' patterns which are associated

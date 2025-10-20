@@ -4,7 +4,9 @@
 #include "Pattern.h"
 
 #ifdef HELIOS_EMBEDDED
+#ifndef HELIOS_STM8
 #include <avr/io.h>
+#endif
 #endif
 
 #ifdef HELIOS_CLI
@@ -254,6 +256,8 @@ static uint8_t storage_read_byte(uint8_t address)
 }
 
 #ifdef HELIOS_EMBEDDED
+#ifndef HELIOS_STM8
+// AVR EEPROM functions
 static inline void storage_internal_write(uint8_t address, uint8_t data)
 {
   while (EECR & (1<<EEPE)) {
@@ -282,6 +286,28 @@ static inline uint8_t storage_internal_read(uint8_t address)
   // Return data from data register
   return EEDR;
 }
+#else
+// STM8 EEPROM functions
+#define STM8_EEPROM_BASE 0x4000
+
+static inline uint8_t storage_internal_read(uint8_t address)
+{
+  return *(volatile uint8_t *)(STM8_EEPROM_BASE + address);
+}
+
+static inline void storage_internal_write(uint8_t address, uint8_t data)
+{
+  // Unlock EEPROM
+  *(volatile uint8_t *)0x50C3 = 0xAE;
+  *(volatile uint8_t *)0x50C3 = 0x56;
+  while (!(*(volatile uint8_t *)0x50C2 & 0x08));
+
+  *(volatile uint8_t *)(STM8_EEPROM_BASE + address) = data;
+
+  while (!(*(volatile uint8_t *)0x50C2 & 0x04));
+  *(volatile uint8_t *)0x50C2 &= ~0x08;
+}
+#endif
 #endif
 
 #ifdef HELIOS_CLI
