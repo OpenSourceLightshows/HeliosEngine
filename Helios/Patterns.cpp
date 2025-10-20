@@ -66,12 +66,6 @@ void patterns_make_pattern(enum pattern_id id, pattern_t *pat)
     args.off_dur = 23;
     break;
 
-  case PATTERN_RAZOR:
-    args.on_dur = 3;
-    args.off_dur = 1;
-    args.gap_dur = 30;
-    break;
-
   case PATTERN_DASH_DOPS:
     args.on_dur = 1;
     args.off_dur = 9;

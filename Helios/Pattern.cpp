@@ -18,6 +18,23 @@ static void pattern_blend_blink_on(pattern_t *pat);
 static void pattern_interpolate(uint8_t *current, const uint8_t next, uint8_t blend_speed);
 static void pattern_tick_fade(pattern_t *pat);
 
+#ifdef HELIOS_STM8
+// STM8-specific helper to get next color without struct return - use pointer
+static void pattern_get_next_color_ptr(colorset_t *set, rgb_color_t *out)
+{
+  if (!set->m_numColors) {
+    rgb_init_from_raw(out, 0);
+    return;
+  }
+  // iterate current index, let it wrap at max uint8
+  set->m_curIndex++;
+  // then modulate the result within max colors
+  set->m_curIndex %= set->m_numColors;
+  // return the color
+  *out = set->m_palette[set->m_curIndex];
+}
+#endif
+
 // ==================================
 //  Pattern Args Functions
 
@@ -79,11 +96,21 @@ void pattern_init_state(pattern_t *pat)
 
   if (pat->m_args.blend_speed > 0) {
     // convert current/next colors to HSV but only if we are doing a blend
+#ifdef HELIOS_STM8
+    pattern_get_next_color_ptr(&pat->m_colorset, &pat->m_cur);
+    pattern_get_next_color_ptr(&pat->m_colorset, &pat->m_next);
+#else
     pat->m_cur = colorset_get_next(&pat->m_colorset);
     pat->m_next = colorset_get_next(&pat->m_colorset);
+#endif
   } else if (pat->m_args.fade_dur) {
     // if there is a fade dur and no blend need to iterate colorset
+#ifdef HELIOS_STM8
+    rgb_color_t temp;
+    pattern_get_next_color_ptr(&pat->m_colorset, &temp);
+#else
     colorset_get_next(&pat->m_colorset);
+#endif
   }
 
   // Initialize the fluctuating fade value
@@ -120,7 +147,12 @@ static void pattern_tick_fade(pattern_t *pat)
 
   // iterate color when at lowest point
   if (step == 0) {
+#ifdef HELIOS_STM8
+    rgb_color_t temp;
+    pattern_get_next_color_ptr(&pat->m_colorset, &temp);
+#else
     colorset_get_next(&pat->m_colorset);
+#endif
   }
 }
 
@@ -220,10 +252,12 @@ void pattern_set_args(pattern_t *pat, const pattern_args_t *args)
   memcpy(&pat->m_args, args, sizeof(pattern_args_t));
 }
 
+#ifndef HELIOS_STM8
 pattern_args_t pattern_get_args(const pattern_t *pat)
 {
   return pat->m_args;
 }
+#endif
 
 pattern_args_t *pattern_args_ptr(pattern_t *pat)
 {
@@ -239,12 +273,22 @@ static void pattern_on_blink_on(pattern_t *pat)
 
   // Check if this is a fading duration pattern
   if (pattern_is_fade(pat)) {
+#ifdef HELIOS_STM8
+    // STM8 - Access current color directly from palette
+    rgb_color_t cur_col = pat->m_colorset.m_palette[pat->m_colorset.m_curIndex];
+#else
     rgb_color_t cur_col = colorset_cur(&pat->m_colorset);
+#endif
     led_set_rgb(&cur_col);
     return;
   }
 
-  rgb_color_t next_col = colorset_get_next(&pat->m_colorset);
+  rgb_color_t next_col;
+#ifdef HELIOS_STM8
+  pattern_get_next_color_ptr(&pat->m_colorset, &next_col);
+#else
+  next_col = colorset_get_next(&pat->m_colorset);
+#endif
   led_set_rgb(&next_col);
 }
 
@@ -262,7 +306,12 @@ static void pattern_begin_gap(pattern_t *pat)
 
 static void pattern_begin_dash(pattern_t *pat)
 {
-  rgb_color_t next_col = colorset_get_next(&pat->m_colorset);
+  rgb_color_t next_col;
+#ifdef HELIOS_STM8
+  pattern_get_next_color_ptr(&pat->m_colorset, &next_col);
+#else
+  next_col = colorset_get_next(&pat->m_colorset);
+#endif
   led_set_rgb(&next_col);
 }
 
@@ -272,10 +321,12 @@ static void pattern_next_state(pattern_t *pat, uint8_t timing)
   pat->m_state = (enum pattern_state)(pat->m_state + 1);
 }
 
+#ifndef HELIOS_STM8
 colorset_t pattern_get_colorset(const pattern_t *pat)
 {
   return pat->m_colorset;
 }
+#endif
 
 colorset_t *pattern_colorset_ptr(pattern_t *pat)
 {
@@ -352,7 +403,11 @@ static void pattern_blend_blink_on(pattern_t *pat)
   // if we reached the next color, then cycle the colorset
   // like normal and begin playing the next color
   if (rgb_equals(&pat->m_cur, &pat->m_next)) {
+#ifdef HELIOS_STM8
+    pattern_get_next_color_ptr(&pat->m_colorset, &pat->m_next);
+#else
     pat->m_next = colorset_get_next(&pat->m_colorset);
+#endif
   }
   // interpolate to the next color
   pattern_interpolate(&pat->m_cur.red, pat->m_next.red, pat->m_args.blend_speed);

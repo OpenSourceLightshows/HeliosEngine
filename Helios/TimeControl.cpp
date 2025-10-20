@@ -12,10 +12,12 @@
 #include "Led.h"
 
 #ifdef HELIOS_EMBEDDED
+#ifndef HELIOS_STM8
 #include <avr/sleep.h>
 #include <avr/interrupt.h>
 #ifdef HELIOS_ARDUINO
 #include <arduino.h>
+#endif
 #endif
 #endif
 
@@ -91,10 +93,12 @@ uint32_t time_get_current_time(void)
 }
 
 #ifdef HELIOS_EMBEDDED
+#ifndef HELIOS_STM8
 volatile uint32_t timer0_overflow_count = 0;
 ISR(TIMER0_OVF_vect) {
   timer0_overflow_count++;  // Increment on each overflow
 }
+#endif
 #endif
 
 uint32_t time_microseconds(void)
@@ -107,8 +111,11 @@ uint32_t time_microseconds(void)
 #else
 #ifdef HELIOS_ARDUINO
   return micros();
+#elif defined(HELIOS_STM8)
+  // STM8 - Simple delay implementation (TODO: use timer)
+  return 0;
 #else
-  // The only reason that micros() is actually necessary is if Helios::tick()
+  // AVR - The only reason that micros() is actually necessary is if Helios::tick()
   // cannot be called in a 1Khz ISR. If Helios::tick() cannot be reliably called
   // by an interrupt then Time::tickClock() must perform manual timestep via micros().
   // If Helios::tick() is called by an interrupt then you don't need this function and
@@ -125,12 +132,20 @@ uint32_t time_microseconds(void)
 }
 
 #ifdef HELIOS_EMBEDDED
+#ifndef HELIOS_STM8
 __attribute__((noinline))
+#endif
 #endif
 void
 time_delay_microseconds(uint32_t us)
 {
 #ifdef HELIOS_EMBEDDED
+#ifdef HELIOS_STM8
+  // STM8 simple busy-wait delay
+  volatile uint32_t count = us * (F_CPU / 1000000) / 4;
+  while (count--);
+#else
+// AVR delay implementation
 #if F_CPU >= 16000000L
   // For the ATtiny85 running at 16MHz
 
@@ -169,8 +184,11 @@ time_delay_microseconds(uint32_t us)
       "brne 1b" : "=w"(us) : "0"(us) // 2 cycles
   );
 #endif
+#endif
+// End AVR delay implementation
 
 #else
+// CLI delay implementation
   uint32_t newtime = time_microseconds() + us;
   while (time_microseconds() < newtime)
   {
