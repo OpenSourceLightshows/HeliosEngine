@@ -6,7 +6,7 @@
 #ifdef HELIOS_STM8
 // STM8 specific includes handled in stm8_init.h
 #define BUTTON_PIN 5
-#define BUTTON_PORT_D
+#define BUTTON_PORT_B
 #else
 #include <avr/interrupt.h>
 #include <avr/io.h>
@@ -137,9 +137,9 @@ uint8_t button_check(void)
 #ifdef HELIOS_ARDUINO
   return digitalRead(3) == HIGH;
 #elif defined(HELIOS_STM8)
-  // STM8 - read button state from PD5
-  #define PD_IDR (*(volatile uint8_t *)0x5010)
-  return (PD_IDR & (1 << BUTTON_PIN)) != 0;
+  // STM8 - read button state from PB5
+  #define PB_IDR (*(volatile uint8_t *)0x5006)
+  return (PB_IDR & (1 << BUTTON_PIN)) != 0;
 #else
   // AVR
   return (PINB & (1 << 3)) != 0;

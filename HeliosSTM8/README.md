@@ -39,43 +39,50 @@ This directory contains the STM8S001J3M3TR microcontroller implementation of the
 ```
          STM8S001J3M3TR
          ┌─────────────┐
-PD1/SWIM │1           8│ PD4 (Available)
-     PD5 │2    TOP    7│ VDD (Power 3.3V)
-     PD6 │3           6│ PB5 (LED Blue)
-     VSS │4_Ground____5│ PD3 (LED Red)
+PD1/SWIM │1           8│ PD6/AIN6
+     VSS │2    TOP    7│ VDD (Power 6V)
+    VCAP │3           6│ PB5 (Button Input)
+VDD/VDDA │4___________5│ PB4 (LED Blue)
          └─────────────┘
+
+Note: PC4, PC5 are alternate functions on some pins
 ```
 
-### Default Pin Assignment
+### Default Pin Assignment (Based on Schematic)
 
 | Pin | Port | Function      | Notes                           |
 |-----|------|---------------|---------------------------------|
 | 1   | PD1  | SWIM          | Programming interface (do not use) |
-| 2   | PD5  | Button Input  | Active HIGH with internal pull-up |
-| 3   | PD6  | LED Green     | PWM via Timer 1 Channel 2       |
-| 4   | VSS  | Ground        | Connect to ground               |
-| 5   | PD3  | LED Red       | PWM via Timer 1 Channel 1       |
-| 6   | PB5  | LED Blue      | PWM via Timer 2 Channel 1       |
-| 7   | VDD  | Power         | 3.3V supply (2.95V - 5.5V)     |
-| 8   | PD4  | Available     | General purpose I/O             |
+| 2   | VSS  | Ground        | Connect to ground               |
+| 3   | VCAP | Capacitor     | 1µF to ground (internal regulator) |
+| 4   | VDD  | Power         | 6V supply (2x CR1620 batteries) |
+| 5   | PB4  | LED Blue      | PWM via Timer 1 Ch1N (complementary) |
+| 6   | PB5  | Button Input  | Active HIGH with external pull-down |
+| 7   | VDD  | Power         | Connected to Pin 4              |
+| 8   | PD6  | Available     | Can be used for expansion       |
 
-**Note:** Pin assignments can be customized by editing the `Makefile` pin configuration section.
+**Additional Pins (Alternate Functions):**
+- **PC5** → LED Red (PWM via Timer 2 Channel 1)
+- **PC4** → LED Green (PWM via Timer 2 Channel 2)
+
+**Note:** The STM8S001J3M3 can remap certain pins. Check the datasheet for alternate function mapping.
 
 ## RGB LED Connection
 
 Connect a common cathode RGB LED:
-- **Red anode** → 150Ω resistor → Pin 5 (PD3)
-- **Green anode** → 150Ω resistor → Pin 3 (PD6)
-- **Blue anode** → 150Ω resistor → Pin 6 (PB5)
-- **Common cathode** → Ground (Pin 4)
+- **Red anode** → 120Ω resistor → PC5 (Timer 2 Ch1)
+- **Green anode** → 120Ω resistor → PC4 (Timer 2 Ch2)
+- **Blue anode** → 120Ω resistor → PB4 (Timer 1 Ch1N)
+- **Common cathode** → Ground (VSS)
 
 ## Button Connection
 
 Connect a momentary push button:
-- One side → Pin 2 (PD5)
-- Other side → VDD (Pin 7)
+- One side → PB5 (Pin 6)
+- Other side → VDD
+- 10kΩ pull-down resistor from PB5 to Ground
 
-The internal pull-up is disabled; the button should pull the pin HIGH when pressed.
+The button is active HIGH with an external 10kΩ pull-down resistor as shown in the schematic.
 
 ## Building the Firmware
 

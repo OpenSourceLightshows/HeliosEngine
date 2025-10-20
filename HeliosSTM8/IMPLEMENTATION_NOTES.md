@@ -23,28 +23,29 @@ HeliosSTM8/
 - No external crystal required
 - Peripheral clocks enabled for all modules
 
-### GPIO Configuration
-- **LED Outputs:** PD3 (Red), PD6 (Green), PB5 (Blue)
+### GPIO Configuration (Updated to match schematic)
+- **LED Outputs:** PC5 (Red), PC4 (Green), PB4 (Blue)
   - Configured as push-pull outputs
   - Fast mode enabled (10MHz)
 
-- **Button Input:** PD5
-  - Configured as input with pull-up
+- **Button Input:** PB5
+  - Configured as input with external pull-down resistor
+  - Active HIGH
   - External interrupt enabled for wake-from-sleep
 
 ### PWM Timers
-- **Timer 1:** Controls Red (PD3/CH1) and Green (PD6/CH2) LEDs
+- **Timer 2:** Controls Red (PC5/CH1) and Green (PC4/CH2) LEDs
   - Prescaler: /16 (16MHz → 1MHz)
   - Auto-reload: 255 (3.9kHz PWM frequency)
   - PWM Mode 1, 8-bit resolution
 
-- **Timer 2:** Controls Blue (PB5/CH1) LED
+- **Timer 1:** Controls Blue (PB4/CH1N) LED using complementary output
   - Prescaler: /16 (16MHz → 1MHz)
   - Auto-reload: 255 (3.9kHz PWM frequency)
   - PWM Mode 1, 8-bit resolution
 
 ### Interrupts
-- External interrupt on PD5 (button)
+- External interrupt on PB5 (button)
   - Rising and falling edge detection
   - Wakes device from WFI (Wait For Interrupt) low-power mode
 
@@ -56,9 +57,10 @@ Added STM8-specific PWM output in `led_update()`:
 ```c
 #elif defined(HELIOS_STM8)
   // STM8 PWM output using Timer 1 and Timer 2
-  TIM1_CCR1L = m_realColor.red;    // Red on PD3
-  TIM1_CCR2L = m_realColor.green;  // Green on PD6
-  TIM2_CCR1L = m_realColor.blue;   // Blue on PB5
+  // Based on schematic: RED=PC5 (TIM2_CH1), GREEN=PC4 (TIM2_CH2), BLUE=PB4 (TIM1_CH1N)
+  TIM2_CCR1L = m_realColor.red;    // Red on PC5 (Timer 2 Ch1)
+  TIM2_CCR2L = m_realColor.green;  // Green on PC4 (Timer 2 Ch2)
+  TIM1_CCR1L = m_realColor.blue;   // Blue on PB4 (Timer 1 Ch1N complementary)
 #endif
 ```
 
@@ -67,9 +69,9 @@ Added STM8-specific PWM output in `led_update()`:
 Added STM8-specific button reading and interrupt handler:
 ```c
 #elif defined(HELIOS_STM8)
-  // Read button state from PD5
-  #define PD_IDR (*(volatile uint8_t *)0x5010)
-  return (PD_IDR & (1 << BUTTON_PIN)) != 0;
+  // Read button state from PB5
+  #define PB_IDR (*(volatile uint8_t *)0x5006)
+  return (PB_IDR & (1 << BUTTON_PIN)) != 0;
 #endif
 ```
 

@@ -31,27 +31,27 @@ MCU = stm8s001j3
 MCU_FAMILY = STM8S001
 CPU_SPEED = 16000000L
 
-# STM8S001J3M3TR pinout (SO-8):
+# STM8S001J3M3TR pinout (SO-8) - Based on schematic:
 # Pin 1: PD1/SWIM - Programming
-# Pin 2: PD5 - Can be used for button
-# Pin 3: PD6 - Can be used for LED
-# Pin 4: VSS - Ground
-# Pin 5: PD3 - Can be used for LED
-# Pin 6: PB5 - Can be used for LED
-# Pin 7: VDD - Power
-# Pin 8: PD4 - Can be used for button
+# Pin 2: VSS - Ground
+# Pin 3: VCAP - Internal regulator capacitor (1µF to ground)
+# Pin 4: VDD/VDDA - Power (6V from 2x CR1620 batteries)
+# Pin 5: PB4 - LED Blue (TIM1_CH1N complementary output)
+# Pin 6: PB5 - Button Input (active HIGH with external pull-down)
+# Pin 7: VDD - Power (connected to Pin 4)
+# Pin 8: PD6/AIN6 - Available for expansion
 
-# Pin assignments for RGB LED and button
-# RGB LED Pins (PWM capable):
-LED_R_PORT = D
-LED_R_PIN = 3
-LED_G_PORT = D
-LED_G_PIN = 6
+# Pin assignments for RGB LED and button (from schematic)
+# RGB LED Pins (PWM capable via alternate functions):
+LED_R_PORT = C
+LED_R_PIN = 5
+LED_G_PORT = C
+LED_G_PIN = 4
 LED_B_PORT = B
-LED_B_PIN = 5
+LED_B_PIN = 4
 
 # Button Pin:
-BUTTON_PORT = D
+BUTTON_PORT = B
 BUTTON_PIN = 5
 
 ########################
