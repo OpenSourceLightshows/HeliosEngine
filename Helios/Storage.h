@@ -7,6 +7,7 @@ extern "C" {
 
 #include <inttypes.h>
 #include "HeliosConfig.h"
+#include "HeliosTypes.h"
 
 // the index of the first config byte, the config bytes start at the end
 // then work their way backwards (so 'config index 0' is the last byte)
@@ -20,8 +21,8 @@ extern "C" {
 #define STORAGE_CURRENT_MODE_INDEX 1
 #define STORAGE_BRIGHTNESS_INDEX 2
 
-// Forward declaration
-typedef struct pattern_t pattern_t;
+// Forward declaration (now in HeliosTypes.h)
+// typedef struct pattern_t pattern_t;
 
 uint8_t storage_init(void);
 

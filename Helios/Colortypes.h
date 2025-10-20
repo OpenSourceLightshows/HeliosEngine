@@ -4,6 +4,7 @@
 #include <inttypes.h>
 
 #include "HeliosConfig.h"
+#include "HeliosTypes.h"
 #include "ColorConstants.h"
 
 #ifdef __cplusplus
@@ -22,9 +23,9 @@ enum hsv_to_rgb_algorithm
 extern enum hsv_to_rgb_algorithm g_hsv_rgb_alg;
 #endif
 
-// Forward declarations
-typedef struct hsv_color_t hsv_color_t;
-typedef struct rgb_color_t rgb_color_t;
+// Forward declarations (now in HeliosTypes.h)
+// typedef struct hsv_color_t hsv_color_t;
+// typedef struct rgb_color_t rgb_color_t;
 
 struct hsv_color_t
 {

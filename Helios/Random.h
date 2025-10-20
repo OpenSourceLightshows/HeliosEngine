@@ -6,8 +6,9 @@ extern "C" {
 #endif
 
 #include <stdint.h>
+#include "HeliosTypes.h"
 
-typedef struct random_t random_t;
+// typedef struct random_t random_t;
 
 struct random_t
 {

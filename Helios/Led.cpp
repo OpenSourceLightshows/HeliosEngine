@@ -9,14 +9,19 @@
 #ifdef HELIOS_EMBEDDED
 #ifdef HELIOS_ARDUINO
 #include <arduino.h>
+#elif defined(HELIOS_STM8)
+// STM8 hardware registers for PWM
+// Timer 1 for Red/Green, Timer 2 for Blue
 #else
 #include <avr/sleep.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #endif
+#ifndef HELIOS_STM8
 #define PWM_PIN_R PB0 // Red channel (pin 5)
 #define PWM_PIN_G PB1 // Green channel (pin 6)
 #define PWM_PIN_B PB4 // Blue channel (pin 3)
+#endif
 #endif
 
 #define SCALE8(i, scale)  (((uint16_t)i * (uint16_t)(scale)) >> 8)
@@ -41,8 +46,10 @@ uint8_t led_init(void)
   pinMode(0, OUTPUT);
   pinMode(1, OUTPUT);
   pinMode(4, OUTPUT);
+#elif defined(HELIOS_STM8)
+  // GPIO and Timer init done in stm8_init_gpio and stm8_init_timers
 #else
-  // pin ctrl done in helios_init
+  // AVR pin ctrl done in helios_init
 #endif
 #endif
   return 1;
@@ -123,6 +130,7 @@ void led_hold(const rgb_color_t *col)
   time_delay_milliseconds(250);
 }
 
+#ifndef HELIOS_STM8
 static void led_set_pwm(uint8_t pwmPin, uint8_t pwmValue, volatile uint8_t *controlRegister,
     uint8_t controlBit, volatile uint8_t *compareRegister)
 {
@@ -148,6 +156,7 @@ static void led_set_pwm(uint8_t pwmPin, uint8_t pwmValue, volatile uint8_t *cont
   (void)compareRegister;
 #endif
 }
+#endif
 
 rgb_color_t led_get(void)
 {
@@ -172,8 +181,16 @@ void led_update(void)
   analogWrite(PWM_PIN_R, m_realColor.red);
   analogWrite(PWM_PIN_G, m_realColor.green);
   analogWrite(PWM_PIN_B, m_realColor.blue);
+#elif defined(HELIOS_STM8)
+  // STM8 - Write PWM values directly to timer compare registers
+  // Red on PD3 (Timer 1 Channel 1)
+  *(volatile uint8_t *)0x5265 = m_realColor.red;   // TIM1_CCR1L
+  // Green on PD6 (Timer 1 Channel 2)
+  *(volatile uint8_t *)0x5267 = m_realColor.green; // TIM1_CCR2L
+  // Blue on PB5 (Timer 2 Channel 1)
+  *(volatile uint8_t *)0x530C = m_realColor.blue;  // TIM2_CCR1L
 #else
-  // backup SREG and turn off interrupts
+  // AVR - backup SREG and turn off interrupts
   uint8_t oldSREG = SREG;
   cli();
 

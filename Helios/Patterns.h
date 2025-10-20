@@ -6,9 +6,10 @@ extern "C" {
 #endif
 
 #include <inttypes.h>
+#include "HeliosTypes.h"
 
 // Forward declaration
-typedef struct pattern_t pattern_t;
+// typedef struct pattern_t pattern_t;
 
 // 
 enum pattern_id {

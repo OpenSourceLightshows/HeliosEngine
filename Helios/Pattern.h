@@ -11,8 +11,8 @@ extern "C" {
 #include "Patterns.h"
 
 // Forward declarations
-typedef struct pattern_args_t pattern_args_t;
-typedef struct pattern_t pattern_t;
+// typedef struct pattern_args_t pattern_args_t;
+// typedef struct pattern_t pattern_t;
 
 // for specifying things like default args
 struct pattern_args_t {

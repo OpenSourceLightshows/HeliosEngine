@@ -3,6 +3,11 @@
 #include "HeliosConfig.h"
 
 #ifdef HELIOS_EMBEDDED
+#ifdef HELIOS_STM8
+// STM8 specific includes handled in stm8_init.h
+#define BUTTON_PIN 5
+#define BUTTON_PORT_D
+#else
 #include <avr/interrupt.h>
 #include <avr/io.h>
 #ifdef HELIOS_ARDUINO
@@ -10,6 +15,7 @@
 #endif
 #define BUTTON_PIN 3
 #define BUTTON_PORT 2
+#endif
 #endif
 
 // Forward declaration
@@ -78,8 +84,11 @@ uint8_t button_init(void)
 #ifdef HELIOS_EMBEDDED
 #ifdef HELIOS_ARDUINO
   pinMode(3, INPUT);
+#elif defined(HELIOS_STM8)
+  // GPIO init done in stm8_init_gpio
+  // External interrupt init done in stm8_init_interrupts
 #else
-  // turn off wake
+  // AVR - turn off wake
   PCMSK &= ~(1 << PCINT3);
   GIMSK &= ~(1 << PCIE);
 #endif
@@ -91,21 +100,35 @@ uint8_t button_init(void)
 void button_enable_wake(void)
 {
 #ifdef HELIOS_EMBEDDED
-  // Configure INT0 to trigger on falling edge
+#ifdef HELIOS_STM8
+  // STM8 - interrupts already configured in stm8_init_interrupts
+  // Enable global interrupts
+  __asm__("rim");
+#else
+  // AVR - Configure INT0 to trigger on falling edge
   PCMSK |= (1 << PCINT3);
   GIMSK |= (1 << PCIE);
   sei();
+#endif
 #else // HELIOS_CLI
   m_enableWake = 1;
 #endif
 }
 
 #ifdef HELIOS_EMBEDDED
+#ifdef HELIOS_STM8
+// STM8 External interrupt handler for button
+void button_exti_isr(void) __interrupt(3) {
+  helios_wakeup();
+}
+#else
+// AVR interrupt handler
 ISR(PCINT0_vect) {
   PCMSK &= ~(1 << PCINT3);
   GIMSK &= ~(1 << PCIE);
   helios_wakeup();
 }
+#endif
 #endif
 
 // directly poll the pin for whether it's pressed right now
@@ -114,7 +137,12 @@ uint8_t button_check(void)
 #ifdef HELIOS_EMBEDDED
 #ifdef HELIOS_ARDUINO
   return digitalRead(3) == HIGH;
+#elif defined(HELIOS_STM8)
+  // STM8 - read button state from PD5
+  #define PD_IDR (*(volatile uint8_t *)0x5010)
+  return (PD_IDR & (1 << BUTTON_PIN)) != 0;
 #else
+  // AVR
   return (PINB & (1 << 3)) != 0;
 #endif
 #elif defined(HELIOS_CLI)

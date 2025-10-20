@@ -12,9 +12,11 @@
 #include "Led.h"
 
 #ifdef HELIOS_EMBEDDED
+#ifndef HELIOS_STM8
 #include <avr/sleep.h>
 #include <avr/interrupt.h>
 #include <avr/wdt.h>
+#endif
 #endif
 
 #ifdef HELIOS_CLI
@@ -91,6 +93,18 @@ static uint8_t sleeping;  //
 
 volatile char helios_version[] = HELIOS_VERSION_STR;
 
+#ifdef HELIOS_STM8
+// STM8-specific helper to get color without struct return - use pointer
+static void helios_get_color_ptr(const colorset_t *set, uint8_t index, rgb_color_t *out)
+{
+  if (index >= set->m_numColors) {
+    rgb_init3(out, 0, 0, 0);
+    return;
+  }
+  *out = set->m_palette[index];
+}
+#endif
+
 uint8_t helios_init(void)
 {
   // first initialize all the components of helios
@@ -99,6 +113,8 @@ uint8_t helios_init(void)
   }
   // then initialize the hardware for embedded helios
 #ifdef HELIOS_EMBEDDED
+#ifndef HELIOS_STM8
+  // AVR hardware initialization
   // Set PB0, PB1, PB4 as output
   DDRB |= (1 << DDB0) | (1 << DDB1) | (1 << DDB4);
   // Timer0 Configuration for PWM
@@ -113,6 +129,8 @@ uint8_t helios_init(void)
   TIMSK |= (1 << TOIE0);
   // Enable interrupts
   sei();
+#endif
+  // STM8 hardware initialization is done in stm8_init functions before main()
 #endif
   return 1;
 }
@@ -168,6 +186,14 @@ void helios_enter_sleep(void)
 #ifdef HELIOS_EMBEDDED
   // clear the led colors
   led_clear();
+#ifdef HELIOS_STM8
+  // STM8 - Enter Wait For Interrupt mode
+  button_enable_wake();
+  __asm__("wfi");  // Wait for interrupt (low power mode)
+  // ... interrupt will make us wake here
+  helios_init_components();
+#else
+  // AVR - Full power down sleep
   // Set all pins to input
   DDRB = 0x00;
   // Disable pull-ups on all pins
@@ -184,6 +210,7 @@ void helios_enter_sleep(void)
   DDRB |= (1 << DDB0) | (1 << DDB1) | (1 << DDB4);
   // wakeup here, re-init
   helios_init_components();
+#endif
 #else
   cur_state = STATE_SLEEP;
   // enable the sleep bool
