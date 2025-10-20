@@ -41,11 +41,11 @@ This directory contains the STM8S001J3M3TR microcontroller implementation of the
          ┌─────────────┐
 PD1/SWIM │1           8│ PD6/AIN6
      VSS │2    TOP    7│ VDD (Power 6V)
-    VCAP │3           6│ PB5 (Button Input)
+    VCAP │3           6│ PB5 (Available)
 VDD/VDDA │4___________5│ PB4 (LED Blue)
          └─────────────┘
 
-Note: PC4, PC5 are alternate functions on some pins
+Note: PD3, PC3, PD5 are alternate functions on some pins
 ```
 
 ### Default Pin Assignment (Based on Schematic)
@@ -57,32 +57,33 @@ Note: PC4, PC5 are alternate functions on some pins
 | 3   | VCAP | Capacitor     | 1µF to ground (internal regulator) |
 | 4   | VDD  | Power         | 6V supply (2x CR1620 batteries) |
 | 5   | PB4  | LED Blue      | PWM via Timer 1 Ch1N (complementary) |
-| 6   | PB5  | Button Input  | Active HIGH with external pull-down |
+| 6   | PB5  | Available     | Can be used for expansion       |
 | 7   | VDD  | Power         | Connected to Pin 4              |
 | 8   | PD6  | Available     | Can be used for expansion       |
 
 **Additional Pins (Alternate Functions):**
-- **PC5** → LED Red (PWM via Timer 2 Channel 1)
-- **PC4** → LED Green (PWM via Timer 2 Channel 2)
+- **PD3** → LED Red (PWM via Timer 2 Channel 2)
+- **PC3** → LED Green (PWM via Timer 1 Channel 3)
+- **PD5** → Button Input (with internal pull-up)
 
 **Note:** The STM8S001J3M3 can remap certain pins. Check the datasheet for alternate function mapping.
 
 ## RGB LED Connection
 
 Connect a common cathode RGB LED:
-- **Red anode** → 120Ω resistor → PC5 (Timer 2 Ch1)
-- **Green anode** → 120Ω resistor → PC4 (Timer 2 Ch2)
+- **Red anode** → 120Ω resistor → PD3 (Timer 2 Ch2)
+- **Green anode** → 120Ω resistor → PC3 (Timer 1 Ch3)
 - **Blue anode** → 120Ω resistor → PB4 (Timer 1 Ch1N)
 - **Common cathode** → Ground (VSS)
 
 ## Button Connection
 
 Connect a momentary push button:
-- One side → PB5 (Pin 6)
+- One side → PD5
 - Other side → VDD
-- 10kΩ pull-down resistor from PB5 to Ground
+- Internal pull-up resistor enabled in software
 
-The button is active HIGH with an external 10kΩ pull-down resistor as shown in the schematic.
+The button is active HIGH with an internal pull-up resistor.
 
 ## Building the Firmware
 

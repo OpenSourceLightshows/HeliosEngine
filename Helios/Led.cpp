@@ -185,23 +185,23 @@ void led_update(void)
   analogWrite(PWM_PIN_B, m_realColor.blue);
 #elif defined(HELIOS_STM8)
   // STM8 PWM output using Timer 1 and Timer 2
-  // Based on schematic: RED=PC5 (TIM2_CH1), GREEN=PC4 (TIM2_CH2), BLUE=PB4 (TIM1_CH1N)
+  // Based on schematic: RED=PD3 (TIM2_CH2), GREEN=PC3 (TIM1_CH3), BLUE=PB4 (TIM1_CH1N)
 
-  // Red LED on PC5 (TIM2_CH1)
-  #define TIM2_CCR1H (*(volatile uint8_t *)0x5311)
-  #define TIM2_CCR1L (*(volatile uint8_t *)0x5312)
-  // Green LED on PC4 (TIM2_CH2)
+  // Red LED on PD3 (TIM2_CH2)
   #define TIM2_CCR2H (*(volatile uint8_t *)0x5313)
   #define TIM2_CCR2L (*(volatile uint8_t *)0x5314)
-  // Blue LED on PB4 (TIM1_CH1 - using complementary output)
+  // Green LED on PC3 (TIM1_CH3)
+  #define TIM1_CCR3H (*(volatile uint8_t *)0x5269)
+  #define TIM1_CCR3L (*(volatile uint8_t *)0x526A)
+  // Blue LED on PB4 (TIM1_CH1N - using complementary output)
   #define TIM1_CCR1H (*(volatile uint8_t *)0x5265)
   #define TIM1_CCR1L (*(volatile uint8_t *)0x5266)
 
   // Set PWM duty cycles
-  TIM2_CCR1H = 0;
-  TIM2_CCR1L = m_realColor.red;   // Red on PC5
   TIM2_CCR2H = 0;
-  TIM2_CCR2L = m_realColor.green; // Green on PC4
+  TIM2_CCR2L = m_realColor.red;   // Red on PD3
+  TIM1_CCR3H = 0;
+  TIM1_CCR3L = m_realColor.green; // Green on PC3
   TIM1_CCR1H = 0;
   TIM1_CCR1L = m_realColor.blue;  // Blue on PB4
 #else

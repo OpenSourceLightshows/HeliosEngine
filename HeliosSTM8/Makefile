@@ -37,21 +37,24 @@ CPU_SPEED = 16000000L
 # Pin 3: VCAP - Internal regulator capacitor (1µF to ground)
 # Pin 4: VDD/VDDA - Power (6V from 2x CR1620 batteries)
 # Pin 5: PB4 - LED Blue (TIM1_CH1N complementary output)
-# Pin 6: PB5 - Button Input (active HIGH with external pull-down)
+# Pin 6: PB5 - Available for expansion
 # Pin 7: VDD - Power (connected to Pin 4)
 # Pin 8: PD6/AIN6 - Available for expansion
 
 # Pin assignments for RGB LED and button (from schematic)
-# RGB LED Pins (PWM capable via alternate functions):
-LED_R_PORT = C
-LED_R_PIN = 5
+# RGB LED Pins (PWM capable):
+# RED: PD3 (TIM2_CH2)
+# GREEN: PC3 (TIM1_CH3)
+# BLUE: PB4 (TIM1_CH1N)
+LED_R_PORT = D
+LED_R_PIN = 3
 LED_G_PORT = C
-LED_G_PIN = 4
+LED_G_PIN = 3
 LED_B_PORT = B
 LED_B_PIN = 4
 
-# Button Pin:
-BUTTON_PORT = B
+# Button Pin: PD5 (with internal pull-up)
+BUTTON_PORT = D
 BUTTON_PIN = 5
 
 ########################
