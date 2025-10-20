@@ -9,14 +9,19 @@
 #ifdef HELIOS_EMBEDDED
 #ifdef HELIOS_ARDUINO
 #include <arduino.h>
+#elif defined(HELIOS_STM8)
+// STM8 specific includes handled in stm8_init.h
 #else
 #include <avr/sleep.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #endif
-#define PWM_PIN_R PB0 // Red channel (pin 5)
-#define PWM_PIN_G PB1 // Green channel (pin 6)
-#define PWM_PIN_B PB4 // Blue channel (pin 3)
+
+#ifndef HELIOS_STM8
+#define PWM_PIN_R PB0 // Red channel (pin 5) - AVR
+#define PWM_PIN_G PB1 // Green channel (pin 6) - AVR
+#define PWM_PIN_B PB4 // Blue channel (pin 3) - AVR
+#endif
 #endif
 
 #define SCALE8(i, scale)  (((uint16_t)i * (uint16_t)(scale)) >> 8)
@@ -41,8 +46,10 @@ uint8_t led_init(void)
   pinMode(0, OUTPUT);
   pinMode(1, OUTPUT);
   pinMode(4, OUTPUT);
+#elif defined(HELIOS_STM8)
+  // pin ctrl done in stm8_init_gpio
 #else
-  // pin ctrl done in helios_init
+  // pin ctrl done in helios_init (AVR)
 #endif
 #endif
   return 1;
@@ -172,7 +179,27 @@ void led_update(void)
   analogWrite(PWM_PIN_R, m_realColor.red);
   analogWrite(PWM_PIN_G, m_realColor.green);
   analogWrite(PWM_PIN_B, m_realColor.blue);
+#elif defined(HELIOS_STM8)
+  // STM8 PWM output using Timer 1 and Timer 2
+  // Red LED on PD3 (TIM1_CH1)
+  #define TIM1_CCR1H (*(volatile uint8_t *)0x5265)
+  #define TIM1_CCR1L (*(volatile uint8_t *)0x5266)
+  // Green LED on PD6 (TIM1_CH2)
+  #define TIM1_CCR2H (*(volatile uint8_t *)0x5267)
+  #define TIM1_CCR2L (*(volatile uint8_t *)0x5268)
+  // Blue LED on PB5 (TIM2_CH1)
+  #define TIM2_CCR1H (*(volatile uint8_t *)0x5311)
+  #define TIM2_CCR1L (*(volatile uint8_t *)0x5312)
+
+  // Set PWM duty cycles
+  TIM1_CCR1H = 0;
+  TIM1_CCR1L = m_realColor.red;   // Red
+  TIM1_CCR2H = 0;
+  TIM1_CCR2L = m_realColor.green; // Green
+  TIM2_CCR1H = 0;
+  TIM2_CCR1L = m_realColor.blue;  // Blue
 #else
+  // AVR ATtiny85 PWM output
   // backup SREG and turn off interrupts
   uint8_t oldSREG = SREG;
   cli();

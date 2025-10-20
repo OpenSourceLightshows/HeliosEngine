@@ -12,9 +12,11 @@
 #include "Led.h"
 
 #ifdef HELIOS_EMBEDDED
+#ifndef HELIOS_STM8
 #include <avr/sleep.h>
 #include <avr/interrupt.h>
 #include <avr/wdt.h>
+#endif
 #endif
 
 #ifdef HELIOS_CLI
@@ -81,6 +83,8 @@ uint8_t helios_init(void)
   }
   // then initialize the hardware for embedded helios
 #ifdef HELIOS_EMBEDDED
+#ifndef HELIOS_STM8
+  // AVR ATtiny85 hardware initialization
   // Set PB0, PB1, PB4 as output
   DDRB |= (1 << DDB0) | (1 << DDB1) | (1 << DDB4);
   // Timer0 Configuration for PWM
@@ -95,6 +99,8 @@ uint8_t helios_init(void)
   TIMSK |= (1 << TOIE0);
   // Enable interrupts
   sei();
+#endif
+  // STM8 hardware initialization is done in stm8_init.c before helios_init() is called
 #endif
   return 1;
 }
@@ -157,6 +163,8 @@ void helios_tick(void)
 void helios_enter_sleep(void)
 {
 #ifdef HELIOS_EMBEDDED
+#ifndef HELIOS_STM8
+  // AVR sleep mode
   // clear the led colors
   led_clear();
   // Set all pins to input
@@ -175,6 +183,16 @@ void helios_enter_sleep(void)
   DDRB |= (1 << DDB0) | (1 << DDB1) | (1 << DDB4);
   // wakeup here, re-init
   helios_init_components();
+#else
+  // STM8 sleep mode - TODO: implement proper low-power mode
+  // For now, just clear LED and enable wake
+  led_clear();
+  button_enable_wake();
+  // STM8 uses WFI (Wait For Interrupt) instruction
+  __asm__("wfi");
+  // wakeup here, re-init
+  helios_init_components();
+#endif
 #else
   g_cur_state = STATE_SLEEP;
   // enable the sleep uint8_t

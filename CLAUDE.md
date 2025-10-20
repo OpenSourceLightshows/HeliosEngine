@@ -4,9 +4,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-Helios Engine is an embedded LED control system designed for the ATTiny85 microcontroller. The codebase is split into three main components:
-- **Helios/**: Core engine code (C) shared between embedded and CLI
-- **HeliosEmbedded/**: ATTiny85 firmware implementation
+Helios Engine is an embedded LED control system designed for multiple microcontrollers. The codebase is split into these main components:
+- **Helios/**: Core engine code (C) shared between all platforms
+- **HeliosEmbedded/**: ATTiny85 (AVR) firmware implementation
+- **HeliosSTM8/**: STM8S001J3M3TR firmware implementation
 - **HeliosCLI/**: Command-line tool for simulation and testing (C++)
 - **HeliosLib/**: Static library build of Helios core
 
@@ -23,11 +24,19 @@ make svgs               # Generate SVG pattern visualizations
 make clean_storage      # Delete Helios.storage file
 ```
 
-### Building the Embedded Firmware
+### Building the Embedded Firmware (ATTiny85)
 ```bash
 cd HeliosEmbedded
 make                    # Build firmware for ATTiny85
 make upload             # Compile and upload to ATTiny85 (sets fuses automatically)
+make clean              # Clean build artifacts
+```
+
+### Building the STM8 Firmware
+```bash
+cd HeliosSTM8
+make                    # Build firmware for STM8S001J3M3TR
+make upload             # Flash firmware to STM8 via ST-LINK
 make clean              # Clean build artifacts
 ```
 
@@ -157,12 +166,19 @@ Version is automatically computed from git tags in the format `MAJOR.MINOR.BUILD
 
 ## Platform-Specific Code
 
-**Embedded** (`HeliosEmbedded/main.c`):
+**ATTiny85 Embedded** ([HeliosEmbedded/main.cpp](HeliosEmbedded/main.cpp)):
 - Initializes ATTiny85 hardware (LED pins, button, sleep modes)
 - Main loop calls `helios_tick()` at TICKRATE
 - Uses AVR sleep modes for power efficiency
+- 8KB flash, 512 bytes RAM, 512 bytes EEPROM
 
-**CLI** (`HeliosCLI/cli_main.cpp`):
+**STM8 Embedded** ([HeliosSTM8/main.c](HeliosSTM8/main.c)):
+- Initializes STM8S001J3M3TR hardware via [stm8_init.c](HeliosSTM8/stm8_init.c)
+- Main loop calls `helios_tick()` at TICKRATE
+- 8KB flash, 1KB RAM, 128 bytes EEPROM
+- Uses SDCC compiler instead of AVR-GCC
+
+**CLI** ([HeliosCLI/cli_main.cpp](HeliosCLI/cli_main.cpp)):
 - Simulates hardware with terminal I/O
 - Reads input commands from stdin
 - Outputs LED colors as hex or ANSI terminal colors
@@ -227,8 +243,10 @@ ATTiny85 has only 8KB flash and 512 bytes SRAM. Code must be:
 ### Cross-Platform Compatibility
 - Core Helios code is pure C for maximum portability
 - Use `#ifdef HELIOS_CLI` for CLI-specific code
-- Use `#ifdef HELIOS_EMBEDDED` for embedded-specific code
+- Use `#ifdef HELIOS_EMBEDDED` for all embedded platforms
+- Use `#ifdef HELIOS_STM8` for STM8-specific code
 - Platform abstraction in LED and Button implementations
+- STM8 uses SDCC compiler, AVR uses AVR-GCC
 
 ## CI/CD
 
