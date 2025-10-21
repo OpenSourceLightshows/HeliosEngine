@@ -9,6 +9,7 @@
 !*.pattern
 !*.h
 !*.cpp
+!*.c
 !*.py
 !*.atsln
 !*.componentinfo.xml
