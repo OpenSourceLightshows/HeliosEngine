@@ -7,7 +7,13 @@ if [ "$OS" == "Windows_NT" ]; then
 elif [ "$(uname -s)" == "Linux" ]; then
   AVR_SIZE="${HOME}/atmel_setup/avr8-gnu-toolchain-linux_x86_64/bin/avr-size"
 else
-	AVR_SIZE="/opt/homebrew/bin/avr-size"
+	# Auto-detect Homebrew installation path for macOS (Apple Silicon vs Intel Mac)
+	if [ -d "/opt/homebrew" ]; then
+		HOMEBREW_PREFIX="/opt/homebrew"
+	else
+		HOMEBREW_PREFIX="/usr/local"
+	fi
+	AVR_SIZE="${HOMEBREW_PREFIX}/bin/avr-size"
 fi
 
 if [ ! -x "$AVR_SIZE" ]; then
