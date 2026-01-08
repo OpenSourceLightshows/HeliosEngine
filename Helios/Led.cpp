@@ -161,10 +161,6 @@ uint8_t led_get_brightness(void)
 
 void led_set_brightness(uint8_t brightness)
 {
-  // Prevent brightness from being set to 0 (LED would be invisible)
-  if (brightness == 0) {
-    brightness = BRIGHTNESS_HIGH;
-  }
   m_brightness = brightness;
 }
 

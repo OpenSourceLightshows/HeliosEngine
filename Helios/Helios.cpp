@@ -175,9 +175,6 @@ void helios_enter_sleep(void)
   DDRB |= (1 << DDB0) | (1 << DDB1) | (1 << DDB4);
   // wakeup here, re-init
   helios_init_components();
-  // Brief flash to confirm device is alive (visible even if pattern is dim)
-  led_set_rgb3(0x20, 0x20, 0x20);
-  led_update();
 #else
   g_cur_state = STATE_SLEEP;
   // enable the sleep uint8_t
@@ -341,9 +338,7 @@ static void helios_handle_state(void)
       break;
 #endif
     default:
-      // Recovery from corrupted state - reset to known good state
-      g_cur_state = STATE_MODES;
-      helios_load_cur_mode();
+      // Fallthrough to STATE_MODES for any unexpected state value
       break;
   }
 }
@@ -874,7 +869,7 @@ static void helios_handle_state_set_global_brightness(void)
   }
   // show different levels of green for each selection
   uint8_t col = 0;
-  uint8_t brightness = BRIGHTNESS_HIGH;  // Safe default instead of 0
+  uint8_t brightness = 0;
   switch (g_menu_selection) {
     case 0:
       col = 0xFF;
