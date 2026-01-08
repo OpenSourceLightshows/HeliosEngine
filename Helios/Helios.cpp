@@ -148,6 +148,14 @@ void Helios::enter_sleep()
   DDRB |= (1 << DDB0) | (1 << DDB1) | (1 << DDB4);
   // wakeup here, re-init
   init_components();
+  // Brief visual "I'm alive" indicator to show device is responsive
+  // This helps users know the device woke up even if brightness is low
+  // or pattern is disabled
+  Led::set(RGB_WHITE_BRI_LOW);
+  Led::update();
+  Time::delayMilliseconds(50);
+  Led::clear();
+  Led::update();
 #else
   cur_state = STATE_SLEEP;
   // enable the sleep bool
@@ -173,6 +181,14 @@ void Helios::wakeup()
   cur_state = STATE_MODES;
   // turn off the sleeping flag that only CLI has
   sleeping = false;
+  // Brief visual "I'm alive" indicator to show device is responsive
+  // This helps users know the device woke up even if brightness is low
+  // or pattern is disabled
+  Led::set(RGB_WHITE_BRI_LOW);
+  Led::update();
+  Time::delayMilliseconds(50);
+  Led::clear();
+  Led::update();
 #endif
 }
 
@@ -191,6 +207,17 @@ void Helios::load_cur_mode()
     // and just initialize default if it cannot be read
     Patterns::make_default(cur_mode, pat);
     // try to write it out because storage was corrupt
+    Storage::write_pattern(cur_mode, pat);
+  }
+  // Validate pattern isn't disabled - this prevents invisible patterns that
+  // make the device appear unresponsive. A pattern is disabled if:
+  // 1. It has no colors (numColors == 0), OR
+  // 2. It has no on duration AND no dash duration (both are 0)
+  PatternArgs args = pat.getArgs();
+  if (pat.colorset().numColors() == 0 ||
+      (args.on_dur == 0 && args.dash_dur == 0)) {
+    // Pattern is disabled, restore defaults
+    Patterns::make_default(cur_mode, pat);
     Storage::write_pattern(cur_mode, pat);
   }
   // then re-initialize the pattern
@@ -296,6 +323,12 @@ void Helios::handle_state()
       }
       break;
 #endif
+    default:
+      // Recovery: invalid state detected (could be due to RAM corruption or bug)
+      // Reset to known good state to prevent device from appearing unresponsive
+      cur_state = STATE_MODES;
+      load_cur_mode();
+      break;
   }
 }
 
@@ -772,7 +805,7 @@ void Helios::handle_state_set_global_brightness()
   }
   // show different levels of green for each selection
   uint8_t col = 0;
-  uint8_t brightness = 0;
+  uint8_t brightness = BRIGHTNESS_LOWEST;  // Safe default instead of 0
   switch (menu_selection) {
     case 0:
       col = 0xFF;
@@ -790,6 +823,11 @@ void Helios::handle_state_set_global_brightness()
       col = 0x28;
       brightness = BRIGHTNESS_LOWEST;
       break;
+  }
+  // Additional guard: ensure brightness is never 0 (would make LED invisible)
+  // This protects against edge cases like menu_selection corruption
+  if (brightness == 0) {
+    brightness = BRIGHTNESS_LOWEST;
   }
   Led::set(0, col, 0);
   // when the user long clicks a selection

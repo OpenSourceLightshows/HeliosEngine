@@ -122,6 +122,17 @@ void Led::setPWM(uint8_t pwmPin, uint8_t pwmValue, volatile uint8_t &controlRegi
 #endif
 }
 
+void Led::setBrightness(uint8_t brightness)
+{
+  // Prevent brightness from being set to 0 (invisible LED)
+  // This protects against EEPROM corruption or edge cases that could
+  // make the device appear completely unresponsive
+  if (brightness == 0) {
+    brightness = BRIGHTNESS_LOWEST;  // Use lowest visible brightness instead
+  }
+  m_brightness = brightness;
+}
+
 void Led::update()
 {
 #ifdef HELIOS_EMBEDDED
