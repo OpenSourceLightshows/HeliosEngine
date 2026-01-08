@@ -148,14 +148,6 @@ void Helios::enter_sleep()
   DDRB |= (1 << DDB0) | (1 << DDB1) | (1 << DDB4);
   // wakeup here, re-init
   init_components();
-  // Brief visual "I'm alive" indicator to show device is responsive
-  // This helps users know the device woke up even if brightness is low
-  // or pattern is disabled
-  Led::set(RGB_WHITE_BRI_LOW);
-  Led::update();
-  Time::delayMilliseconds(50);
-  Led::clear();
-  Led::update();
 #else
   cur_state = STATE_SLEEP;
   // enable the sleep bool
@@ -181,14 +173,6 @@ void Helios::wakeup()
   cur_state = STATE_MODES;
   // turn off the sleeping flag that only CLI has
   sleeping = false;
-  // Brief visual "I'm alive" indicator to show device is responsive
-  // This helps users know the device woke up even if brightness is low
-  // or pattern is disabled
-  Led::set(RGB_WHITE_BRI_LOW);
-  Led::update();
-  Time::delayMilliseconds(50);
-  Led::clear();
-  Led::update();
 #endif
 }
 
@@ -324,10 +308,7 @@ void Helios::handle_state()
       break;
 #endif
     default:
-      // Recovery: invalid state detected (could be due to RAM corruption or bug)
-      // Reset to known good state to prevent device from appearing unresponsive
-      cur_state = STATE_MODES;
-      load_cur_mode();
+      // Fallthrough to STATE_MODES for any unexpected state value
       break;
   }
 }
@@ -805,8 +786,9 @@ void Helios::handle_state_set_global_brightness()
   }
   // show different levels of green for each selection
   uint8_t col = 0;
-  uint8_t brightness = BRIGHTNESS_LOWEST;  // Safe default instead of 0
+  uint8_t brightness = 0;
   switch (menu_selection) {
+    default:
     case 0:
       col = 0xFF;
       brightness = BRIGHTNESS_HIGH;
@@ -823,11 +805,6 @@ void Helios::handle_state_set_global_brightness()
       col = 0x28;
       brightness = BRIGHTNESS_LOWEST;
       break;
-  }
-  // Additional guard: ensure brightness is never 0 (would make LED invisible)
-  // This protects against edge cases like menu_selection corruption
-  if (brightness == 0) {
-    brightness = BRIGHTNESS_LOWEST;
   }
   Led::set(0, col, 0);
   // when the user long clicks a selection
