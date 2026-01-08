@@ -165,8 +165,12 @@ void colorset_randomize_colors(colorset_t *set, random_t *ctx, uint8_t numColors
     mode = (enum colorset_color_mode)(random_next8(ctx, 0, 255) % COLOR_MODE_COUNT);
   }
   colorset_clear(set);
+  // Ensure at least 1 color (prevent disabled pattern)
   if (!numColors) {
     numColors = random_next8(ctx, mode == COLOR_MODE_MONOCHROMATIC ? 2 : 1, 9);
+  }
+  if (numColors == 0) {
+    numColors = 1;
   }
   uint8_t randomizedHue = random_next8(ctx, 0, 255);
   uint8_t colorGap = 0;
