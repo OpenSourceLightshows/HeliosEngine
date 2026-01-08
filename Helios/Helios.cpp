@@ -222,6 +222,12 @@ void helios_load_cur_mode(void)
     // try to write it out because storage was corrupt
     storage_write_pattern(g_cur_mode, &g_pat);
   }
+  // Validate pattern won't be disabled (no colors or no on/dash duration)
+  if (colorset_num_colors(&g_pat.m_colorset) == 0 ||
+      (g_pat.m_args.on_dur == 0 && g_pat.m_args.dash_dur == 0)) {
+    patterns_make_default(g_cur_mode, &g_pat);
+    storage_write_pattern(g_cur_mode, &g_pat);
+  }
   // then re-initialize the pattern
   pattern_init_state(&g_pat);
 }
@@ -325,6 +331,11 @@ static void helios_handle_state(void)
       }
       break;
 #endif
+    default:
+      // Recovery from corrupted state - reset to known good state
+      g_cur_state = STATE_MODES;
+      helios_load_cur_mode();
+      break;
   }
 }
 
@@ -854,7 +865,7 @@ static void helios_handle_state_set_global_brightness(void)
   }
   // show different levels of green for each selection
   uint8_t col = 0;
-  uint8_t brightness = 0;
+  uint8_t brightness = BRIGHTNESS_HIGH;  // Safe default instead of 0
   switch (g_menu_selection) {
     case 0:
       col = 0xFF;

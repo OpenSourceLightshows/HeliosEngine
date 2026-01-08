@@ -147,7 +147,8 @@ void colorset_add_color_with_value_style(colorset_t *set, random_t *ctx, uint8_t
 
 void colorset_remove_color(colorset_t *set, uint8_t index)
 {
-  if (index >= set->m_numColors) {
+  // Prevent removing the last color (pattern would become disabled)
+  if (index >= set->m_numColors || set->m_numColors <= 1) {
     return;
   }
   uint8_t i;
