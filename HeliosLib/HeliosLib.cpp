@@ -33,11 +33,36 @@ PatternID intToPatternID(int val)
   return (PatternID)val;
 }
 
+// Helper to set the colorset on the current pattern
+static void setCurrentColorset(Colorset &colorset)
+{
+  Helios::cur_pattern().setColorset(colorset);
+}
+
+// Helper to set pattern args on the current pattern
+static void setCurrentArgs(PatternArgs &args)
+{
+  Helios::cur_pattern().setArgs(args);
+}
+
+// Helper to fully configure and reinitialize the current pattern
+static void setCurrentMode(PatternArgs &args, Colorset &colorset)
+{
+  Helios::cur_pattern().setArgs(args);
+  Helios::cur_pattern().setColorset(colorset);
+  Helios::cur_pattern().init();
+}
+
 EMSCRIPTEN_BINDINGS(Vortex) {
   // basic control functions
   function("Init", &init_helios);
   function("Cleanup", &cleanup_helios);
   function("Tick", &tick_helios);
+
+  // helpers to configure the current mode
+  function("setCurrentColorset", &setCurrentColorset);
+  function("setCurrentArgs", &setCurrentArgs);
+  function("setCurrentMode", &setCurrentMode);
 
   // Bind the HSVColor class
   class_<HSVColor>("HSVColor")
@@ -133,7 +158,7 @@ EMSCRIPTEN_BINDINGS(Vortex) {
     .function("init", &Pattern::init)
     .function("setArgs", &Pattern::setArgs)
     .function("getArgs", select_overload<PatternArgs()>(&Pattern::getArgs))
-    .function("equals", &Pattern::equals, allow_raw_pointer<const Pattern *>())
+    //.function("equals", &Pattern::equals, allow_raw_pointer<const Pattern *>())
     .function("getColorset", select_overload<const Colorset() const>(&Pattern::getColorset))
     .function("setColorset", &Pattern::setColorset)
     .function("clearColorset", &Pattern::clearColorset)
