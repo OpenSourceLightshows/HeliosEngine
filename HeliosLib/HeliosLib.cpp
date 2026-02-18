@@ -33,11 +33,41 @@ PatternID intToPatternID(int val)
   return (PatternID)val;
 }
 
+// Helper to set the colorset on the current pattern
+static void setCurrentColorset(Colorset &colorset)
+{
+  Helios::cur_pattern().setColorset(colorset);
+}
+
+// Helper to set pattern args on the current pattern
+static void setCurrentArgs(PatternArgs &args)
+{
+  Helios::cur_pattern().setArgs(args);
+}
+
+// Helper to reinitialize the current pattern with a new PatternID, args, and colorset
+static void setCurrentPattern(PatternID id, PatternArgs &args, Colorset &colorset)
+{
+  Helios::cur_pattern().init(id, &args, &colorset);
+}
+
+// Helper to get the current pattern
+static Pattern &getCurrentPattern()
+{
+  return Helios::cur_pattern();
+}
+
 EMSCRIPTEN_BINDINGS(Vortex) {
   // basic control functions
   function("Init", &init_helios);
   function("Cleanup", &cleanup_helios);
   function("Tick", &tick_helios);
+
+  // helpers to configure the current mode
+  function("setCurrentColorset", &setCurrentColorset);
+  function("setCurrentArgs", &setCurrentArgs);
+  function("setCurrentPattern", &setCurrentPattern);
+  function("getCurrentPattern", &getCurrentPattern, allow_raw_pointer<Pattern *>());
 
   // Bind the HSVColor class
   class_<HSVColor>("HSVColor")
