@@ -146,6 +146,8 @@ EMSCRIPTEN_BINDINGS(Vortex) {
 
   // pattern args class
   class_<PatternArgs>("PatternArgs")
+    .constructor<>()
+    .constructor<uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t>()
     .property("on_dur", &PatternArgs::on_dur)
     .property("off_dur", &PatternArgs::off_dur)
     .property("gap_dur", &PatternArgs::gap_dur)
