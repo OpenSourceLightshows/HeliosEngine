@@ -69,9 +69,9 @@ LIBS=\
 # source files
 # local source files first, other sources after
 ifeq ($(OS),Windows_NT)
-    SRC = $(shell find ../Helios/ -type f -name \\*.cpp) HeliosLib.cpp
+    SRC = $(shell find ../Helios/ -type f -name \\*.cpp) HeliosLib.cpp HeliosInstance.cpp
 else
-    SRC = $(shell find ../Helios/ -type f -name '*.cpp') HeliosLib.cpp
+    SRC = $(shell find ../Helios/ -type f -name '*.cpp') HeliosLib.cpp HeliosInstance.cpp
 endif
 
 # object files are source files with .c replaced with .o
