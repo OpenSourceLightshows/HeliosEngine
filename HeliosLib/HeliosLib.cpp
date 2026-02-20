@@ -1,4 +1,5 @@
 #include "HeliosLib.h"
+#include "HeliosInstance.h"
 
 // Helios includes
 #include "Helios.h"
@@ -166,6 +167,18 @@ EMSCRIPTEN_BINDINGS(Vortex) {
     .function("clearColorset", &Pattern::clearColorset)
     .function("getFlags", &Pattern::getFlags)
     .function("hasFlags", &Pattern::hasFlags);
+
+  // HeliosInstance class for independent engine instances
+  // This allows multiple mode previews on the same page
+  class_<HeliosInstance>("HeliosInstance")
+    .constructor<>()
+    .function("init", &HeliosInstance::init)
+    .function("tick", &HeliosInstance::tick)
+    .function("getCurColor", &HeliosInstance::getCurColor)
+    .function("cur_pattern", &HeliosInstance::cur_pattern, allow_raw_pointer<Pattern *>())
+    .function("setColorset", &HeliosInstance::setColorset)
+    .function("setArgs", &HeliosInstance::setArgs)
+    .function("setMode", &HeliosInstance::setMode);
 
   // bind others as necessary
 }
