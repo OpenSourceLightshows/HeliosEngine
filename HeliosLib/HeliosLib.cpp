@@ -175,7 +175,6 @@ EMSCRIPTEN_BINDINGS(Vortex) {
     .function("init", &HeliosInstance::init)
     .function("tick", &HeliosInstance::tick)
     .function("getCurColor", &HeliosInstance::getCurColor)
-    .function("cur_pattern", &HeliosInstance::cur_pattern, allow_raw_pointer<Pattern *>())
     .function("setColorset", &HeliosInstance::setColorset)
     .function("setArgs", &HeliosInstance::setArgs)
     .function("setMode", &HeliosInstance::setMode);
