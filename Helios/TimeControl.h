@@ -27,6 +27,8 @@ public:
   // Exposing this in the header seems to save on space a non negligible amount, it is used a lot
   // and exposing in the header probably allows the compiler to optimize away repititive calls
   static uint32_t getCurtime() { return m_curTick; }
+  // force the current tick value (used by isolated HeliosInstance timelines)
+  static void setCurtime(uint32_t tick) { m_curTick = tick; }
 
   // Current microseconds since startup, only use this for things like measuring rapid data transfer timings.
   // If you just need to perform regular time checks for a pattern or some logic then use getCurtime() and measure

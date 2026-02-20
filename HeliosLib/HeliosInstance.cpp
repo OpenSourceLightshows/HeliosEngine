@@ -2,7 +2,7 @@
 #include "Led.h"
 #include "TimeControl.h"
 
-HeliosInstance::HeliosInstance() : pat()
+HeliosInstance::HeliosInstance() : pat(), m_localTick(0)
 {
 }
 
@@ -12,16 +12,17 @@ HeliosInstance::~HeliosInstance()
 
 bool HeliosInstance::init()
 {
+  m_localTick = 0;
   pat.init();
   return true;
 }
 
 void HeliosInstance::tick()
 {
+  m_localTick += 1;
+  Time::setCurtime(m_localTick);
   pat.play();
   // Pattern updates internal state, color retrieved via getCurColor() using Led
-  // Advance Helios time so pattern timers (on/off/gap/dash durations) behave correctly.
-  Time::tickClock();
 }
 
 RGBColor HeliosInstance::getCurColor()
