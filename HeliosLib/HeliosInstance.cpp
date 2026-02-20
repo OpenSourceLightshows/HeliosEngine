@@ -1,4 +1,5 @@
 #include "HeliosInstance.h"
+#include "Led.h"
 
 HeliosInstance::HeliosInstance() : pat()
 {
