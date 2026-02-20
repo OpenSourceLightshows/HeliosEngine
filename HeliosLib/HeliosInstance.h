@@ -1,17 +1,13 @@
 #pragma once
 
-#include "Pattern.h"
 #include "Colorset.h"
+#include "HeliosPatternInstance.h"
 
 class HeliosInstance
 {
 public:
   HeliosInstance();
   ~HeliosInstance();
-
-  static HeliosInstance* create() { return new HeliosInstance(); }
-
-  bool init();
   void tick();
   RGBColor getCurColor();
   void setColorset(Colorset &colorset);
@@ -19,7 +15,5 @@ public:
   void setMode(PatternArgs &args, Colorset &colorset);
 
 private:
-  Pattern pat;
-  uint32_t m_localTick;
-  RGBColor m_lastColor;
+  HeliosPatternInstance pat;
 };

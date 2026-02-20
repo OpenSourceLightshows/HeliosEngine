@@ -144,7 +144,7 @@ replay:
     break;
   }
 
-  if (!m_blinkTimer.alarm()) {
+  if (!m_blinkTimer.alarmAt(now())) {
     // no alarm triggered just stay in current state, return and don't transition states
     PRINT_STATE(m_state);
     return;
@@ -183,30 +183,30 @@ void Pattern::onBlinkOn()
     blendBlinkOn();
     return;
   }
-  Led::set(m_colorset.getNext());
+  outputSet(m_colorset.getNext());
 }
 
 void Pattern::onBlinkOff()
 {
   PRINT_STATE(STATE_OFF);
-  Led::clear();
+  outputClear();
 }
 
 void Pattern::beginGap()
 {
   PRINT_STATE(STATE_IN_GAP);
-  Led::clear();
+  outputClear();
 }
 
 void Pattern::beginDash()
 {
   PRINT_STATE(STATE_IN_DASH);
-  Led::set(m_colorset.getNext());
+  outputSet(m_colorset.getNext());
 }
 
 void Pattern::nextState(uint8_t timing)
 {
-  m_blinkTimer.init(timing);
+  m_blinkTimer.initAt(timing, now());
   m_state = (PatternState)(m_state + 1);
 }
 
@@ -267,7 +267,22 @@ void Pattern::blendBlinkOn()
   interpolate(m_cur.green, m_next.green);
   interpolate(m_cur.blue, m_next.blue);
   // set the color
-  Led::set(m_cur);
+  outputSet(m_cur);
+}
+
+uint32_t Pattern::now() const
+{
+  return Time::getCurtime();
+}
+
+void Pattern::outputSet(const RGBColor &col)
+{
+  Led::set(col);
+}
+
+void Pattern::outputClear()
+{
+  Led::clear();
 }
 
 void Pattern::interpolate(uint8_t &current, const uint8_t next)

@@ -16,15 +16,25 @@ Timer::~Timer()
 
 void Timer::init(uint8_t alarm)
 {
+  initAt(alarm, Time::getCurtime());
+}
+
+void Timer::initAt(uint8_t alarm, uint32_t now)
+{
   reset();
   m_alarm = alarm;
-  start();
+  startAt(now);
 }
 
 void Timer::start(uint32_t offset)
 {
+  startAt(Time::getCurtime(), offset);
+}
+
+void Timer::startAt(uint32_t now, uint32_t offset)
+{
   // reset the start time
-  m_startTime = Time::getCurtime() + offset;
+  m_startTime = now + offset;
 }
 
 void Timer::reset()
@@ -35,10 +45,14 @@ void Timer::reset()
 
 bool Timer::alarm()
 {
+  return alarmAt(Time::getCurtime());
+}
+
+bool Timer::alarmAt(uint32_t now)
+{
   if (!m_alarm) {
     return false;
   }
-  uint32_t now = Time::getCurtime();
   // time since start (forward or backwards)
   int32_t timeDiff = (int32_t)(int64_t)(now - m_startTime);
   if (timeDiff < 0) {

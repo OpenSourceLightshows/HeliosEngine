@@ -168,13 +168,10 @@ EMSCRIPTEN_BINDINGS(Vortex) {
     .function("getFlags", &Pattern::getFlags)
     .function("hasFlags", &Pattern::hasFlags);
 
-  // Factory function to create HeliosInstance
-  function("createHeliosInstance", &HeliosInstance::create, allow_raw_pointers());
-
   // HeliosInstance class for independent engine instances
   // This allows multiple mode previews on the same page
   class_<HeliosInstance>("HeliosInstance")
-    .function("init", &HeliosInstance::init)
+    .constructor<>()
     .function("tick", &HeliosInstance::tick)
     .function("getCurColor", &HeliosInstance::getCurColor)
     .function("setColorset", &HeliosInstance::setColorset)
