@@ -108,6 +108,11 @@ FORCE:
 # generic clean target
 clean:
 	@$(RM) $(DFILES) $(OBJS) $(TARGETS) $(TESTS)
+	@$(RM) ../Helios/*.o ../Helios/*.d ../Helios/*.avr.o ../Helios/*.avr.d
+	@$(RM) ../HeliosLib/*.o ../HeliosLib/*.d ../HeliosLib/helios.a ../HeliosLib/HeliosLib.js ../HeliosLib/HeliosLib.wasm
+	@$(RM) ../HeliosCLI/*.o ../HeliosCLI/*.d ../HeliosCLI/helios
+	@$(RM) ../HeliosEmbedded/*.o ../HeliosEmbedded/*.d ../HeliosEmbedded/*.avr.o ../HeliosEmbedded/*.avr.d
+	@$(RM) ../HeliosEmbedded/helios.elf ../HeliosEmbedded/helios.hex ../HeliosEmbedded/helios.bin ../HeliosEmbedded/helios.eep ../HeliosEmbedded/helios.lst ../HeliosEmbedded/helios.map
 
 compute_version:
 	$(eval LATEST_TAG ?= $(shell git fetch --depth=1 origin +refs/tags/*:refs/tags/* &> /dev/null && git tag --list | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$$' | sort -V | tail -n1))
