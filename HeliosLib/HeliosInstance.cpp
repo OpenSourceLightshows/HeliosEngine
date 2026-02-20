@@ -1,5 +1,6 @@
 #include "HeliosInstance.h"
 #include "Led.h"
+#include "TimeControl.h"
 
 HeliosInstance::HeliosInstance() : pat()
 {
@@ -19,6 +20,8 @@ void HeliosInstance::tick()
 {
   pat.play();
   // Pattern updates internal state, color retrieved via getCurColor() using Led
+  // Advance Helios time so pattern timers (on/off/gap/dash durations) behave correctly.
+  Time::tickClock();
 }
 
 RGBColor HeliosInstance::getCurColor()
