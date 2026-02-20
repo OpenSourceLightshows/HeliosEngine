@@ -9,6 +9,8 @@ public:
   HeliosInstance();
   ~HeliosInstance();
 
+  static HeliosInstance* create() { return new HeliosInstance(); }
+
   bool init();
   void tick();
   RGBColor getCurColor();
