@@ -21,4 +21,5 @@ public:
 private:
   Pattern pat;
   uint32_t m_localTick;
+  RGBColor m_lastColor;
 };
