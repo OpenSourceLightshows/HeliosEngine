@@ -2,7 +2,9 @@
 
 #include "Timer.h"
 
+#ifndef WASM
 #include "TimeControl.h"
+#endif
 
 Timer::Timer() :
   m_alarm(0),
@@ -16,7 +18,11 @@ Timer::~Timer()
 
 void Timer::init(uint8_t alarm)
 {
-  initAt(alarm, Time::getCurtime());
+#ifdef WASM
+  initAt(alarm, 0);
+#else
+  initAt(alarm, Time::activeCurtime());
+#endif
 }
 
 void Timer::initAt(uint8_t alarm, uint32_t now)
@@ -28,7 +34,11 @@ void Timer::initAt(uint8_t alarm, uint32_t now)
 
 void Timer::start(uint32_t offset)
 {
-  startAt(Time::getCurtime(), offset);
+#ifdef WASM
+  startAt(0, offset);
+#else
+  startAt(Time::activeCurtime(), offset);
+#endif
 }
 
 void Timer::startAt(uint32_t now, uint32_t offset)
@@ -45,7 +55,11 @@ void Timer::reset()
 
 bool Timer::alarm()
 {
-  return alarmAt(Time::getCurtime());
+#ifdef WASM
+  return alarmAt(0);
+#else
+  return alarmAt(Time::activeCurtime());
+#endif
 }
 
 bool Timer::alarmAt(uint32_t now)

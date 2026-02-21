@@ -1,32 +1,10 @@
 #include "HeliosLib.h"
 #include "HeliosInstance.h"
 
-// Helios includes
-#include "Helios.h"
-#include "Led.h"
-
 #ifdef WASM
 #include <emscripten/bind.h>
-#include <emscripten/val.h>
 
 using namespace emscripten;
-
-// just need a non class function to bind to wasm here
-static void init_helios() { HeliosLib::init(); }
-static void cleanup_helios() { HeliosLib::cleanup(); }
-
-// this is a spcial function that wraps tick then returns the current color of
-// the leds as a javascript object 'value'
-val tick_helios() {
-  // first run a tick
-  HeliosLib::tick();
-  // fetch led color
-  val color = val::object();
-  color.set("red", Led::get().red);
-  color.set("green", Led::get().green);
-  color.set("blue", Led::get().blue);
-  return color;
-}
 
 // js is dumb and has issues doing this cast I guess
 PatternID intToPatternID(int val)
@@ -34,37 +12,7 @@ PatternID intToPatternID(int val)
   return (PatternID)val;
 }
 
-// Helper to set the colorset on the current pattern
-static void setCurrentColorset(Colorset &colorset)
-{
-  Helios::cur_pattern().setColorset(colorset);
-}
-
-// Helper to set pattern args on the current pattern
-static void setCurrentArgs(PatternArgs &args)
-{
-  Helios::cur_pattern().setArgs(args);
-}
-
-// Helper to fully configure and reinitialize the current pattern
-static void setCurrentMode(PatternArgs &args, Colorset &colorset)
-{
-  Helios::cur_pattern().setArgs(args);
-  Helios::cur_pattern().setColorset(colorset);
-  Helios::cur_pattern().init();
-}
-
 EMSCRIPTEN_BINDINGS(Vortex) {
-  // basic control functions
-  function("Init", &init_helios);
-  function("Cleanup", &cleanup_helios);
-  function("Tick", &tick_helios);
-
-  // helpers to configure the current mode
-  function("setCurrentColorset", &setCurrentColorset);
-  function("setCurrentArgs", &setCurrentArgs);
-  function("setCurrentMode", &setCurrentMode);
-
   // Bind the HSVColor class
   class_<HSVColor>("HSVColor")
     .constructor<>()
@@ -156,18 +104,6 @@ EMSCRIPTEN_BINDINGS(Vortex) {
     .property("group_size", &PatternArgs::group_size)
     .property("blend_speed", &PatternArgs::blend_speed);
 
-  // pattern class
-  class_<Pattern>("Pattern")
-    .function("init", &Pattern::init)
-    .function("setArgs", &Pattern::setArgs)
-    .function("getArgs", select_overload<PatternArgs()>(&Pattern::getArgs))
-    //.function("equals", &Pattern::equals, allow_raw_pointer<const Pattern *>())
-    .function("getColorset", select_overload<const Colorset() const>(&Pattern::getColorset))
-    .function("setColorset", &Pattern::setColorset)
-    .function("clearColorset", &Pattern::clearColorset)
-    .function("getFlags", &Pattern::getFlags)
-    .function("hasFlags", &Pattern::hasFlags);
-
   // HeliosInstance class for independent engine instances
   // This allows multiple mode previews on the same page
   class_<HeliosInstance>("HeliosInstance")
@@ -186,11 +122,7 @@ EMSCRIPTEN_BINDINGS(Vortex) {
 
 bool HeliosLib::init()
 {
-    if (!Helios::init()) {
-        return false;
-    }
-
-    return true;
+  return true;
 }
 
 void HeliosLib::cleanup()
@@ -200,5 +132,4 @@ void HeliosLib::cleanup()
 
 void HeliosLib::tick()
 {
-  Helios::tick();
 }

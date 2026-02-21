@@ -61,6 +61,7 @@ std::string initial_colorset_str = "";
 std::string initial_pattern_str = "";
 std::string initial_pattern_args_str = "";
 uint32_t initial_mode_index = 0;
+static Helios *g_helios = nullptr;
 
 // used to switch terminal to non-blocking and back
 static struct termios orig_term_attr = {0};
@@ -80,6 +81,8 @@ static void dump_eeprom(const std::string& filename);
 
 int main(int argc, char *argv[])
 {
+  Helios helios;
+  g_helios = &helios;
   // parse command line options
   parse_options(argc, argv);
   // set the terminal to instantly receive key presses
@@ -91,21 +94,21 @@ int main(int argc, char *argv[])
     return 0;
   }
   // toggle timestep in the engine based on the cli input
-  Time::enableTimestep(timestep);
+  helios.time().enableTimestep(timestep);
   // toggle storage in the engine based on cli input
-  Storage::enableStorage(storage);
+  helios.storage().enableStorage(storage);
   // run the engine initialization
-  Helios::init();
+  helios.init();
   // set the initial mode index
-  Helios::set_mode_index(initial_mode_index);
+  helios.set_mode_index(initial_mode_index);
   // Set the initial pattern based on user arguments
   if (initial_pattern_str.length() > 0) {
     // convert the string arg to integer, then treat it as a PatternID
     PatternID id = (PatternID)strtoul(initial_pattern_str.c_str(), NULL, 10);
     // pass the current pattern to make_pattern to update it's internals
-    Patterns::make_pattern(id, Helios::cur_pattern());
+    Patterns::make_pattern(id, helios.cur_pattern());
     // re-initialize the current pattern
-    Helios::cur_pattern().init();
+    helios.cur_pattern().init();
   }
   // set initial pattern args based on user arguments
   if (initial_pattern_args_str.length() > 0) {
@@ -126,7 +129,7 @@ int main(int argc, char *argv[])
     // construct pattern args from the array of values
     PatternArgs args(vals[0], vals[1], vals[2], vals[3], vals[4], vals[5]);
     // set the args of the current pattern
-    Helios::cur_pattern().setArgs(args);
+    helios.cur_pattern().setArgs(args);
   }
   // Set the initial colorset based on user arguments
   if (initial_colorset_str.length() > 0) {
@@ -143,9 +146,9 @@ int main(int argc, char *argv[])
       }
     }
     // update the colorset of the current pattern
-    Helios::cur_pattern().setColorset(set);
+    helios.cur_pattern().setColorset(set);
     // re-initialize the current pattern
-    Helios::cur_pattern().init();
+    helios.cur_pattern().init();
   }
   // just generate eeprom?
   if (eeprom) {
@@ -155,19 +158,19 @@ int main(int argc, char *argv[])
   // so that we can detect when one full cycle of the pattern has passed
   uint32_t cycle_count = 0;
   uint8_t last_index = 0;
-  while (Helios::keep_going()) {
+  while (helios.keep_going()) {
     // check for any inputs and read the next one
     read_inputs();
     // if lockstep is enabled, only run logic if the
     // input queue isn't actually empty
-    if (lockstep && !Button::inputQueueSize()) {
+    if (lockstep && !g_helios->button().inputQueueSize()) {
       // just keep waiting for an input
       continue;
     }
     // run the main loop
-    Helios::tick();
+    helios.tick();
     // don't render anything if asleep, but technically it's still running...
-    if (Helios::is_asleep()) {
+    if (helios.is_asleep()) {
       continue;
     }
     // watch for a full cycle if it was requested by the command line
@@ -175,7 +178,7 @@ int main(int argc, char *argv[])
       // grab the current index of the colorset, which might be the same for
       // several tick in a row, so we must check whether it just changed this
       // tick by comparing it to the index we saved last tick
-      uint8_t cur_index = Helios::cur_pattern().colorset().curIndex();
+      uint8_t cur_index = helios.cur_pattern().colorset().curIndex();
       if (cur_index == 0 && last_index != 0) {
         // only if the current index is 0 (start of colorset) and the last index was
         // not 0 then the colorset *just* started iterating through it's colors, so
@@ -184,7 +187,7 @@ int main(int argc, char *argv[])
       }
       // then if we run more than the chosen number of cycles just quit
       if (cycle_count >= num_cycles) {
-        Helios::terminate();
+        helios.terminate();
         break;
       }
       last_index = cur_index;
@@ -389,7 +392,7 @@ static bool read_inputs()
     }
     for (uint32_t i = 0; i < repeatAmount; ++i) {
       // otherwise just queue up the command
-      Button::queueInput(command);
+      g_helios->button().queueInput(command);
     }
   }
   return true;
@@ -402,7 +405,7 @@ static void show()
     if (generate_bmp) {
       // still need to generate the BMP by recoring all the output colors
       // even if they have chosen the -q for quiet option
-      RGBColor currentColor = {Led::get().red, Led::get().green, Led::get().blue};
+      RGBColor currentColor = g_helios->led().get();
       RGBColor scaledColor = currentColor.scaleBrightness(brightness_scale);
       colorBuffer.push_back(scaledColor);
     }
@@ -414,7 +417,7 @@ static void show()
     out += "\r";
   }
   // Get the current color and scale its brightness up
-  RGBColor currentColor = {Led::get().red, Led::get().green, Led::get().blue};
+  RGBColor currentColor = g_helios->led().get();
   RGBColor scaledColor = currentColor.scaleBrightness(brightness_scale);
   if (output_type == OUTPUT_TYPE_COLOR) {
     out += "\x1B[0m["; // opening |

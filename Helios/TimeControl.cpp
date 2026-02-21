@@ -4,8 +4,6 @@
 
 #include "Timings.h"
 
-#include "Led.h"
-
 #ifdef HELIOS_EMBEDDED
 #include <avr/sleep.h>
 #include <avr/interrupt.h>
@@ -23,15 +21,16 @@ uint64_t start = 0;
 #define NS_TO_US(ns) ((ns)/1000)
 #endif
 
-// static members
-uint32_t Time::m_curTick = 0;
-// the last frame timestamp
-uint32_t Time::m_prevTime = 0;
+Time *Time::s_activeInstance = nullptr;
 
+Time::Time() :
+  m_curTick(0),
+  m_prevTime(0)
 #ifdef HELIOS_CLI
-// whether timestep is enabled, default enabled
-bool Time::m_enableTimestep = true;
+  , m_enableTimestep(true)
 #endif
+{
+}
 
 bool Time::init()
 {
@@ -180,4 +179,23 @@ void Time::delayMilliseconds(uint32_t ms)
     delayMicroseconds(1000);
   }
 #endif
+}
+
+uint32_t Time::activeCurtime()
+{
+  return s_activeInstance ? s_activeInstance->getCurtime() : 0;
+}
+
+void Time::activeDelayMilliseconds(uint32_t ms)
+{
+  if (s_activeInstance) {
+    s_activeInstance->delayMilliseconds(ms);
+  }
+}
+
+void Time::activeDelayMicroseconds(uint32_t us)
+{
+  if (s_activeInstance) {
+    s_activeInstance->delayMicroseconds(us);
+  }
 }

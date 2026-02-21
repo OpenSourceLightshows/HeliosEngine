@@ -13,29 +13,31 @@
 
 #include "Helios.h"
 
-// static members of Button
-uint32_t Button::m_pressTime = 0;
-uint32_t Button::m_releaseTime = 0;
-uint32_t Button::m_holdDuration = 0;
-uint32_t Button::m_releaseDuration = 0;
-uint8_t Button::m_releaseCount = 0;
-bool Button::m_buttonState = false;
-bool Button::m_newPress = false;
-bool Button::m_newRelease = false;
-bool Button::m_isPressed = false;
-bool Button::m_shortClick = false;
-bool Button::m_longClick = false;
-bool Button::m_holdClick = false;
-
+Button::Button() :
+  m_pressTime(0),
+  m_releaseTime(0),
+  m_holdDuration(0),
+  m_releaseDuration(0),
+  m_releaseCount(0),
+  m_buttonState(false),
+  m_newPress(false),
+  m_newRelease(false),
+  m_isPressed(false),
+  m_shortClick(false),
+  m_longClick(false),
+  m_holdClick(false),
 #ifdef HELIOS_CLI
-// an input queue for the button, each tick one even is processed
-// out of this queue and used to produce input
-std::queue<char> Button::m_inputQueue;
-// the virtual pin state
-bool Button::m_pinState = false;
-// whether the button is waiting to wake the device
-bool Button::m_enableWake = false;
+  m_pinState(false),
+  m_enableWake(false),
 #endif
+  m_time(nullptr)
+{
+}
+
+uint32_t Button::now() const
+{
+  return m_time ? m_time->getCurtime() : Time::activeCurtime();
+}
 
 // initialize a new button object with a pin number
 bool Button::init()
@@ -85,7 +87,7 @@ void Button::enableWake()
 ISR(PCINT0_vect) {
   PCMSK &= ~(1 << PCINT3);
   GIMSK &= ~(1 << PCIE);
-  Helios::wakeup();
+  Helios::wakeupActiveInstance();
 }
 #endif
 
@@ -108,8 +110,8 @@ bool Button::check()
 // detect if the button is being held for a long hold (past long click)
 bool Button::holdPressing()
 {
-  uint16_t holDur = (uint16_t)(Button::holdDuration());
-  if (holDur > HOLD_CLICK_START && holDur <= HOLD_CLICK_END && Button::isPressed()) {
+  uint16_t holDur = (uint16_t)holdDuration();
+  if (holDur > HOLD_CLICK_START && holDur <= HOLD_CLICK_END && isPressed()) {
     return true;
   }
   return false;
@@ -130,18 +132,19 @@ void Button::update()
     m_buttonState = newButtonState;
     m_isPressed = m_buttonState;
     if (m_isPressed) {
-      m_pressTime = Time::getCurtime();
+      m_pressTime = now();
       m_newPress = true;
     } else {
-      m_releaseTime = Time::getCurtime();
+      m_releaseTime = now();
       m_newRelease = true;
       m_releaseCount++;
     }
   }
+  const uint32_t curtime = now();
   if (m_isPressed) {
-    m_holdDuration = (Time::getCurtime() >= m_pressTime) ? (uint32_t)(Time::getCurtime() - m_pressTime) : 0;
+    m_holdDuration = (curtime >= m_pressTime) ? (uint32_t)(curtime - m_pressTime) : 0;
   } else {
-    m_releaseDuration = (Time::getCurtime() >= m_releaseTime) ? (uint32_t)(Time::getCurtime() - m_releaseTime) : 0;
+    m_releaseDuration = (curtime >= m_releaseTime) ? (uint32_t)(curtime - m_releaseTime) : 0;
   }
   m_shortClick = (m_newRelease && (m_holdDuration <= SHORT_CLICK_THRESHOLD));
   m_longClick = (m_newRelease && (m_holdDuration > SHORT_CLICK_THRESHOLD) && (m_holdDuration < HOLD_CLICK_START));
@@ -156,7 +159,7 @@ void Button::update()
 
   if (m_enableWake) {
     if (m_isPressed || m_shortClick || m_longClick) {
-      Helios::wakeup();
+      Helios::wakeupActiveInstance();
     }
   }
 #endif
@@ -171,16 +174,16 @@ bool Button::processPreInput()
   char command = m_inputQueue.front();
   switch (command) {
   case 'p': // press
-    Button::doPress();
+    doPress();
     break;
   case 'r': // release
-    Button::doRelease();
+    doRelease();
     break;
   case 't': // toggle
-    Button::doToggle();
+    doToggle();
     break;
   case 'q': // quit
-    Helios::terminate();
+    Helios::terminateActiveInstance();
     break;
   case 'w': // wait
     // wait is pre input I guess
@@ -205,10 +208,10 @@ bool Button::processPostInput()
   char command = m_inputQueue.front();
   switch (command) {
   case 'c': // click button
-    Button::doShortClick();
+    doShortClick();
     break;
   case 'l': // long click button
-    Button::doLongClick();
+    doLongClick();
     break;
   default:
     // should never happen
@@ -222,7 +225,7 @@ void Button::doShortClick()
 {
   m_newRelease = true;
   m_shortClick = true;
-  m_pressTime = Time::getCurtime();
+  m_pressTime = now();
   m_holdDuration = SHORT_CLICK_THRESHOLD - 1;
   m_releaseCount++;
 }
@@ -231,7 +234,7 @@ void Button::doLongClick()
 {
   m_newRelease = true;
   m_longClick = true;
-  m_pressTime = Time::getCurtime();
+  m_pressTime = now();
   m_holdDuration = SHORT_CLICK_THRESHOLD + 1;
   m_releaseCount++;
 }
@@ -240,7 +243,7 @@ void Button::doHoldClick()
 {
   m_newRelease = true;
   m_holdClick = true;
-  m_pressTime = Time::getCurtime();
+  m_pressTime = now();
   m_holdDuration = HOLD_CLICK_START + 1;
   m_releaseCount++;
 }
@@ -268,11 +271,8 @@ void Button::queueInput(char input)
   m_inputQueue.push(input);
 }
 
-uint32_t Button::inputQueueSize()
+uint32_t Button::inputQueueSize() const
 {
   return m_inputQueue.size();
 }
 #endif
-
-// global button
-Button button;

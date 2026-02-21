@@ -11,48 +11,50 @@
 
 class Time
 {
-  // private unimplemented constructor
-  Time();
-
 public:
-  // opting for static class here because there should only ever be one
-  // Settings control object and I don't like singletons
-  static bool init();
-  static void cleanup();
+  Time();
+  bool init();
+  void cleanup();
 
   // tick the clock forward to millis()
-  static void tickClock();
+  void tickClock();
 
   // get the current tick, offset by any active simulation (simulation only exists in vortexlib)
-  // Exposing this in the header seems to save on space a non negligible amount, it is used a lot
-  // and exposing in the header probably allows the compiler to optimize away repititive calls
-  static uint32_t getCurtime() { return m_curTick; }
+  uint32_t getCurtime() const { return m_curTick; }
 
   // Current microseconds since startup, only use this for things like measuring rapid data transfer timings.
   // If you just need to perform regular time checks for a pattern or some logic then use getCurtime() and measure
   // time in ticks, use the SEC_TO_TICKS() or MS_TO_TICKS() macros to convert timings to measures of ticks for
   // purpose of comparing against getCurtime()
-  static uint32_t microseconds();
+  uint32_t microseconds();
 
   // delay for some number of microseconds or milliseconds, these are bad
-  static void delayMicroseconds(uint32_t us);
-  static void delayMilliseconds(uint32_t ms);
+  void delayMicroseconds(uint32_t us);
+  void delayMilliseconds(uint32_t ms);
 
 #ifdef HELIOS_CLI
   // toggle timestep on/off
-  static void enableTimestep(bool enabled) { m_enableTimestep = enabled; }
+  void enableTimestep(bool enabled) { m_enableTimestep = enabled; }
 #endif
 
+  // bridge access for legacy/static callsites and interrupt edges
+  static void setActiveInstance(Time *instance) { s_activeInstance = instance; }
+  static uint32_t activeCurtime();
+  static void activeDelayMilliseconds(uint32_t ms);
+  static void activeDelayMicroseconds(uint32_t us);
+
 private:
-  // global tick counter
-  static uint32_t m_curTick;
+  // tick counter
+  uint32_t m_curTick;
   // the last frame timestamp
-  static uint32_t m_prevTime;
+  uint32_t m_prevTime;
 
 #ifdef HELIOS_CLI
   // whether timestep is enabled
-  static bool m_enableTimestep;
+  bool m_enableTimestep;
 #endif
+
+  static Time *s_activeInstance;
 };
 
 #endif

@@ -15,10 +15,12 @@
 #include <fcntl.h>
 #endif
 
+Storage::Storage()
 #ifdef HELIOS_CLI
-// whether storage is enabled, default enabled
-bool Storage::m_enableStorage = true;
+  : m_enableStorage(true)
 #endif
+{
+}
 
 bool Storage::init()
 {

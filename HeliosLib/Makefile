@@ -68,10 +68,25 @@ LIBS=\
 
 # source files
 # local source files first, other sources after
-ifeq ($(OS),Windows_NT)
-    SRC = $(shell find ../Helios/ -type f -name \\*.cpp) HeliosLib.cpp HeliosInstance.cpp
+HELIOS_SRC_COMMON=\
+	../Helios/Colortypes.cpp \
+	../Helios/Colorset.cpp \
+	../Helios/Pattern.cpp \
+	../Helios/Patterns.cpp \
+	../Helios/Random.cpp \
+	../Helios/Timer.cpp
+
+HELIOS_SRC_LEGACY=\
+	../Helios/Button.cpp \
+	../Helios/Helios.cpp \
+	../Helios/Led.cpp \
+	../Helios/Storage.cpp \
+	../Helios/TimeControl.cpp
+
+ifdef WASM
+SRC = $(HELIOS_SRC_COMMON) HeliosLib.cpp HeliosInstance.cpp
 else
-    SRC = $(shell find ../Helios/ -type f -name '*.cpp') HeliosLib.cpp HeliosInstance.cpp
+SRC = $(HELIOS_SRC_COMMON) $(HELIOS_SRC_LEGACY) HeliosLib.cpp HeliosInstance.cpp
 endif
 
 # object files are source files with .c replaced with .o

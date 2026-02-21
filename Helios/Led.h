@@ -5,57 +5,57 @@
 
 #include "Colortypes.h"
 
+class Time;
+
 class Led
 {
-  // private unimplemented constructor
-  Led();
-
 public:
-  // opting for static class here because there should only ever be one
-  // Led control object and I don't like singletons
-  static bool init();
-  static void cleanup();
+  Led();
+  void bindTime(Time *time) { m_time = time; }
+  bool init();
+  void cleanup();
 
   // control individual LED, these are appropriate to use in internal pattern logic
-  static void set(RGBColor col);
-  static void set(uint8_t r, uint8_t g, uint8_t b);
+  void set(RGBColor col);
+  void set(uint8_t r, uint8_t g, uint8_t b);
 
   // Turn off individual LEDs, these are appropriate to use in internal pattern logic
-  static void clear() { set(RGB_OFF); }
+  void clear() { set(RGB_OFF); }
 
   // Dim individual LEDs, these are appropriate to use in internal pattern logic
-  static void adjustBrightness(uint8_t fadeBy);
+  void adjustBrightness(uint8_t fadeBy);
 
   // strobe between two colors with a simple on/off timing
-  static void strobe(uint16_t on_time, uint16_t off_time, RGBColor col1, RGBColor col2);
+  void strobe(uint16_t on_time, uint16_t off_time, RGBColor col1, RGBColor col2);
 
   // breath the hue on an index
   // warning: these use hsv to rgb in realtime!
-  static void breath(uint8_t hue, uint32_t duration = 1000, uint8_t magnitude = 60,
+  void breath(uint8_t hue, uint32_t duration = 1000, uint8_t magnitude = 60,
       uint8_t sat = 255, uint8_t val = 255);
 
   // a very specialized api to hold all leds on a color for 250ms
-  static void hold(RGBColor col);
+  void hold(RGBColor col);
 
   // get the RGBColor of an Led index
-  static RGBColor get() { return m_ledColor; }
+  RGBColor get() const { return m_ledColor; }
 
   // global brightness
-  static uint8_t getBrightness() { return m_brightness; }
-  static void setBrightness(uint8_t brightness) { m_brightness = brightness; }
+  uint8_t getBrightness() const { return m_brightness; }
+  void setBrightness(uint8_t brightness) { m_brightness = brightness; }
 
   // actually update the LEDs and show the changes
-  static void update();
+  void update();
 
 private:
-  static void setPWM(uint8_t pwmPin, uint8_t pwmValue, volatile uint8_t &controlRegister,
+  void setPWM(uint8_t pwmPin, uint8_t pwmValue, volatile uint8_t &controlRegister,
       uint8_t controlBit, volatile uint8_t &compareRegister);
 
   // the global brightness
-  static uint8_t m_brightness;
+  uint8_t m_brightness;
   // led color
-  static RGBColor m_ledColor;
-  static RGBColor m_realColor;
+  RGBColor m_ledColor;
+  RGBColor m_realColor;
+  Time *m_time;
 };
 
 #endif

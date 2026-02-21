@@ -2,31 +2,49 @@
 
 #include "HeliosConfig.h"
 #include "Colorset.h"
-#include "Pattern.h"
+#include "HeliosPatternRuntime.h"
+#include "Storage.h"
+#include "Led.h"
+#include "TimeControl.h"
+#include "Button.h"
 
 class Helios
 {
 public:
-  static bool init();
-  static void tick();
+  Helios();
+  bool init();
+  void tick();
 
-  static void enter_sleep();
-  static void wakeup();
+  void enter_sleep();
+  void wakeup();
 
-  static bool keep_going() { return keepgoing; }
-  static void terminate() { keepgoing = false; }
+  bool keep_going() const { return keepgoing; }
+  void terminate() { keepgoing = false; }
 
-  static void load_next_mode();
-  static void load_cur_mode();
-  static void save_cur_mode();
-  static void load_global_flags();
-  static void save_global_flags();
-  static void set_mode_index(uint8_t mode_index);
+  void load_next_mode();
+  void load_cur_mode();
+  void save_cur_mode();
+  void load_global_flags();
+  void save_global_flags();
+  void set_mode_index(uint8_t mode_index);
 
 #ifdef HELIOS_CLI
-  static bool is_asleep() { return sleeping; }
-  static Pattern &cur_pattern() { return pat; }
+  bool is_asleep() const { return sleeping; }
 #endif
+  Pattern &cur_pattern() { return pat; }
+  const Pattern &cur_pattern() const { return pat; }
+  Storage &storage() { return m_storage; }
+  Led &led() { return m_led; }
+  const Led &led() const { return m_led; }
+  Time &time() { return m_time; }
+  const Time &time() const { return m_time; }
+  Button &button() { return m_button; }
+  const Button &button() const { return m_button; }
+
+  // Embedded ISR bridge to the active runtime instance.
+  static void setActiveInstance(Helios *instance) { s_activeInstance = instance; }
+  static void wakeupActiveInstance() { if (s_activeInstance) s_activeInstance->wakeup(); }
+  static void terminateActiveInstance() { if (s_activeInstance) s_activeInstance->terminate(); }
 
   enum Flags : uint8_t {
     // No flags are set
@@ -49,18 +67,18 @@ public:
   };
 
   // get/set global flags
-  static void set_flags(Flags flag) { global_flags = (Flags)(global_flags | flag); }
-  static bool has_flags(Flags flag) { return (global_flags & flag) == flag; }
-  static bool has_any_flags(Flags flag) { return (global_flags & flag) != FLAG_NONE; }
-  static void clear_flags(Flags flag) { global_flags = (Flags)(global_flags & ~flag); }
-  static void toggle_flags(Flags flag) { global_flags = (Flags)(global_flags ^ flag); }
+  void set_flags(Flags flag) { global_flags = (Flags)(global_flags | flag); }
+  bool has_flags(Flags flag) const { return (global_flags & flag) == flag; }
+  bool has_any_flags(Flags flag) const { return (global_flags & flag) != FLAG_NONE; }
+  void clear_flags(Flags flag) { global_flags = (Flags)(global_flags & ~flag); }
+  void toggle_flags(Flags flag) { global_flags = (Flags)(global_flags ^ flag); }
 
 private:
   // initialize the various components of helios
-  static bool init_components();
+  bool init_components();
 
-  static void handle_state();
-  static void handle_state_modes();
+  void handle_state();
+  void handle_state_modes();
 
   // the slot selection returns this info for internal menu logic
   enum ColorSelectOption {
@@ -71,20 +89,20 @@ private:
     SELECTED_SLOT
   };
 
-  static void handle_off_menu(uint8_t mag, bool past);
-  static void handle_on_menu(uint8_t mag, bool past);
-  static void handle_state_col_select();
-  static void handle_state_col_select_slot(ColorSelectOption &out_option);
-  static void handle_state_col_select_quadrant();
-  static void handle_state_col_select_hue_sat_val();
-  static void handle_state_pat_select();
-  static void handle_state_toggle_flag(Flags flag);
-  static void handle_state_set_defaults();
-  static void handle_state_set_global_brightness();
-  static void handle_state_shift_mode();
-  static void handle_state_randomize();
-  static void show_selection(RGBColor color);
-  static void factory_reset();
+  void handle_off_menu(uint8_t mag, bool past);
+  void handle_on_menu(uint8_t mag, bool past);
+  void handle_state_col_select();
+  void handle_state_col_select_slot(ColorSelectOption &out_option);
+  void handle_state_col_select_quadrant();
+  void handle_state_col_select_hue_sat_val();
+  void handle_state_pat_select();
+  void handle_state_toggle_flag(Flags flag);
+  void handle_state_set_defaults();
+  void handle_state_set_global_brightness();
+  void handle_state_shift_mode();
+  void handle_state_randomize();
+  void show_selection(RGBColor color);
+  void factory_reset();
 
   enum State : uint8_t {
     STATE_MODES,
@@ -106,23 +124,28 @@ private:
   };
 
   // the current state of the system
-  static State cur_state;
+  State cur_state;
   // global flags for the entire system
-  static Flags global_flags;
-  static uint8_t menu_selection;
-  static uint8_t cur_mode;
+  Flags global_flags;
+  uint8_t menu_selection;
+  uint8_t cur_mode;
   // the quadrant that was selected in color select
-  static uint8_t selected_slot;
-  static uint8_t selected_base_quad;
-  static uint8_t selected_hue;
-  static uint8_t selected_sat;
-  static uint8_t selected_val;
-  static PatternArgs default_args[6];
-  static Colorset default_colorsets[6];
-  static Pattern pat;
-  static bool keepgoing;
+  uint8_t selected_slot;
+  uint8_t selected_base_quad;
+  uint8_t selected_hue;
+  uint8_t selected_sat;
+  uint8_t selected_val;
+  PatternArgs default_args[6];
+  Colorset default_colorsets[6];
+  HeliosPatternRuntime pat;
+  Storage m_storage;
+  Led m_led;
+  Time m_time;
+  Button m_button;
+  bool keepgoing;
 
 #ifdef HELIOS_CLI
-  static bool sleeping;
+  bool sleeping;
 #endif
+  static Helios *s_activeInstance;
 };

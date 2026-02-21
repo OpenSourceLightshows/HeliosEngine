@@ -7,10 +7,11 @@
 // this is the main thread for non-arduino embedded builds
 int main(int argc, char *argv[])
 {
-  Helios::init();
+  Helios helios;
+  helios.init();
   // the main thread just initializes Helios then continuously calls tick
-  while (Helios::keep_going()) {
-    Helios::tick();
+  while (helios.keep_going()) {
+    helios.tick();
   }
   return 0;
 }

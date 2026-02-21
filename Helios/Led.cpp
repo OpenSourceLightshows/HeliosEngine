@@ -22,11 +22,13 @@
 
 #define SCALE8(i, scale)  (((uint16_t)i * (uint16_t)(scale)) >> 8)
 
-// array of led color values
-RGBColor Led::m_ledColor = RGB_OFF;
-RGBColor Led::m_realColor = RGB_OFF;
-// global brightness
-uint8_t Led::m_brightness = DEFAULT_BRIGHTNESS;
+Led::Led() :
+  m_brightness(DEFAULT_BRIGHTNESS),
+  m_ledColor(RGB_OFF),
+  m_realColor(RGB_OFF),
+  m_time(nullptr)
+{
+}
 
 bool Led::init()
 {
@@ -69,7 +71,8 @@ void Led::adjustBrightness(uint8_t fadeBy)
 
 void Led::strobe(uint16_t on_time, uint16_t off_time, RGBColor off_col, RGBColor on_col)
 {
-  set(((Time::getCurtime() % (on_time + off_time)) > on_time) ? off_col : on_col);
+  const uint32_t curtime = m_time ? m_time->getCurtime() : Time::activeCurtime();
+  set(((curtime % (on_time + off_time)) > on_time) ? off_col : on_col);
 }
 
 void Led::breath(uint8_t hue, uint32_t duration, uint8_t magnitude, uint8_t sat, uint8_t val)
@@ -79,7 +82,8 @@ void Led::breath(uint8_t hue, uint32_t duration, uint8_t magnitude, uint8_t sat,
     return;
   }
   // Determine the phase in the cycle
-  uint32_t phase = Time::getCurtime() % (2 * duration);
+  const uint32_t curtime = m_time ? m_time->getCurtime() : Time::activeCurtime();
+  uint32_t phase = curtime % (2 * duration);
   // Calculate hue shift
   int32_t hueShift;
   if (phase < duration) {
@@ -99,7 +103,11 @@ void Led::hold(RGBColor col)
 {
   set(col);
   update();
-  Time::delayMilliseconds(250);
+  if (m_time) {
+    m_time->delayMilliseconds(250);
+    return;
+  }
+  Time::activeDelayMilliseconds(250);
 }
 
 void Led::setPWM(uint8_t pwmPin, uint8_t pwmValue, volatile uint8_t &controlRegister,
