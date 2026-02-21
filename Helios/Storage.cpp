@@ -17,7 +17,10 @@
 
 Storage::Storage()
 #ifdef HELIOS_CLI
-  : m_enableStorage(true)
+  : m_enableStorage(true),
+    m_callbacks(nullptr)
+#else
+  : m_callbacks(nullptr)
 #endif
 {
 }
@@ -124,6 +127,9 @@ void Storage::write_crc(uint8_t pos)
 
 void Storage::write_byte(uint8_t address, uint8_t data)
 {
+  if (m_callbacks && m_callbacks->storageWrite(address, data)) {
+    return;
+  }
 #ifdef HELIOS_EMBEDDED
   // reads out the byte of the eeprom first to see if it's different
   // before writing out the byte -- this is faster than always writing
@@ -161,6 +167,10 @@ void Storage::write_byte(uint8_t address, uint8_t data)
 
 uint8_t Storage::read_byte(uint8_t address)
 {
+  uint8_t callbackValue = 0;
+  if (m_callbacks && m_callbacks->storageRead(address, callbackValue)) {
+    return callbackValue;
+  }
 #ifdef HELIOS_EMBEDDED
   // do a three way read because the attiny85 eeprom basically doesn't work
   uint8_t b1 = internal_read(address);

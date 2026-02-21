@@ -4,6 +4,7 @@
 #include <inttypes.h>
 
 #include "Colortypes.h"
+#include "HeliosCallbacks.h"
 
 class Time;
 
@@ -12,6 +13,7 @@ class Led
 public:
   Led();
   void bindTime(Time *time) { m_time = time; }
+  void bindCallbacks(HeliosCallbacks *callbacks) { m_callbacks = callbacks; }
   bool init();
   void cleanup();
 
@@ -41,7 +43,7 @@ public:
 
   // global brightness
   uint8_t getBrightness() const { return m_brightness; }
-  void setBrightness(uint8_t brightness) { m_brightness = brightness; }
+  void setBrightness(uint8_t brightness);
 
   // actually update the LEDs and show the changes
   void update();
@@ -56,6 +58,7 @@ private:
   RGBColor m_ledColor;
   RGBColor m_realColor;
   Time *m_time;
+  HeliosCallbacks *m_callbacks;
 };
 
 #endif

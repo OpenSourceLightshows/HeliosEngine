@@ -49,6 +49,7 @@ Helios::Helios() :
   m_led(),
   m_time(),
   m_button(),
+  m_callbacks(nullptr),
   keepgoing(true)
 #ifdef HELIOS_CLI
   , sleeping(false)
@@ -56,8 +57,18 @@ Helios::Helios() :
 {
   setActiveInstance(this);
   Time::setActiveInstance(&m_time);
+  setCallbacks(nullptr);
+}
+
+void Helios::setCallbacks(HeliosCallbacks *callbacks)
+{
+  m_callbacks = callbacks;
+  m_time.bindCallbacks(callbacks);
   m_led.bindTime(&m_time);
+  m_led.bindCallbacks(callbacks);
   m_button.bindTime(&m_time);
+  m_button.bindCallbacks(callbacks);
+  m_storage.bindCallbacks(callbacks);
 }
 
 bool Helios::init()

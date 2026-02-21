@@ -29,6 +29,7 @@ Time::Time() :
 #ifdef HELIOS_CLI
   , m_enableTimestep(true)
 #endif
+  , m_callbacks(nullptr)
 {
 }
 
@@ -89,14 +90,15 @@ ISR(TIMER0_OVF_vect) {
 
 uint32_t Time::microseconds()
 {
+  uint32_t usOut = 0;
 #ifdef HELIOS_CLI
   struct timespec ts;
   clock_gettime(CLOCK_MONOTONIC, &ts);
   uint64_t us = SEC_TO_US((uint64_t)ts.tv_sec) + NS_TO_US((uint64_t)ts.tv_nsec);
-  return (unsigned long)us;
+  usOut = (unsigned long)us;
 #else
 #ifdef HELIOS_ARDUINO
-  return micros();
+  usOut = micros();
 #else
   // The only reason that micros() is actually necessary is if Helios::tick()
   // cannot be called in a 1Khz ISR. If Helios::tick() cannot be reliably called
@@ -109,9 +111,13 @@ uint32_t Time::microseconds()
   uint32_t micros = (timer0_overflow_count * (256 * 8)) + (TCNT0 * 8);
   SREG = oldSREG;
   // then shift right to counteract the multiplication by 8
-  return micros >> 6;
+  usOut = micros >> 6;
 #endif
 #endif
+  if (m_callbacks) {
+    return m_callbacks->timeNowMicros(usOut);
+  }
+  return usOut;
 }
 
 #ifdef HELIOS_EMBEDDED

@@ -3,6 +3,10 @@
 #include "Colorset.h"
 #include "HeliosPatternInstance.h"
 
+#ifdef WASM
+#include <emscripten/val.h>
+#endif
+
 class HeliosInstance
 {
 public:
@@ -13,7 +17,17 @@ public:
   void setColorset(Colorset &colorset);
   void setArgs(PatternArgs &args);
   void setMode(PatternArgs &args, Colorset &colorset);
+#ifdef WASM
+  void setLedsInitHook(emscripten::val callback);
+  void setLedsShowHook(emscripten::val callback);
+  void setLedsBrightnessHook(emscripten::val callback);
+#endif
 
 private:
   HeliosPatternInstance pat;
+#ifdef WASM
+  emscripten::val m_ledsInitHook;
+  emscripten::val m_ledsShowHook;
+  emscripten::val m_ledsBrightnessHook;
+#endif
 };

@@ -4,6 +4,7 @@
 #include <inttypes.h>
 
 #include "HeliosConfig.h"
+#include "HeliosCallbacks.h"
 
 // macros to convert milliseconds and seconds to measures of ticks
 #define MS_TO_TICKS(ms) (uint32_t)(((uint32_t)(ms) * TICKRATE) / 1000)
@@ -13,6 +14,7 @@ class Time
 {
 public:
   Time();
+  void bindCallbacks(HeliosCallbacks *callbacks) { m_callbacks = callbacks; }
   bool init();
   void cleanup();
 
@@ -55,6 +57,7 @@ private:
 #endif
 
   static Time *s_activeInstance;
+  HeliosCallbacks *m_callbacks;
 };
 
 #endif

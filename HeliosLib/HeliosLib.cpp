@@ -3,8 +3,72 @@
 
 #ifdef WASM
 #include <emscripten/bind.h>
+#include <string>
 
 using namespace emscripten;
+
+class HeliosLibJsCallbacks : public HeliosCallbacks
+{
+public:
+  HeliosLibJsCallbacks() :
+    m_checkPinHook(val::undefined()),
+    m_ledsInitHook(val::undefined()),
+    m_ledsShowHook(val::undefined()),
+    m_ledsBrightnessHook(val::undefined())
+  {
+  }
+
+  void setCheckPinHook(val callback) { m_checkPinHook = callback; }
+  void setLedsInitHook(val callback) { m_ledsInitHook = callback; }
+  void setLedsShowHook(val callback) { m_ledsShowHook = callback; }
+  void setLedsBrightnessHook(val callback) { m_ledsBrightnessHook = callback; }
+
+  bool checkPinHook(uint32_t pin, bool defaultState) override
+  {
+    if (!isFunction(m_checkPinHook)) {
+      return defaultState;
+    }
+    return m_checkPinHook(pin, defaultState).as<bool>();
+  }
+
+  void ledsInit(const RGBColor &initialColor, int count) override
+  {
+    if (!isFunction(m_ledsInitHook)) {
+      return;
+    }
+    m_ledsInitHook(initialColor.red, initialColor.green, initialColor.blue, count);
+  }
+
+  void ledsShow(const RGBColor &color, uint8_t brightness) override
+  {
+    if (!isFunction(m_ledsShowHook)) {
+      return;
+    }
+    m_ledsShowHook(color.red, color.green, color.blue, brightness);
+  }
+
+  void ledsBrightness(uint8_t brightness) override
+  {
+    if (!isFunction(m_ledsBrightnessHook)) {
+      return;
+    }
+    m_ledsBrightnessHook(brightness);
+  }
+
+private:
+  static bool isFunction(const val &callback)
+  {
+    if (callback.isNull() || callback.isUndefined()) {
+      return false;
+    }
+    return callback.typeOf().as<std::string>() == "function";
+  }
+
+  val m_checkPinHook;
+  val m_ledsInitHook;
+  val m_ledsShowHook;
+  val m_ledsBrightnessHook;
+};
 
 // js is dumb and has issues doing this cast I guess
 PatternID intToPatternID(int val)
@@ -112,7 +176,20 @@ EMSCRIPTEN_BINDINGS(Vortex) {
     .function("getCurColor", &HeliosInstance::getCurColor)
     .function("setColorset", &HeliosInstance::setColorset)
     .function("setArgs", &HeliosInstance::setArgs)
-    .function("setMode", &HeliosInstance::setMode);
+    .function("setMode", &HeliosInstance::setMode)
+    .function("setLedsInitHook", &HeliosInstance::setLedsInitHook)
+    .function("setLedsShowHook", &HeliosInstance::setLedsShowHook)
+    .function("setLedsBrightnessHook", &HeliosInstance::setLedsBrightnessHook);
+
+  class_<HeliosLib>("HeliosLib")
+    .constructor<>()
+    .function("init", &HeliosLib::init)
+    .function("tick", &HeliosLib::tick)
+    .function("cleanup", &HeliosLib::cleanup)
+    .function("setCheckPinHook", &HeliosLib::setCheckPinHook)
+    .function("setLedsInitHook", &HeliosLib::setLedsInitHook)
+    .function("setLedsShowHook", &HeliosLib::setLedsShowHook)
+    .function("setLedsBrightnessHook", &HeliosLib::setLedsBrightnessHook);
 
   // bind others as necessary
 }
@@ -120,16 +197,80 @@ EMSCRIPTEN_BINDINGS(Vortex) {
 
 // Helios Lib code
 
+HeliosLib::HeliosLib() :
+  m_helios(),
+  m_callbacks(nullptr)
+#ifdef WASM
+  , m_jsCallbacks(new HeliosLibJsCallbacks())
+#endif
+{
+#ifdef WASM
+  setCallbacks(m_jsCallbacks);
+#endif
+}
+
+HeliosLib::~HeliosLib()
+{
+#ifdef WASM
+  delete m_jsCallbacks;
+  m_jsCallbacks = nullptr;
+#endif
+}
+
 bool HeliosLib::init()
 {
-  return true;
+  return m_helios.init();
 }
 
 void HeliosLib::cleanup()
 {
-
 }
 
 void HeliosLib::tick()
 {
+  m_helios.tick();
 }
+
+void HeliosLib::setCallbacks(HeliosCallbacks *callbacks)
+{
+  m_callbacks = callbacks;
+  m_helios.setCallbacks(callbacks);
+}
+
+#ifdef WASM
+void HeliosLib::setCheckPinHook(emscripten::val callback)
+{
+  if (!m_jsCallbacks) {
+    return;
+  }
+  m_jsCallbacks->setCheckPinHook(callback);
+  setCallbacks(m_jsCallbacks);
+}
+
+void HeliosLib::setLedsInitHook(emscripten::val callback)
+{
+  if (!m_jsCallbacks) {
+    return;
+  }
+  m_jsCallbacks->setLedsInitHook(callback);
+  setCallbacks(m_jsCallbacks);
+}
+
+void HeliosLib::setLedsShowHook(emscripten::val callback)
+{
+  if (!m_jsCallbacks) {
+    return;
+  }
+  m_jsCallbacks->setLedsShowHook(callback);
+  setCallbacks(m_jsCallbacks);
+}
+
+void HeliosLib::setLedsBrightnessHook(emscripten::val callback)
+{
+  if (!m_jsCallbacks) {
+    return;
+  }
+  m_jsCallbacks->setLedsBrightnessHook(callback);
+  setCallbacks(m_jsCallbacks);
+}
+#endif

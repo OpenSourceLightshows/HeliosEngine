@@ -7,6 +7,7 @@
 #include "Led.h"
 #include "TimeControl.h"
 #include "Button.h"
+#include "HeliosCallbacks.h"
 
 class Helios
 {
@@ -40,6 +41,7 @@ public:
   const Time &time() const { return m_time; }
   Button &button() { return m_button; }
   const Button &button() const { return m_button; }
+  void setCallbacks(HeliosCallbacks *callbacks);
 
   // Embedded ISR bridge to the active runtime instance.
   static void setActiveInstance(Helios *instance) { s_activeInstance = instance; }
@@ -142,6 +144,7 @@ private:
   Led m_led;
   Time m_time;
   Button m_button;
+  HeliosCallbacks *m_callbacks;
   bool keepgoing;
 
 #ifdef HELIOS_CLI

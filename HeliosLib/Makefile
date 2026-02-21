@@ -84,7 +84,7 @@ HELIOS_SRC_LEGACY=\
 	../Helios/TimeControl.cpp
 
 ifdef WASM
-SRC = $(HELIOS_SRC_COMMON) HeliosLib.cpp HeliosInstance.cpp
+SRC = $(HELIOS_SRC_COMMON) $(HELIOS_SRC_LEGACY) HeliosLib.cpp HeliosInstance.cpp
 else
 SRC = $(HELIOS_SRC_COMMON) $(HELIOS_SRC_LEGACY) HeliosLib.cpp HeliosInstance.cpp
 endif

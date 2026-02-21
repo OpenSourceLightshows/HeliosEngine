@@ -6,6 +6,8 @@
 #include <queue>
 #endif
 
+#include "HeliosCallbacks.h"
+
 class Time;
 
 class Button
@@ -13,6 +15,7 @@ class Button
 public:
   Button();
   void bindTime(Time *time) { m_time = time; }
+  void bindCallbacks(HeliosCallbacks *callbacks) { m_callbacks = callbacks; }
   // initialize a new button object with a pin number
   bool init();
   // directly poll the pin for whether it's pressed right now
@@ -124,4 +127,5 @@ private:
 #endif
   uint32_t now() const;
   Time *m_time;
+  HeliosCallbacks *m_callbacks;
 };

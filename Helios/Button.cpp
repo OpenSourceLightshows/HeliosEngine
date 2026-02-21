@@ -7,8 +7,11 @@
 #ifdef HELIOS_ARDUINO
 #include <arduino.h>
 #endif
-#define BUTTON_PIN 3
 #define BUTTON_PORT 2
+#endif
+
+#ifndef BUTTON_PIN
+#define BUTTON_PIN 3
 #endif
 
 #include "Helios.h"
@@ -30,7 +33,8 @@ Button::Button() :
   m_pinState(false),
   m_enableWake(false),
 #endif
-  m_time(nullptr)
+  m_time(nullptr),
+  m_callbacks(nullptr)
 {
 }
 
@@ -94,17 +98,22 @@ ISR(PCINT0_vect) {
 // directly poll the pin for whether it's pressed right now
 bool Button::check()
 {
+  bool defaultState = false;
 #ifdef HELIOS_EMBEDDED
 #ifdef HELIOS_ARDUINO
-  return digitalRead(3) == HIGH;
+  defaultState = digitalRead(3) == HIGH;
 #else
-  return (PINB & (1 << 3)) != 0;
+  defaultState = (PINB & (1 << 3)) != 0;
 #endif
 #elif defined(HELIOS_CLI)
   // then just return the pin state as-is, the input event may have
   // adjusted this value
-  return m_pinState;
+  defaultState = m_pinState;
 #endif
+  if (m_callbacks) {
+    return m_callbacks->checkPinHook(BUTTON_PIN, defaultState);
+  }
+  return defaultState;
 }
 
 // detect if the button is being held for a long hold (past long click)
