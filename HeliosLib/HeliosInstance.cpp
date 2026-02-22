@@ -65,10 +65,17 @@ int HeliosInstance::randomizeSeeded(uint8_t maxColors)
   Random ctx(pat.crc32());
   uint8_t randVal = ctx.next8();
 
-  uint8_t safeMaxColors = maxColors > 0 ? maxColors : 8;
-  uint8_t numColors = (uint8_t)((randVal + 1) % safeMaxColors);
+  // Firmware-style variability: randomize between 1..requested max.
+  uint8_t requestedMaxColors = maxColors > 0 ? maxColors : 1;
+  if (requestedMaxColors > NUM_COLOR_SLOTS) {
+    requestedMaxColors = NUM_COLOR_SLOTS;
+  }
+  uint8_t requestedColors = (uint8_t)((randVal % requestedMaxColors) + 1);
 
-  pat.colorset().randomizeColors(ctx, numColors, Colorset::COLOR_MODE_RANDOMLY_PICK);
+  pat.colorset().randomizeColors(ctx, requestedColors, Colorset::COLOR_MODE_RANDOMLY_PICK);
+  while (pat.colorset().numColors() > requestedColors) {
+    pat.colorset().removeColor((uint8_t)(pat.colorset().numColors() - 1));
+  }
 
   int patternIndex = (int)(randVal % PATTERN_COUNT);
   Patterns::make_pattern((PatternID)patternIndex, pat);

@@ -39,6 +39,7 @@ INCLUDES=\
 
 ifdef WASM
 DEFINES += -D WASM
+DEFINES += -D NUM_COLOR_SLOTS=80
 # this was used before but I think only the above is necessary
 LDFLAGS += --bind -s EXPORT_ES6=1 -s EXPORT_NAME='HeliosLib'
 endif
