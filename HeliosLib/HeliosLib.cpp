@@ -177,6 +177,10 @@ EMSCRIPTEN_BINDINGS(Vortex) {
     .function("setColorset", &HeliosInstance::setColorset)
     .function("setArgs", &HeliosInstance::setArgs)
     .function("setMode", &HeliosInstance::setMode)
+    .function("randomizeSeeded", &HeliosInstance::randomizeSeeded)
+    .function("getArgs", &HeliosInstance::getArgs)
+    .function("getNumColors", &HeliosInstance::getNumColors)
+    .function("getColorAt", &HeliosInstance::getColorAt)
     .function("setLedsInitHook", &HeliosInstance::setLedsInitHook)
     .function("setLedsShowHook", &HeliosInstance::setLedsShowHook)
     .function("setLedsBrightnessHook", &HeliosInstance::setLedsBrightnessHook);

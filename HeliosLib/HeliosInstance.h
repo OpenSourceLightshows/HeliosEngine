@@ -17,6 +17,10 @@ public:
   void setColorset(Colorset &colorset);
   void setArgs(PatternArgs &args);
   void setMode(PatternArgs &args, Colorset &colorset);
+  int randomizeSeeded(uint8_t maxColors);
+  PatternArgs getArgs();
+  int getNumColors();
+  RGBColor getColorAt(int index);
 #ifdef WASM
   void setLedsInitHook(emscripten::val callback);
   void setLedsShowHook(emscripten::val callback);

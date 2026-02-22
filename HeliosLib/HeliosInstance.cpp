@@ -1,4 +1,6 @@
 #include "HeliosInstance.h"
+#include "Patterns.h"
+#include "Random.h"
 
 #ifdef WASM
 #include <string>
@@ -56,6 +58,40 @@ void HeliosInstance::setMode(PatternArgs &args, Colorset &colorset)
   pat.setArgs(args);
   pat.setColorset(colorset);
   pat.restart();
+}
+
+int HeliosInstance::randomizeSeeded(uint8_t maxColors)
+{
+  Random ctx(pat.crc32());
+  uint8_t randVal = ctx.next8();
+
+  uint8_t safeMaxColors = maxColors > 0 ? maxColors : 8;
+  uint8_t numColors = (uint8_t)((randVal + 1) % safeMaxColors);
+
+  pat.colorset().randomizeColors(ctx, numColors, Colorset::COLOR_MODE_RANDOMLY_PICK);
+
+  int patternIndex = (int)(randVal % PATTERN_COUNT);
+  Patterns::make_pattern((PatternID)patternIndex, pat);
+  pat.restart();
+  return patternIndex;
+}
+
+PatternArgs HeliosInstance::getArgs()
+{
+  return pat.getArgs();
+}
+
+int HeliosInstance::getNumColors()
+{
+  return pat.colorset().numColors();
+}
+
+RGBColor HeliosInstance::getColorAt(int index)
+{
+  if (index < 0) {
+    return RGBColor();
+  }
+  return pat.colorset().get((uint8_t)index);
 }
 
 #ifdef WASM
