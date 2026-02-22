@@ -52,7 +52,6 @@ public:
 
   // enable wake on press
   void enableWake();
-  void handleWakeInterrupt();
 
 #ifdef HELIOS_CLI
   // these will 'inject' a short/long click without actually touching the
@@ -123,6 +122,5 @@ private:
   // whether the button is waiting to wake the device
   bool m_enableWake;
 #endif
-  uint32_t now() const;
   Helios &m_helios;
 };

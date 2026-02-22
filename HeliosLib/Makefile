@@ -85,9 +85,9 @@ HELIOS_SRC_LEGACY=\
 	../Helios/TimeControl.cpp
 
 ifdef WASM
-SRC = $(HELIOS_SRC_COMMON) $(HELIOS_SRC_LEGACY) HeliosLib.cpp HeliosInstance.cpp
+SRC = $(HELIOS_SRC_COMMON) $(HELIOS_SRC_LEGACY) HeliosLib.cpp
 else
-SRC = $(HELIOS_SRC_COMMON) $(HELIOS_SRC_LEGACY) HeliosLib.cpp HeliosInstance.cpp
+SRC = $(HELIOS_SRC_COMMON) $(HELIOS_SRC_LEGACY) HeliosLib.cpp
 endif
 
 # object files are source files with .c replaced with .o

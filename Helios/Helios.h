@@ -2,7 +2,7 @@
 
 #include "HeliosConfig.h"
 #include "Colorset.h"
-#include "HeliosPatternRuntime.h"
+#include "Pattern.h"
 #include "Storage.h"
 #include "Led.h"
 #include "TimeControl.h"
@@ -42,7 +42,8 @@ public:
   Button &button() { return m_button; }
   const Button &button() const { return m_button; }
   void setCallbacks(HeliosCallbacks *callbacks);
-  HeliosCallbacks *callbacks() const { return m_callbacks; }
+  HeliosCallbacks &callbacks() { return *m_callbacks; }
+  const HeliosCallbacks &callbacks() const { return *m_callbacks; }
 
   enum Flags : uint8_t {
     // No flags are set
@@ -135,11 +136,12 @@ private:
   uint8_t selected_val;
   PatternArgs default_args[6];
   Colorset default_colorsets[6];
-  HeliosPatternRuntime pat;
+  Pattern pat;
   Storage m_storage;
   Led m_led;
   Time m_time;
   Button m_button;
+  HeliosCallbacks m_defaultCallbacks;
   HeliosCallbacks *m_callbacks;
   bool keepgoing;
 

@@ -2,7 +2,7 @@
 
 #include "Helios.h"
 #include "HeliosCallbacks.h"
-#include "HeliosPatternInstance.h"
+#include "Pattern.h"
 
 #ifdef WASM
 #include <emscripten/val.h>
@@ -41,7 +41,7 @@ public:
 
 private:
   Helios m_helios;
-  HeliosPatternInstance m_preview;
+  Pattern m_preview;
   HeliosCallbacks *m_callbacks;
 #ifdef WASM
   HeliosLibJsCallbacks *m_jsCallbacks;

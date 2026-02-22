@@ -16,10 +16,6 @@
 
 #include "Helios.h"
 
-#ifdef HELIOS_EMBEDDED
-static Button *g_activeButton = nullptr;
-#endif
-
 Button::Button(Helios &helios) :
   m_pressTime(0),
   m_releaseTime(0),
@@ -39,11 +35,6 @@ Button::Button(Helios &helios) :
 #endif
   m_helios(helios)
 {
-}
-
-uint32_t Button::now() const
-{
-  return m_helios.time().getCurtime();
 }
 
 // initialize a new button object with a pin number
@@ -69,18 +60,12 @@ bool Button::init()
 #ifdef HELIOS_ARDUINO
   pinMode(3, INPUT);
 #else
-  g_activeButton = this;
   // turn off wake
   PCMSK &= ~(1 << PCINT3);
   GIMSK &= ~(1 << PCIE);
 #endif
 #endif
   return true;
-}
-
-void Button::handleWakeInterrupt()
-{
-  m_helios.wakeup();
 }
 
 // enable wake on press
@@ -100,9 +85,6 @@ void Button::enableWake()
 ISR(PCINT0_vect) {
   PCMSK &= ~(1 << PCINT3);
   GIMSK &= ~(1 << PCIE);
-  if (g_activeButton) {
-    g_activeButton->handleWakeInterrupt();
-  }
 }
 #endif
 
@@ -121,10 +103,7 @@ bool Button::check()
   // adjusted this value
   defaultState = m_pinState;
 #endif
-  if (m_helios.callbacks()) {
-    return m_helios.callbacks()->checkPinHook(BUTTON_PIN, defaultState);
-  }
-  return defaultState;
+  return m_helios.callbacks().checkPinHook(BUTTON_PIN, defaultState);
 }
 
 // detect if the button is being held for a long hold (past long click)
@@ -152,15 +131,15 @@ void Button::update()
     m_buttonState = newButtonState;
     m_isPressed = m_buttonState;
     if (m_isPressed) {
-      m_pressTime = now();
+      m_pressTime = m_helios.time().getCurtime();
       m_newPress = true;
     } else {
-      m_releaseTime = now();
+      m_releaseTime = m_helios.time().getCurtime();
       m_newRelease = true;
       m_releaseCount++;
     }
   }
-  const uint32_t curtime = now();
+  const uint32_t curtime = m_helios.time().getCurtime();
   if (m_isPressed) {
     m_holdDuration = (curtime >= m_pressTime) ? (uint32_t)(curtime - m_pressTime) : 0;
   } else {
@@ -245,7 +224,7 @@ void Button::doShortClick()
 {
   m_newRelease = true;
   m_shortClick = true;
-  m_pressTime = now();
+  m_pressTime = m_helios.time().getCurtime();
   m_holdDuration = SHORT_CLICK_THRESHOLD - 1;
   m_releaseCount++;
 }
@@ -254,7 +233,7 @@ void Button::doLongClick()
 {
   m_newRelease = true;
   m_longClick = true;
-  m_pressTime = now();
+  m_pressTime = m_helios.time().getCurtime();
   m_holdDuration = SHORT_CLICK_THRESHOLD + 1;
   m_releaseCount++;
 }
@@ -263,7 +242,7 @@ void Button::doHoldClick()
 {
   m_newRelease = true;
   m_holdClick = true;
-  m_pressTime = now();
+  m_pressTime = m_helios.time().getCurtime();
   m_holdDuration = HOLD_CLICK_START + 1;
   m_releaseCount++;
 }

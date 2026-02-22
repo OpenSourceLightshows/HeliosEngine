@@ -47,7 +47,8 @@ Helios::Helios() :
   m_led(*this),
   m_time(*this),
   m_button(*this),
-  m_callbacks(nullptr),
+  m_defaultCallbacks(),
+  m_callbacks(&m_defaultCallbacks),
   keepgoing(true)
 #ifdef HELIOS_CLI
   , sleeping(false)
@@ -58,7 +59,7 @@ Helios::Helios() :
 
 void Helios::setCallbacks(HeliosCallbacks *callbacks)
 {
-  m_callbacks = callbacks;
+  m_callbacks = callbacks ? callbacks : &m_defaultCallbacks;
 }
 
 bool Helios::init()

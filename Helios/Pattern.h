@@ -25,13 +25,14 @@ public:
   Pattern(uint8_t onDur = 1, uint8_t offDur = 0, uint8_t gap = 0,
           uint8_t dash = 0, uint8_t group = 0, uint8_t blend = 0);
   Pattern(const PatternArgs &args);
-  virtual ~Pattern();
+  ~Pattern();
 
   // init the pattern to initial state
   void init();
 
   // play the pattern
   void play();
+  void tick() { advanceTick(); play(); }
 
   // set/get args
   void setArgs(const PatternArgs &args);
@@ -51,6 +52,10 @@ public:
 
   // set a color in the colorset and re-initialize
   void updateColor(uint8_t index, const RGBColor &col);
+
+  void restart();
+  void advanceTick() { m_localTick += 1; }
+  RGBColor getCurColor() const { return m_curColor; }
 
   // calculate crc of the colorset + pattern
   uint32_t crc32() const;
@@ -130,11 +135,8 @@ protected:
   void blendBlinkOn();
   void interpolate(uint8_t &current, const uint8_t next);
 
-  // abstraction points so alternate runtimes (e.g. WASM instances) can provide
-  // local time/led behavior without mutating global Time/Led state.
-  virtual uint32_t now() const;
-  virtual void outputSet(const RGBColor &col);
-  virtual void outputClear();
+  uint32_t m_localTick;
+  RGBColor m_curColor;
 };
 
 #endif

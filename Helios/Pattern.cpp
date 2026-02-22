@@ -43,7 +43,9 @@ Pattern::Pattern(uint8_t onDur, uint8_t offDur, uint8_t gap,
   m_state(STATE_BLINK_ON),
   m_blinkTimer(),
   m_cur(),
-  m_next()
+  m_next(),
+  m_localTick(0),
+  m_curColor()
 {
 }
 
@@ -59,6 +61,7 @@ Pattern::~Pattern()
 
 void Pattern::init()
 {
+  m_curColor.clear();
   m_colorset.resetIndex();
 
   // the default state to begin with
@@ -79,6 +82,13 @@ void Pattern::init()
     m_cur = m_colorset.getNext();
     m_next = m_colorset.getNext();
   }
+}
+
+void Pattern::restart()
+{
+  m_localTick = 0;
+  m_curColor.clear();
+  init();
 }
 
 void Pattern::play()
@@ -141,7 +151,7 @@ replay:
     break;
   }
 
-  if (!m_blinkTimer.alarmAt(now())) {
+  if (!m_blinkTimer.alarmAt(m_localTick)) {
     // no alarm triggered just stay in current state, return and don't transition states
     PRINT_STATE(m_state);
     return;
@@ -180,30 +190,30 @@ void Pattern::onBlinkOn()
     blendBlinkOn();
     return;
   }
-  outputSet(m_colorset.getNext());
+  m_curColor = m_colorset.getNext();
 }
 
 void Pattern::onBlinkOff()
 {
   PRINT_STATE(STATE_OFF);
-  outputClear();
+  m_curColor.clear();
 }
 
 void Pattern::beginGap()
 {
   PRINT_STATE(STATE_IN_GAP);
-  outputClear();
+  m_curColor.clear();
 }
 
 void Pattern::beginDash()
 {
   PRINT_STATE(STATE_IN_DASH);
-  outputSet(m_colorset.getNext());
+  m_curColor = m_colorset.getNext();
 }
 
 void Pattern::nextState(uint8_t timing)
 {
-  m_blinkTimer.initAt(timing, now());
+  m_blinkTimer.initAt(timing, m_localTick);
   m_state = (PatternState)(m_state + 1);
 }
 
@@ -264,22 +274,7 @@ void Pattern::blendBlinkOn()
   interpolate(m_cur.green, m_next.green);
   interpolate(m_cur.blue, m_next.blue);
   // set the color
-  outputSet(m_cur);
-}
-
-uint32_t Pattern::now() const
-{
-  return 0;
-}
-
-void Pattern::outputSet(const RGBColor &col)
-{
-  (void)col;
-}
-
-void Pattern::outputClear()
-{
-  // no-op fallback; runtime-specific subclasses own output routing.
+  m_curColor = m_cur;
 }
 
 void Pattern::interpolate(uint8_t &current, const uint8_t next)

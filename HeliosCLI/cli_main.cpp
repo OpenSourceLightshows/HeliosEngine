@@ -61,15 +61,14 @@ std::string initial_colorset_str = "";
 std::string initial_pattern_str = "";
 std::string initial_pattern_args_str = "";
 uint32_t initial_mode_index = 0;
-static Helios *g_helios = nullptr;
 
 // used to switch terminal to non-blocking and back
 static struct termios orig_term_attr = {0};
 
 // internal functions
 static void parse_options(int argc, char *argv[]);
-static bool read_inputs();
-static void show();
+static bool read_inputs(Helios &helios);
+static void show(Helios &helios);
 static void restore_terminal();
 static void set_terminal_nonblocking();
 static bool writeBMP(const std::string& filename, const std::vector<RGBColor>& colors);
@@ -82,7 +81,6 @@ static void dump_eeprom(const std::string& filename);
 int main(int argc, char *argv[])
 {
   Helios helios;
-  g_helios = &helios;
   // parse command line options
   parse_options(argc, argv);
   // set the terminal to instantly receive key presses
@@ -160,10 +158,10 @@ int main(int argc, char *argv[])
   uint8_t last_index = 0;
   while (helios.keep_going()) {
     // check for any inputs and read the next one
-    read_inputs();
+    read_inputs(helios);
     // if lockstep is enabled, only run logic if the
     // input queue isn't actually empty
-    if (lockstep && !g_helios->button().inputQueueSize()) {
+    if (lockstep && !helios.button().inputQueueSize()) {
       // just keep waiting for an input
       continue;
     }
@@ -193,7 +191,7 @@ int main(int argc, char *argv[])
       last_index = cur_index;
     }
     // render the output of the main loop
-    show();
+    show(helios);
   }
   // if the user requested a bmp file to be written
   if (generate_bmp) {
@@ -356,7 +354,7 @@ static void parse_options(int argc, char *argv[])
 }
 
 // read the input from stdin to control the tool
-static bool read_inputs()
+static bool read_inputs(Helios &helios)
 {
   // keep track of the number of inputs and only process
   // one input per tick
@@ -392,20 +390,20 @@ static bool read_inputs()
     }
     for (uint32_t i = 0; i < repeatAmount; ++i) {
       // otherwise just queue up the command
-      g_helios->button().queueInput(command);
+      helios.button().queueInput(command);
     }
   }
   return true;
 }
 
 // render the led
-static void show()
+static void show(Helios &helios)
 {
   if (output_type == OUTPUT_TYPE_NONE) {
     if (generate_bmp) {
       // still need to generate the BMP by recoring all the output colors
       // even if they have chosen the -q for quiet option
-      RGBColor currentColor = g_helios->led().get();
+      RGBColor currentColor = helios.led().get();
       RGBColor scaledColor = currentColor.scaleBrightness(brightness_scale);
       colorBuffer.push_back(scaledColor);
     }
@@ -417,7 +415,7 @@ static void show()
     out += "\r";
   }
   // Get the current color and scale its brightness up
-  RGBColor currentColor = g_helios->led().get();
+  RGBColor currentColor = helios.led().get();
   RGBColor scaledColor = currentColor.scaleBrightness(brightness_scale);
   if (output_type == OUTPUT_TYPE_COLOR) {
     out += "\x1B[0m["; // opening |
