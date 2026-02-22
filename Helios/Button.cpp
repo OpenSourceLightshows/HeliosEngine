@@ -16,7 +16,11 @@
 
 #include "Helios.h"
 
-Button::Button() :
+#ifdef HELIOS_EMBEDDED
+static Button *g_activeButton = nullptr;
+#endif
+
+Button::Button(Helios &helios) :
   m_pressTime(0),
   m_releaseTime(0),
   m_holdDuration(0),
@@ -33,14 +37,13 @@ Button::Button() :
   m_pinState(false),
   m_enableWake(false),
 #endif
-  m_time(nullptr),
-  m_callbacks(nullptr)
+  m_helios(helios)
 {
 }
 
 uint32_t Button::now() const
 {
-  return m_time ? m_time->getCurtime() : Time::activeCurtime();
+  return m_helios.time().getCurtime();
 }
 
 // initialize a new button object with a pin number
@@ -66,12 +69,18 @@ bool Button::init()
 #ifdef HELIOS_ARDUINO
   pinMode(3, INPUT);
 #else
+  g_activeButton = this;
   // turn off wake
   PCMSK &= ~(1 << PCINT3);
   GIMSK &= ~(1 << PCIE);
 #endif
 #endif
   return true;
+}
+
+void Button::handleWakeInterrupt()
+{
+  m_helios.wakeup();
 }
 
 // enable wake on press
@@ -91,7 +100,9 @@ void Button::enableWake()
 ISR(PCINT0_vect) {
   PCMSK &= ~(1 << PCINT3);
   GIMSK &= ~(1 << PCIE);
-  Helios::wakeupActiveInstance();
+  if (g_activeButton) {
+    g_activeButton->handleWakeInterrupt();
+  }
 }
 #endif
 
@@ -110,8 +121,8 @@ bool Button::check()
   // adjusted this value
   defaultState = m_pinState;
 #endif
-  if (m_callbacks) {
-    return m_callbacks->checkPinHook(BUTTON_PIN, defaultState);
+  if (m_helios.callbacks()) {
+    return m_helios.callbacks()->checkPinHook(BUTTON_PIN, defaultState);
   }
   return defaultState;
 }
@@ -168,7 +179,7 @@ void Button::update()
 
   if (m_enableWake) {
     if (m_isPressed || m_shortClick || m_longClick) {
-      Helios::wakeupActiveInstance();
+      m_helios.wakeup();
     }
   }
 #endif
@@ -192,7 +203,7 @@ bool Button::processPreInput()
     doToggle();
     break;
   case 'q': // quit
-    Helios::terminateActiveInstance();
+    m_helios.terminate();
     break;
   case 'w': // wait
     // wait is pre input I guess

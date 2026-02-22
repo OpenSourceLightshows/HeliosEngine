@@ -28,8 +28,6 @@
 // the number of menus in quadrant selection
 #define NUM_MENUS_QUADRANT 7
 
-Helios *Helios::s_activeInstance = nullptr;
-
 volatile char helios_version[] = HELIOS_VERSION_STR;
 
 Helios::Helios() :
@@ -45,30 +43,22 @@ Helios::Helios() :
   default_args(),
   default_colorsets(),
   pat(),
-  m_storage(),
-  m_led(),
-  m_time(),
-  m_button(),
+  m_storage(*this),
+  m_led(*this),
+  m_time(*this),
+  m_button(*this),
   m_callbacks(nullptr),
   keepgoing(true)
 #ifdef HELIOS_CLI
   , sleeping(false)
 #endif
 {
-  setActiveInstance(this);
-  Time::setActiveInstance(&m_time);
   setCallbacks(nullptr);
 }
 
 void Helios::setCallbacks(HeliosCallbacks *callbacks)
 {
   m_callbacks = callbacks;
-  m_time.bindCallbacks(callbacks);
-  m_led.bindTime(&m_time);
-  m_led.bindCallbacks(callbacks);
-  m_button.bindTime(&m_time);
-  m_button.bindCallbacks(callbacks);
-  m_storage.bindCallbacks(callbacks);
 }
 
 bool Helios::init()

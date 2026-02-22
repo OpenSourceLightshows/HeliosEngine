@@ -4,16 +4,14 @@
 #include <inttypes.h>
 
 #include "Colortypes.h"
-#include "HeliosCallbacks.h"
 
 class Time;
+class Helios;
 
 class Led
 {
 public:
-  Led();
-  void bindTime(Time *time) { m_time = time; }
-  void bindCallbacks(HeliosCallbacks *callbacks) { m_callbacks = callbacks; }
+  explicit Led(Helios &helios);
   bool init();
   void cleanup();
 
@@ -57,8 +55,7 @@ private:
   // led color
   RGBColor m_ledColor;
   RGBColor m_realColor;
-  Time *m_time;
-  HeliosCallbacks *m_callbacks;
+  Helios &m_helios;
 };
 
 #endif

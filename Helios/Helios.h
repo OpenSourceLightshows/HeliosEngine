@@ -42,11 +42,7 @@ public:
   Button &button() { return m_button; }
   const Button &button() const { return m_button; }
   void setCallbacks(HeliosCallbacks *callbacks);
-
-  // Embedded ISR bridge to the active runtime instance.
-  static void setActiveInstance(Helios *instance) { s_activeInstance = instance; }
-  static void wakeupActiveInstance() { if (s_activeInstance) s_activeInstance->wakeup(); }
-  static void terminateActiveInstance() { if (s_activeInstance) s_activeInstance->terminate(); }
+  HeliosCallbacks *callbacks() const { return m_callbacks; }
 
   enum Flags : uint8_t {
     // No flags are set
@@ -150,5 +146,4 @@ private:
 #ifdef HELIOS_CLI
   bool sleeping;
 #endif
-  static Helios *s_activeInstance;
 };

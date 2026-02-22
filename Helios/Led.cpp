@@ -2,8 +2,6 @@
 
 #include "Led.h"
 
-#include "TimeControl.h"
-
 #include "HeliosConfig.h"
 #include "Helios.h"
 
@@ -22,12 +20,11 @@
 
 #define SCALE8(i, scale)  (((uint16_t)i * (uint16_t)(scale)) >> 8)
 
-Led::Led() :
+Led::Led(Helios &helios) :
   m_brightness(DEFAULT_BRIGHTNESS),
   m_ledColor(RGB_OFF),
   m_realColor(RGB_OFF),
-  m_time(nullptr),
-  m_callbacks(nullptr)
+  m_helios(helios)
 {
 }
 
@@ -36,8 +33,8 @@ bool Led::init()
   // clear the led colors
   m_ledColor = RGB_OFF;
   m_realColor = RGB_OFF;
-  if (m_callbacks) {
-    m_callbacks->ledsInit(m_ledColor, 1);
+  if (m_helios.callbacks()) {
+    m_helios.callbacks()->ledsInit(m_ledColor, 1);
   }
 #ifdef HELIOS_EMBEDDED
 #ifdef HELIOS_ARDUINO
@@ -76,14 +73,14 @@ void Led::adjustBrightness(uint8_t fadeBy)
 void Led::setBrightness(uint8_t brightness)
 {
   m_brightness = brightness;
-  if (m_callbacks) {
-    m_callbacks->ledsBrightness(brightness);
+  if (m_helios.callbacks()) {
+    m_helios.callbacks()->ledsBrightness(brightness);
   }
 }
 
 void Led::strobe(uint16_t on_time, uint16_t off_time, RGBColor off_col, RGBColor on_col)
 {
-  const uint32_t curtime = m_time ? m_time->getCurtime() : Time::activeCurtime();
+  const uint32_t curtime = m_helios.time().getCurtime();
   set(((curtime % (on_time + off_time)) > on_time) ? off_col : on_col);
 }
 
@@ -94,7 +91,7 @@ void Led::breath(uint8_t hue, uint32_t duration, uint8_t magnitude, uint8_t sat,
     return;
   }
   // Determine the phase in the cycle
-  const uint32_t curtime = m_time ? m_time->getCurtime() : Time::activeCurtime();
+  const uint32_t curtime = m_helios.time().getCurtime();
   uint32_t phase = curtime % (2 * duration);
   // Calculate hue shift
   int32_t hueShift;
@@ -115,11 +112,7 @@ void Led::hold(RGBColor col)
 {
   set(col);
   update();
-  if (m_time) {
-    m_time->delayMilliseconds(250);
-    return;
-  }
-  Time::activeDelayMilliseconds(250);
+  m_helios.time().delayMilliseconds(250);
 }
 
 void Led::setPWM(uint8_t pwmPin, uint8_t pwmValue, volatile uint8_t &controlRegister,
@@ -165,7 +158,7 @@ void Led::update()
 #endif
 #endif
   // notify host runtimes whenever a frame is shown
-  if (m_callbacks) {
-    m_callbacks->ledsShow(m_ledColor, m_brightness);
+  if (m_helios.callbacks()) {
+    m_helios.callbacks()->ledsShow(m_ledColor, m_brightness);
   }
 }

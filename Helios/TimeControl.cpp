@@ -3,6 +3,7 @@
 #include <math.h>
 
 #include "Timings.h"
+#include "Helios.h"
 
 #ifdef HELIOS_EMBEDDED
 #include <avr/sleep.h>
@@ -21,20 +22,19 @@ uint64_t start = 0;
 #define NS_TO_US(ns) ((ns)/1000)
 #endif
 
-Time *Time::s_activeInstance = nullptr;
-
-Time::Time() :
+Time::Time(Helios &helios) :
   m_curTick(0),
   m_prevTime(0)
 #ifdef HELIOS_CLI
   , m_enableTimestep(true)
 #endif
-  , m_callbacks(nullptr)
+  , m_helios(helios)
 {
 }
 
 bool Time::init()
 {
+  (void)m_helios;
   m_prevTime = microseconds();
   m_curTick = 0;
   return true;
@@ -114,9 +114,6 @@ uint32_t Time::microseconds()
   usOut = micros >> 6;
 #endif
 #endif
-  if (m_callbacks) {
-    return m_callbacks->timeNowMicros(usOut);
-  }
   return usOut;
 }
 
@@ -187,21 +184,3 @@ void Time::delayMilliseconds(uint32_t ms)
 #endif
 }
 
-uint32_t Time::activeCurtime()
-{
-  return s_activeInstance ? s_activeInstance->getCurtime() : 0;
-}
-
-void Time::activeDelayMilliseconds(uint32_t ms)
-{
-  if (s_activeInstance) {
-    s_activeInstance->delayMilliseconds(ms);
-  }
-}
-
-void Time::activeDelayMicroseconds(uint32_t us)
-{
-  if (s_activeInstance) {
-    s_activeInstance->delayMicroseconds(us);
-  }
-}

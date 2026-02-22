@@ -4,7 +4,6 @@
 #include "Colorset.h"
 
 #include "HeliosConfig.h"
-#include "TimeControl.h"
 
 #include <string.h> // for memcpy
 
@@ -21,7 +20,6 @@
 static void printState(PatternState state)
 {
   static uint64_t lastPrint = 0;
-  if (lastPrint == Time::activeCurtime()) return;
   switch (m_state) {
   case STATE_ON: printf("on  "); break;
   case STATE_OFF: printf("off "); break;
@@ -30,7 +28,7 @@ static void printState(PatternState state)
   case STATE_IN_GAP2: printf("gap2"); break;
   default: return;
   }
-  lastPrint = Time::activeCurtime();
+  lastPrint++;
 }
 #else
 #define PRINT_STATE(state) // do nothing
@@ -271,12 +269,7 @@ void Pattern::blendBlinkOn()
 
 uint32_t Pattern::now() const
 {
-#ifdef WASM
-  // WASM uses explicit instance time via HeliosPatternInstance overrides.
   return 0;
-#else
-  return Time::activeCurtime();
-#endif
 }
 
 void Pattern::outputSet(const RGBColor &col)

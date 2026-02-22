@@ -3,7 +3,8 @@
 
 #include <inttypes.h>
 #include "HeliosConfig.h"
-#include "HeliosCallbacks.h"
+
+class Helios;
 
 // the index of the first config byte, the config bytes start at the end
 // then work their way backwards (so 'config index 0' is the last byte)
@@ -23,8 +24,7 @@ class Storage
 {
 public:
 
-  Storage();
-  void bindCallbacks(HeliosCallbacks *callbacks) { m_callbacks = callbacks; }
+  explicit Storage(Helios &helios);
   bool init();
 
   bool read_pattern(uint8_t slot, Pattern &pat);
@@ -68,7 +68,7 @@ private:
   // whether storage is enabled
   bool m_enableStorage;
 #endif
-  HeliosCallbacks *m_callbacks;
+  Helios &m_helios;
 };
 
 #endif

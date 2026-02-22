@@ -4,7 +4,8 @@
 #include <inttypes.h>
 
 #include "HeliosConfig.h"
-#include "HeliosCallbacks.h"
+
+class Helios;
 
 // macros to convert milliseconds and seconds to measures of ticks
 #define MS_TO_TICKS(ms) (uint32_t)(((uint32_t)(ms) * TICKRATE) / 1000)
@@ -13,8 +14,7 @@
 class Time
 {
 public:
-  Time();
-  void bindCallbacks(HeliosCallbacks *callbacks) { m_callbacks = callbacks; }
+  explicit Time(Helios &helios);
   bool init();
   void cleanup();
 
@@ -39,12 +39,6 @@ public:
   void enableTimestep(bool enabled) { m_enableTimestep = enabled; }
 #endif
 
-  // bridge access for legacy/static callsites and interrupt edges
-  static void setActiveInstance(Time *instance) { s_activeInstance = instance; }
-  static uint32_t activeCurtime();
-  static void activeDelayMilliseconds(uint32_t ms);
-  static void activeDelayMicroseconds(uint32_t us);
-
 private:
   // tick counter
   uint32_t m_curTick;
@@ -55,9 +49,7 @@ private:
   // whether timestep is enabled
   bool m_enableTimestep;
 #endif
-
-  static Time *s_activeInstance;
-  HeliosCallbacks *m_callbacks;
+  Helios &m_helios;
 };
 
 #endif

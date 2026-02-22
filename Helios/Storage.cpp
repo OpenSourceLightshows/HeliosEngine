@@ -2,6 +2,7 @@
 
 #include "Colorset.h"
 #include "Pattern.h"
+#include "Helios.h"
 
 #ifdef HELIOS_EMBEDDED
 #include <avr/io.h>
@@ -15,12 +16,12 @@
 #include <fcntl.h>
 #endif
 
-Storage::Storage()
+Storage::Storage(Helios &helios)
 #ifdef HELIOS_CLI
   : m_enableStorage(true),
-    m_callbacks(nullptr)
+    m_helios(helios)
 #else
-  : m_callbacks(nullptr)
+  : m_helios(helios)
 #endif
 {
 }
@@ -127,7 +128,7 @@ void Storage::write_crc(uint8_t pos)
 
 void Storage::write_byte(uint8_t address, uint8_t data)
 {
-  if (m_callbacks && m_callbacks->storageWrite(address, data)) {
+  if (m_helios.callbacks() && m_helios.callbacks()->storageWrite(address, data)) {
     return;
   }
 #ifdef HELIOS_EMBEDDED
@@ -168,7 +169,7 @@ void Storage::write_byte(uint8_t address, uint8_t data)
 uint8_t Storage::read_byte(uint8_t address)
 {
   uint8_t callbackValue = 0;
-  if (m_callbacks && m_callbacks->storageRead(address, callbackValue)) {
+  if (m_helios.callbacks() && m_helios.callbacks()->storageRead(address, callbackValue)) {
     return callbackValue;
   }
 #ifdef HELIOS_EMBEDDED

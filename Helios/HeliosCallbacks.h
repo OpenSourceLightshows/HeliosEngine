@@ -17,9 +17,6 @@ public:
   virtual void ledsShow(const RGBColor &color, uint8_t brightness) { (void)color; (void)brightness; }
   virtual void ledsBrightness(uint8_t brightness) { (void)brightness; }
 
-  // Optional timing hook
-  virtual uint32_t timeNowMicros(uint32_t defaultMicros) { return defaultMicros; }
-
   // Optional storage hooks, return true if handled by callback
   virtual bool storageRead(uint8_t address, uint8_t &outValue)
   {

@@ -6,16 +6,13 @@
 #include <queue>
 #endif
 
-#include "HeliosCallbacks.h"
-
 class Time;
+class Helios;
 
 class Button
 {
 public:
-  Button();
-  void bindTime(Time *time) { m_time = time; }
-  void bindCallbacks(HeliosCallbacks *callbacks) { m_callbacks = callbacks; }
+  explicit Button(Helios &helios);
   // initialize a new button object with a pin number
   bool init();
   // directly poll the pin for whether it's pressed right now
@@ -55,6 +52,7 @@ public:
 
   // enable wake on press
   void enableWake();
+  void handleWakeInterrupt();
 
 #ifdef HELIOS_CLI
   // these will 'inject' a short/long click without actually touching the
@@ -126,6 +124,5 @@ private:
   bool m_enableWake;
 #endif
   uint32_t now() const;
-  Time *m_time;
-  HeliosCallbacks *m_callbacks;
+  Helios &m_helios;
 };
