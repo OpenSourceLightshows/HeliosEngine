@@ -45,7 +45,8 @@ Pattern::Pattern(uint8_t onDur, uint8_t offDur, uint8_t gap,
   m_cur(),
   m_next(),
   m_localTick(0),
-  m_curColor()
+  m_curColor(),
+  m_colorDirty(false)
 {
 }
 
@@ -62,6 +63,7 @@ Pattern::~Pattern()
 void Pattern::init()
 {
   m_curColor.clear();
+  m_colorDirty = false;
   m_colorset.resetIndex();
 
   // the default state to begin with
@@ -88,6 +90,7 @@ void Pattern::restart()
 {
   m_localTick = 0;
   m_curColor.clear();
+  m_colorDirty = false;
   init();
 }
 
@@ -191,24 +194,28 @@ void Pattern::onBlinkOn()
     return;
   }
   m_curColor = m_colorset.getNext();
+  m_colorDirty = true;
 }
 
 void Pattern::onBlinkOff()
 {
   PRINT_STATE(STATE_OFF);
   m_curColor.clear();
+  m_colorDirty = true;
 }
 
 void Pattern::beginGap()
 {
   PRINT_STATE(STATE_IN_GAP);
   m_curColor.clear();
+  m_colorDirty = true;
 }
 
 void Pattern::beginDash()
 {
   PRINT_STATE(STATE_IN_DASH);
   m_curColor = m_colorset.getNext();
+  m_colorDirty = true;
 }
 
 void Pattern::nextState(uint8_t timing)
@@ -275,6 +282,7 @@ void Pattern::blendBlinkOn()
   interpolate(m_cur.blue, m_next.blue);
   // set the color
   m_curColor = m_cur;
+  m_colorDirty = true;
 }
 
 void Pattern::interpolate(uint8_t &current, const uint8_t next)

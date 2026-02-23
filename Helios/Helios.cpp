@@ -342,7 +342,9 @@ void Helios::handle_state_modes()
   if (!has_flags(FLAG_LOCKED) && hasReleased) {
     // just play the current mode
     pat.play();
-    m_led.set(pat.getCurColor());
+    if (pat.consumeColorDirty()) {
+      m_led.set(pat.getCurColor());
+    }
   }
   // check how long the button is held
   uint32_t holdDur = m_button.holdDuration();
@@ -732,7 +734,9 @@ void Helios::handle_state_pat_select()
     pat.restart();
   }
   pat.play();
-  m_led.set(pat.getCurColor());
+  if (pat.consumeColorDirty()) {
+    m_led.set(pat.getCurColor());
+  }
   show_selection(RGB_MAGENTA_BRI_LOW);
 }
 
@@ -850,7 +854,9 @@ void Helios::handle_state_randomize()
     cur_state = STATE_MODES;
   }
   pat.play();
-  m_led.set(pat.getCurColor());
+  if (pat.consumeColorDirty()) {
+    m_led.set(pat.getCurColor());
+  }
   show_selection(RGB_WHITE_BRI_LOW);
 }
 

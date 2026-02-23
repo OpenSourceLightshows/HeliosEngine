@@ -56,6 +56,7 @@ public:
   void restart();
   void advanceTick() { m_localTick += 1; }
   RGBColor getCurColor() const { return m_curColor; }
+  bool consumeColorDirty() { bool dirty = m_colorDirty; m_colorDirty = false; return dirty; }
 
   // calculate crc of the colorset + pattern
   uint32_t crc32() const;
@@ -137,6 +138,7 @@ protected:
 
   uint32_t m_localTick;
   RGBColor m_curColor;
+  bool m_colorDirty;
 };
 
 #endif
