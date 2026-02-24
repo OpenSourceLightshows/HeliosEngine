@@ -1,5 +1,6 @@
 #include "Button.h"
 #include "TimeControl.h"
+#include "HeliosConfig.h"
 
 #ifdef HELIOS_EMBEDDED
 #include <avr/interrupt.h>
@@ -11,50 +12,67 @@
 #define BUTTON_PORT 2
 #endif
 
-#include "Helios.h"
-
-// static members of Button
-uint32_t Button::m_pressTime = 0;
-uint32_t Button::m_releaseTime = 0;
-uint32_t Button::m_holdDuration = 0;
-uint32_t Button::m_releaseDuration = 0;
-uint8_t Button::m_releaseCount = 0;
-bool Button::m_buttonState = false;
-bool Button::m_newPress = false;
-bool Button::m_newRelease = false;
-bool Button::m_isPressed = false;
-bool Button::m_shortClick = false;
-bool Button::m_longClick = false;
-bool Button::m_holdClick = false;
+// Forward declaration
+#ifdef __cplusplus
+extern "C" {
+#endif
+void helios_wakeup(void);
+void helios_terminate(void);
+#ifdef __cplusplus
+}
+#endif
 
 #ifdef HELIOS_CLI
+// Forward declarations for CLI functions
+static uint8_t button_process_pre_input(void);
+static uint8_t button_process_post_input(void);
+#endif
+
+// static members of Button
+static uint32_t m_pressTime = 0;
+static uint32_t m_releaseTime = 0;
+static uint32_t m_holdDuration = 0;
+static uint32_t m_releaseDuration = 0;
+static uint8_t m_releaseCount = 0;
+static uint8_t m_buttonState = 0;
+static uint8_t m_newPress = 0;
+static uint8_t m_newRelease = 0;
+static uint8_t m_isPressed = 0;
+static uint8_t m_shortClick = 0;
+static uint8_t m_longClick = 0;
+static uint8_t m_holdClick = 0;
+
+#ifdef HELIOS_CLI
+static uint8_t m_pinState = 0;
+static uint8_t m_enableWake = 0;
 // an input queue for the button, each tick one even is processed
 // out of this queue and used to produce input
-std::queue<char> Button::m_inputQueue;
-// the virtual pin state
-bool Button::m_pinState = false;
-// whether the button is waiting to wake the device
-bool Button::m_enableWake = false;
+#define INPUT_QUEUE_SIZE 4096
+static char m_inputQueue[INPUT_QUEUE_SIZE];
+static uint32_t m_queueHead = 0;
+static uint32_t m_queueTail = 0;
 #endif
 
 // initialize a new button object with a pin number
-bool Button::init()
+uint8_t button_init(void)
 {
   m_pressTime = 0;
   m_releaseTime = 0;
   m_holdDuration = 0;
   m_releaseDuration = 0;
-  m_newPress = false;
-  m_newRelease = false;
-  m_shortClick = false;
-  m_longClick = false;
-  m_holdClick = false;
-  m_buttonState = check();
+  m_newPress = 0;
+  m_newRelease = 0;
+  m_shortClick = 0;
+  m_longClick = 0;
+  m_holdClick = 0;
+  m_buttonState = button_check();
   m_releaseCount = !m_buttonState;
   m_isPressed = m_buttonState;
 #ifdef HELIOS_CLI
-  m_pinState = false;
-  m_enableWake = false;
+  m_pinState = 0;
+  m_enableWake = 0;
+  m_queueHead = 0;
+  m_queueTail = 0;
 #endif
 #ifdef HELIOS_EMBEDDED
 #ifdef HELIOS_ARDUINO
@@ -65,11 +83,11 @@ bool Button::init()
   GIMSK &= ~(1 << PCIE);
 #endif
 #endif
-  return true;
+  return 1;
 }
 
 // enable wake on press
-void Button::enableWake()
+void button_enable_wake(void)
 {
 #ifdef HELIOS_EMBEDDED
   // Configure INT0 to trigger on falling edge
@@ -77,7 +95,7 @@ void Button::enableWake()
   GIMSK |= (1 << PCIE);
   sei();
 #else // HELIOS_CLI
-  m_enableWake = false;
+  m_enableWake = 1;
 #endif
 }
 
@@ -85,12 +103,12 @@ void Button::enableWake()
 ISR(PCINT0_vect) {
   PCMSK &= ~(1 << PCINT3);
   GIMSK &= ~(1 << PCIE);
-  Helios::wakeup();
+  helios_wakeup();
 }
 #endif
 
 // directly poll the pin for whether it's pressed right now
-bool Button::check()
+uint8_t button_check(void)
 {
 #ifdef HELIOS_EMBEDDED
 #ifdef HELIOS_ARDUINO
@@ -102,46 +120,48 @@ bool Button::check()
   // then just return the pin state as-is, the input event may have
   // adjusted this value
   return m_pinState;
+#else
+  return 0;
 #endif
 }
 
 // detect if the button is being held for a long hold (past long click)
-bool Button::holdPressing()
+uint8_t button_hold_pressing(void)
 {
-  uint16_t holDur = (uint16_t)(Button::holdDuration());
-  if (holDur > HOLD_CLICK_START && holDur <= HOLD_CLICK_END && Button::isPressed()) {
-    return true;
+  uint16_t holDur = (uint16_t)(button_hold_duration());
+  if (holDur > HOLD_CLICK_START && holDur <= HOLD_CLICK_END && button_is_pressed()) {
+    return 1;
   }
-  return false;
+  return 0;
 }
 
 // poll the button pin and update the state of the button object
-void Button::update()
+void button_update(void)
 {
 #ifdef HELIOS_CLI
   // process any pre-input events in the queue
-  bool processed_pre = processPreInput();
+  uint8_t processed_pre = button_process_pre_input();
 #endif
 
-  bool newButtonState = check();
-  m_newPress = false;
-  m_newRelease = false;
+  uint8_t newButtonState = button_check();
+  m_newPress = 0;
+  m_newRelease = 0;
   if (newButtonState != m_buttonState) {
     m_buttonState = newButtonState;
     m_isPressed = m_buttonState;
     if (m_isPressed) {
-      m_pressTime = Time::getCurtime();
-      m_newPress = true;
+      m_pressTime = time_get_current_time();
+      m_newPress = 1;
     } else {
-      m_releaseTime = Time::getCurtime();
-      m_newRelease = true;
+      m_releaseTime = time_get_current_time();
+      m_newRelease = 1;
       m_releaseCount++;
     }
   }
   if (m_isPressed) {
-    m_holdDuration = (Time::getCurtime() >= m_pressTime) ? (uint32_t)(Time::getCurtime() - m_pressTime) : 0;
+    m_holdDuration = (time_get_current_time() >= m_pressTime) ? (uint32_t)(time_get_current_time() - m_pressTime) : 0;
   } else {
-    m_releaseDuration = (Time::getCurtime() >= m_releaseTime) ? (uint32_t)(Time::getCurtime() - m_releaseTime) : 0;
+    m_releaseDuration = (time_get_current_time() >= m_releaseTime) ? (uint32_t)(time_get_current_time() - m_releaseTime) : 0;
   }
   m_shortClick = (m_newRelease && (m_holdDuration <= SHORT_CLICK_THRESHOLD));
   m_longClick = (m_newRelease && (m_holdDuration > SHORT_CLICK_THRESHOLD) && (m_holdDuration < HOLD_CLICK_START));
@@ -151,36 +171,91 @@ void Button::update()
   // if there was no pre-input event this tick, process a post input event
   // to ensure there is only one event per tick processed
   if (!processed_pre) {
-    processPostInput();
+    button_process_post_input();
   }
 
   if (m_enableWake) {
     if (m_isPressed || m_shortClick || m_longClick) {
-      Helios::wakeup();
+      helios_wakeup();
     }
   }
 #endif
 }
 
-#ifdef HELIOS_CLI
-bool Button::processPreInput()
+uint8_t button_on_press(void)
 {
-  if (!m_inputQueue.size()) {
-    return false;
+  return m_newPress;
+}
+
+uint8_t button_on_release(void)
+{
+  return m_newRelease;
+}
+
+uint8_t button_is_pressed(void)
+{
+  return m_isPressed;
+}
+
+uint8_t button_on_short_click(void)
+{
+  return m_shortClick;
+}
+
+uint8_t button_on_long_click(void)
+{
+  return m_longClick;
+}
+
+uint8_t button_on_hold_click(void)
+{
+  return m_holdClick;
+}
+
+uint32_t button_press_time(void)
+{
+  return m_pressTime;
+}
+
+uint32_t button_release_time(void)
+{
+  return m_releaseTime;
+}
+
+uint32_t button_hold_duration(void)
+{
+  return m_holdDuration;
+}
+
+uint32_t button_release_duration(void)
+{
+  return m_releaseDuration;
+}
+
+uint8_t button_release_count(void)
+{
+  return m_releaseCount;
+}
+
+#ifdef HELIOS_CLI
+static uint8_t button_process_pre_input(void)
+{
+  if (m_queueHead == m_queueTail) {
+    return 0;
   }
-  char command = m_inputQueue.front();
+  char command = m_inputQueue[m_queueHead];
   switch (command) {
   case 'p': // press
-    Button::doPress();
+    button_do_press();
     break;
   case 'r': // release
-    Button::doRelease();
+    button_do_release();
     break;
   case 't': // toggle
-    Button::doToggle();
+    button_do_toggle();
     break;
   case 'q': // quit
-    Helios::terminate();
+    helios_terminate();
     break;
   case 'w': // wait
     // wait is pre input I guess
@@ -188,91 +263,97 @@ bool Button::processPreInput()
   default:
     // return here! do not pop the queue
     // do not process post input events
-    return false;
+    return 0;
   }
   // now pop whatever pre-input command was processed
-  m_inputQueue.pop();
-  return true;
+  m_queueHead = (m_queueHead + 1) % INPUT_QUEUE_SIZE;
+  return 1;
 }
 
-bool Button::processPostInput()
+static uint8_t button_process_post_input(void)
 {
-  if (!m_inputQueue.size()) {
+  if (m_queueHead == m_queueTail) {
     // probably processed the pre-input event already
-    return false;
+    return 0;
   }
   // process input queue from the command line
-  char command = m_inputQueue.front();
+  char command = m_inputQueue[m_queueHead];
   switch (command) {
   case 'c': // click button
-    Button::doShortClick();
+    button_do_short_click();
     break;
   case 'l': // long click button
-    Button::doLongClick();
+    button_do_long_click();
     break;
   default:
     // should never happen
-    return false;
+    return 0;
   }
-  m_inputQueue.pop();
-  return true;
+  m_queueHead = (m_queueHead + 1) % INPUT_QUEUE_SIZE;
+  return 1;
 }
 
-void Button::doShortClick()
+void button_do_short_click(void)
 {
-  m_newRelease = true;
-  m_shortClick = true;
-  m_pressTime = Time::getCurtime();
+  m_newRelease = 1;
+  m_shortClick = 1;
+  m_pressTime = time_get_current_time();
   m_holdDuration = SHORT_CLICK_THRESHOLD - 1;
   m_releaseCount++;
 }
 
-void Button::doLongClick()
+void button_do_long_click(void)
 {
-  m_newRelease = true;
-  m_longClick = true;
-  m_pressTime = Time::getCurtime();
+  m_newRelease = 1;
+  m_longClick = 1;
+  m_pressTime = time_get_current_time();
   m_holdDuration = SHORT_CLICK_THRESHOLD + 1;
   m_releaseCount++;
 }
 
-void Button::doHoldClick()
+void button_do_hold_click(void)
 {
-  m_newRelease = true;
-  m_holdClick = true;
-  m_pressTime = Time::getCurtime();
+  m_newRelease = 1;
+  m_holdClick = 1;
+  m_pressTime = time_get_current_time();
   m_holdDuration = HOLD_CLICK_START + 1;
   m_releaseCount++;
 }
 
 // this will actually press down the button, it's your responsibility to wait
 // for the appropriate number of ticks and then release the button
-void Button::doPress()
+void button_do_press(void)
 {
-  m_pinState = true;
+  m_pinState = 1;
 }
 
-void Button::doRelease()
+void button_do_release(void)
 {
-  m_pinState = false;
+  m_pinState = 0;
 }
 
-void Button::doToggle()
+void button_do_toggle(void)
 {
   m_pinState = !m_pinState;
 }
 
 // queue up an input event for the button
-void Button::queueInput(char input)
+void button_queue_input(char input)
 {
-  m_inputQueue.push(input);
+  uint32_t nextTail = (m_queueTail + 1) % INPUT_QUEUE_SIZE;
+  if (nextTail != m_queueHead) {
+    m_inputQueue[m_queueTail] = input;
+    m_queueTail = nextTail;
+  }
 }
 
-uint32_t Button::inputQueueSize()
+uint32_t button_input_queue_size(void)
 {
-  return m_inputQueue.size();
+  if (m_queueTail >= m_queueHead) {
+    return m_queueTail - m_queueHead;
+  } else {
+    return INPUT_QUEUE_SIZE - m_queueHead + m_queueTail;
+  }
 }
 #endif
 
-// global button
-Button button;

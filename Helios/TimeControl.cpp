@@ -1,3 +1,8 @@
+// Enable POSIX features for clock_gettime, usleep, etc.
+#ifdef HELIOS_CLI
+#define _POSIX_C_SOURCE 200112L
+#endif
+
 #include "TimeControl.h"
 
 #include <math.h>
@@ -17,34 +22,33 @@
 #ifdef HELIOS_CLI
 #include <unistd.h>
 #include <time.h>
-uint64_t start = 0;
 // convert seconds and nanoseconds to microseconds
 #define SEC_TO_US(sec) ((sec)*1000000)
 #define NS_TO_US(ns) ((ns)/1000)
 #endif
 
 // static members
-uint32_t Time::m_curTick = 0;
+static uint32_t m_curTick = 0;
 // the last frame timestamp
-uint32_t Time::m_prevTime = 0;
+static uint32_t m_prevTime = 0;
 
 #ifdef HELIOS_CLI
 // whether timestep is enabled, default enabled
-bool Time::m_enableTimestep = true;
+static uint8_t m_enableTimestep = 1;
 #endif
 
-bool Time::init()
+uint8_t time_init(void)
 {
-  m_prevTime = microseconds();
+  m_prevTime = time_microseconds();
   m_curTick = 0;
-  return true;
+  return 1;
 }
 
-void Time::cleanup()
+void time_cleanup(void)
 {
 }
 
-void Time::tickClock()
+void time_tick_clock(void)
 {
   // tick clock forward
   m_curTick++;
@@ -61,7 +65,7 @@ void Time::tickClock()
   uint32_t elapsed_us;
   uint32_t us;
   do {
-    us = microseconds();
+    us = time_microseconds();
     // detect rollover of microsecond counter
     if (us < m_prevTime) {
       // calculate wrapped around difference
@@ -78,7 +82,12 @@ void Time::tickClock()
   } while (elapsed_us < (1000000 / TICKRATE));
 
   // store current time
-  m_prevTime = microseconds();
+  m_prevTime = time_microseconds();
+}
+
+uint32_t time_get_current_time(void)
+{
+  return m_curTick;
 }
 
 #ifdef HELIOS_EMBEDDED
@@ -88,7 +97,7 @@ ISR(TIMER0_OVF_vect) {
 }
 #endif
 
-uint32_t Time::microseconds()
+uint32_t time_microseconds(void)
 {
 #ifdef HELIOS_CLI
   struct timespec ts;
@@ -119,7 +128,7 @@ uint32_t Time::microseconds()
 __attribute__((noinline))
 #endif
 void
-Time::delayMicroseconds(uint32_t us)
+time_delay_microseconds(uint32_t us)
 {
 #ifdef HELIOS_EMBEDDED
 #if F_CPU >= 16000000L
@@ -162,22 +171,31 @@ Time::delayMicroseconds(uint32_t us)
 #endif
 
 #else
-  uint32_t newtime = microseconds() + us;
-  while (microseconds() < newtime)
+  uint32_t newtime = time_microseconds() + us;
+  while (time_microseconds() < newtime)
   {
     // busy loop
   }
 #endif
 }
 
-void Time::delayMilliseconds(uint32_t ms)
+void time_delay_milliseconds(uint32_t ms)
 {
 #ifdef HELIOS_CLI
   usleep(ms * 1000);
 #else
   // not very accurate
-  for (uint16_t i = 0; i < ms; ++i) {
-    delayMicroseconds(1000);
+  uint16_t i;
+  for (i = 0; i < ms; ++i) {
+    time_delay_microseconds(1000);
   }
 #endif
 }
+
+#ifdef HELIOS_CLI
+void time_enable_timestep(uint8_t enabled)
+{
+  m_enableTimestep = enabled;
+}
+#endif
+

@@ -2,6 +2,7 @@
 
 #include "Storage.h"
 #include "Pattern.h"
+#include "ColorConstants.h"
 
 // define arrays of colors, you can reuse these if you have multiple
 // modes that use the same colorset -- these demonstrate the max amount
@@ -14,14 +15,14 @@ static const uint32_t color_codes4[] = {RGB_MAGENTA_BRI_LOWEST, RGB_ROYAL_BLUE_B
 static const uint32_t color_codes5[] = {RGB_RED, RGB_HOT_PINK, RGB_ROYAL_BLUE, RGB_BLUE, RGB_GREEN, RGB_YELLOW};
 
 // Define Colorset configurations for each slot
-struct default_colorset {
+struct default_colorset_t {
   uint8_t num_cols;
   const uint32_t *cols;
 };
 
 // the array of colorset entries, make sure the number on the left reflects
 // the number of colors in the array on the right
-static const default_colorset default_colorsets[] = {
+static const struct default_colorset_t default_colorsets[] = {
   { 6, color_codes0 },  // 0 Lightside
   { 4, color_codes1 },  // 1 Sauna
   { 4, color_codes2 },  // 2 Butterfly
@@ -30,12 +31,13 @@ static const default_colorset default_colorsets[] = {
   { 6, color_codes5 },  // 5 Rainbow Glitter
 };
 
-void Patterns::make_default(uint8_t index, Pattern &pat)
+void patterns_make_default(uint8_t index, pattern_t *pat)
 {
   if (index >= NUM_MODE_SLOTS) {
     return;
   }
-  PatternArgs args;
+  pattern_args_t args;
+  pattern_args_init(&args, 0, 0, 0, 0, 0, 0);
   switch (index) {
     case 0:  // Lightside
       args.on_dur = 2;
@@ -67,16 +69,18 @@ void Patterns::make_default(uint8_t index, Pattern &pat)
       break;
   }
   // assign default args
-  pat.setArgs(args);
+  pattern_set_args(pat, &args);
   // build the set out of the defaults
-  Colorset set(default_colorsets[index].num_cols, default_colorsets[index].cols);
+  colorset_t set;
+  colorset_init_array(&set, default_colorsets[index].num_cols, default_colorsets[index].cols);
   // assign default colorset
-  pat.setColorset(set);
+  pattern_set_colorset(pat, &set);
 }
 
-void Patterns::make_pattern(PatternID id, Pattern &pat)
+void patterns_make_pattern(enum pattern_id id, pattern_t *pat)
 {
-  PatternArgs args;
+  pattern_args_t args;
+  pattern_args_init(&args, 0, 0, 0, 0, 0, 0);
   switch (id)
   {
   default:
@@ -192,5 +196,6 @@ void Patterns::make_pattern(PatternID id, Pattern &pat)
     break;
   }
 
-  pat.setArgs(args);
+  pattern_set_args(pat, &args);
 }
+

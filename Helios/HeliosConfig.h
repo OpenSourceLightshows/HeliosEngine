@@ -160,13 +160,13 @@
 // Colorset Size
 //
 // the colorset is just an array of colors but it also has a num colors val
-#define COLORSET_SIZE ((sizeof(RGBColor) * NUM_COLOR_SLOTS) + 1)
+#define COLORSET_SIZE ((sizeof(rgb_color_t) * NUM_COLOR_SLOTS) + 1)
 
 // Pattern Args Size
 //
 // There is currently 6 args for a pattern: on, off, gap, dash, group, blend
 // Each takes up 1 byte currently
-#define PAT_ARGS_SIZE (sizeof(PatternArgs))
+#define PAT_ARGS_SIZE (sizeof(pattern_args_t))
 
 // Pattern Size
 //
@@ -180,12 +180,10 @@
 
 // Some math to calculate storage sizes:
 // 3 * 6 = 18 for the colorset
-// 1 + 7 + 1 + 1 = 10 for the rest
-//  = 28 bytes total for a pattern including CRC
-//    -> 8 slots = 8 * 28 = 224
-//      = 31 bytes left
-//    -> 9 slots = 9 * 28 = 252
-//      = 3 bytes left
+// 1 + 6 + 1 + 1 = 9 for the rest
+//  = 27 bytes total for a pattern including CRC
+//    -> 9 slots = 9 * 27 = 243
+//      = 12 bytes left
 
 // forbidden constant:
 // #define HELIOS_ARDUINO 1
