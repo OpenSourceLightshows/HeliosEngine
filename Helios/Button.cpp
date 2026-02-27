@@ -82,28 +82,32 @@ void Button::enableWake()
 }
 
 #ifdef HELIOS_EMBEDDED
+extern Helios helios;
 ISR(PCINT0_vect) {
   PCMSK &= ~(1 << PCINT3);
   GIMSK &= ~(1 << PCIE);
+  helios.wakeup();
 }
 #endif
 
 // directly poll the pin for whether it's pressed right now
 bool Button::check()
 {
-  bool defaultState = false;
 #ifdef HELIOS_EMBEDDED
 #ifdef HELIOS_ARDUINO
-  defaultState = digitalRead(3) == HIGH;
+  return digitalRead(3) == HIGH;
 #else
-  defaultState = (PINB & (1 << 3)) != 0;
+  return (PINB & (1 << 3)) != 0;
 #endif
 #elif defined(HELIOS_CLI)
   // then just return the pin state as-is, the input event may have
   // adjusted this value
-  defaultState = m_pinState;
+#ifdef HELIOS_LIB
+  return m_helios.callbacks().checkPinHook(BUTTON_PIN, m_pinState);
+#else
+  return m_pinState;
 #endif
-  return m_helios.callbacks().checkPinHook(BUTTON_PIN, defaultState);
+#endif
 }
 
 // detect if the button is being held for a long hold (past long click)
@@ -139,11 +143,10 @@ void Button::update()
       m_releaseCount++;
     }
   }
-  const uint32_t curtime = m_helios.time().getCurtime();
   if (m_isPressed) {
-    m_holdDuration = (curtime >= m_pressTime) ? (uint32_t)(curtime - m_pressTime) : 0;
+    m_holdDuration = (m_helios.time().getCurtime() >= m_pressTime) ? (uint32_t)(m_helios.time().getCurtime() - m_pressTime) : 0;
   } else {
-    m_releaseDuration = (curtime >= m_releaseTime) ? (uint32_t)(curtime - m_releaseTime) : 0;
+    m_releaseDuration = (m_helios.time().getCurtime() >= m_releaseTime) ? (uint32_t)(m_helios.time().getCurtime() - m_releaseTime) : 0;
   }
   m_shortClick = (m_newRelease && (m_holdDuration <= SHORT_CLICK_THRESHOLD));
   m_longClick = (m_newRelease && (m_holdDuration > SHORT_CLICK_THRESHOLD) && (m_holdDuration < HOLD_CLICK_START));

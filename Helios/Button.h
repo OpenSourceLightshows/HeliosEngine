@@ -6,7 +6,6 @@
 #include <queue>
 #endif
 
-class Time;
 class Helios;
 
 class Button

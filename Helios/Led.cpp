@@ -2,6 +2,8 @@
 
 #include "Led.h"
 
+#include "TimeControl.h"
+
 #include "HeliosConfig.h"
 #include "Helios.h"
 
