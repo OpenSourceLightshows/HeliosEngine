@@ -1,3 +1,6 @@
+#ifndef HELIOS_H
+#define HELIOS_H
+
 #include <stdint.h>
 
 #include "HeliosConfig.h"
@@ -126,3 +129,5 @@ private:
   static bool sleeping;
 #endif
 };
+
+#endif // HELIOS_H
