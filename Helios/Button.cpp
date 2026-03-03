@@ -7,11 +7,8 @@
 #ifdef HELIOS_ARDUINO
 #include <arduino.h>
 #endif
-#define BUTTON_PORT 2
-#endif
-
-#ifndef BUTTON_PIN
 #define BUTTON_PIN 3
+#define BUTTON_PORT 2
 #endif
 
 #include "Helios.h"
@@ -82,7 +79,6 @@ void Button::enableWake()
 }
 
 #ifdef HELIOS_EMBEDDED
-extern Helios helios;
 ISR(PCINT0_vect) {
   PCMSK &= ~(1 << PCINT3);
   GIMSK &= ~(1 << PCIE);
@@ -102,11 +98,7 @@ bool Button::check()
 #elif defined(HELIOS_CLI)
   // then just return the pin state as-is, the input event may have
   // adjusted this value
-#ifdef HELIOS_LIB
-  return m_helios.callbacks().checkPinHook(BUTTON_PIN, m_pinState);
-#else
-  return m_pinState;
-#endif
+  return m_helios.callbacks().checkPinHook(m_pinState);
 #endif
 }
 

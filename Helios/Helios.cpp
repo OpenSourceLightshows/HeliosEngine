@@ -30,6 +30,11 @@
 
 volatile char helios_version[] = HELIOS_VERSION_STR;
 
+#ifdef HELIOS_EMBEDDED
+// global instance for embedded
+Helios helios;
+#endif
+
 Helios::Helios() :
   cur_state(STATE_MODES),
   global_flags(FLAG_NONE),

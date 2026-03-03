@@ -10,7 +10,7 @@ public:
   virtual ~HeliosCallbacks() {}
 
   // Input hooks
-  virtual bool checkPinHook(uint32_t pin, bool defaultState) { return defaultState; }
+  virtual bool checkPinHook(bool defaultState) { return defaultState; }
 
   // Output hooks
   virtual void ledsInit(const RGBColor &initialColor, int count) { (void)initialColor; (void)count; }

@@ -149,3 +149,7 @@ private:
   bool sleeping;
 #endif
 };
+
+#ifdef HELIOS_EMBEDDED
+extern Helios helios;
+#endif
