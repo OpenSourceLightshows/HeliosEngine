@@ -5,7 +5,6 @@
 
 #include "Colortypes.h"
 
-class Time;
 class Helios;
 
 class Led
