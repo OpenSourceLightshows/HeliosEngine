@@ -17,14 +17,15 @@ public:
   virtual void ledsShow(const RGBColor &color, uint8_t brightness) { (void)color; (void)brightness; }
   virtual void ledsBrightness(uint8_t brightness) { (void)brightness; }
 
-  // Optional storage hooks, return true if handled by callback
-  virtual bool storageRead(uint8_t address, uint8_t &outValue)
+  // Optional storage read hook, return true to make hook active
+  virtual uint8_t storageRead(uint8_t address, uint8_t &outValue)
   {
     (void)address;
     (void)outValue;
     return false;
   }
 
+  // Optional storage write hook, return true to make hook active
   virtual bool storageWrite(uint8_t address, uint8_t value)
   {
     (void)address;

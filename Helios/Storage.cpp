@@ -16,13 +16,11 @@
 #include <fcntl.h>
 #endif
 
-Storage::Storage(Helios &helios)
+Storage::Storage(Helios &helios) :
 #ifdef HELIOS_CLI
-  : m_enableStorage(true),
-    m_helios(helios)
-#else
-  : m_helios(helios)
+  m_enableStorage(true),
 #endif
+  m_helios(helios)
 {
 }
 
@@ -128,9 +126,6 @@ void Storage::write_crc(uint8_t pos)
 
 void Storage::write_byte(uint8_t address, uint8_t data)
 {
-  if (m_helios.callbacks().storageWrite(address, data)) {
-    return;
-  }
 #ifdef HELIOS_EMBEDDED
   // reads out the byte of the eeprom first to see if it's different
   // before writing out the byte -- this is faster than always writing
@@ -146,6 +141,11 @@ void Storage::write_byte(uint8_t address, uint8_t data)
   }
 #else // HELIOS_CLI
   if (!m_enableStorage) {
+    return;
+  }
+  // check the storage hook first
+  if (m_helios.callbacks().storageWrite(address, data)) {
+    // bypass fwrite if hook active
     return;
   }
   FILE *f = fopen(STORAGE_FILENAME, "r+b");
@@ -168,10 +168,6 @@ void Storage::write_byte(uint8_t address, uint8_t data)
 
 uint8_t Storage::read_byte(uint8_t address)
 {
-  uint8_t callbackValue = 0;
-  if (m_helios.callbacks().storageRead(address, callbackValue)) {
-    return callbackValue;
-  }
 #ifdef HELIOS_EMBEDDED
   // do a three way read because the attiny85 eeprom basically doesn't work
   uint8_t b1 = internal_read(address);
@@ -192,6 +188,11 @@ uint8_t Storage::read_byte(uint8_t address)
     return 0;
   }
   uint8_t val = 0;
+  // check the storage hook first
+  if (m_helios.callbacks().storageRead(address, val)) {
+    // bypass fread if storage active
+    return val;
+  }
   if (access(STORAGE_FILENAME, O_RDONLY) != 0) {
     return val;
   }
