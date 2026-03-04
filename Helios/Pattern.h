@@ -6,6 +6,8 @@
 #include "Timer.h"
 #include "Patterns.h"
 
+class Helios;
+
 // for specifying things like default args
 struct PatternArgs {
   PatternArgs(uint8_t on = 0, uint8_t off = 0, uint8_t gap = 0, uint8_t dash = 0, uint8_t group = 0, uint8_t blend = 0) :
@@ -22,9 +24,9 @@ class Pattern
 {
 public:
   // try to not set on duration to 0
-  Pattern(uint8_t onDur = 1, uint8_t offDur = 0, uint8_t gap = 0,
+  Pattern(Helios &helios, uint8_t onDur = 1, uint8_t offDur = 0, uint8_t gap = 0,
           uint8_t dash = 0, uint8_t group = 0, uint8_t blend = 0);
-  Pattern(const PatternArgs &args);
+  Pattern(Helios &helios, const PatternArgs &args);
   ~Pattern();
 
   // init the pattern to initial state
@@ -32,7 +34,6 @@ public:
 
   // play the pattern
   void play();
-  void tick() { advanceTick(); play(); }
 
   // set/get args
   void setArgs(const PatternArgs &args);
@@ -53,11 +54,6 @@ public:
   // set a color in the colorset and re-initialize
   void updateColor(uint8_t index, const RGBColor &col);
 
-  void restart();
-  void advanceTick() { m_localTick += 1; }
-  RGBColor getCurColor() const { return m_curColor; }
-  bool consumeColorDirty() { bool dirty = m_colorDirty; m_colorDirty = false; return dirty; }
-
   // calculate crc of the colorset + pattern
   uint32_t crc32() const;
 
@@ -69,6 +65,9 @@ public:
   bool isBlend() const { return m_args.blend_speed > 0; }
 
 protected:
+  // helios reference
+  Helios &m_helios;
+
   // ==================================
   //  Pattern Parameters
   PatternArgs m_args;
@@ -135,10 +134,6 @@ protected:
   // apis for blend
   void blendBlinkOn();
   void interpolate(uint8_t &current, const uint8_t next);
-
-  uint32_t m_localTick;
-  RGBColor m_curColor;
-  bool m_colorDirty;
 };
 
 #endif

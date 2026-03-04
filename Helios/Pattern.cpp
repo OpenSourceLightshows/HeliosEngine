@@ -1,9 +1,12 @@
 #include "Pattern.h"
 
 //#include "../Patterns/PatternBuilder.h"
+#include "TimeControl.h"
 #include "Colorset.h"
 
 #include "HeliosConfig.h"
+#include "Helios.h"
+#include "Led.h"
 
 #include <string.h> // for memcpy
 
@@ -16,10 +19,11 @@
 #include "../../Time/TimeControl.h"
 #include <stdio.h>
 // print out the current state of the pattern
-#define PRINT_STATE(state) printState(state)
-static void printState(PatternState state)
+#define PRINT_STATE(state) printState(state, m_helios.time().getCurtime())
+static void printState(PatternState state, uint32_t now)
 {
   static uint64_t lastPrint = 0;
+  if (lastPrint == now) return;
   switch (m_state) {
   case STATE_ON: printf("on  "); break;
   case STATE_OFF: printf("off "); break;
@@ -28,14 +32,15 @@ static void printState(PatternState state)
   case STATE_IN_GAP2: printf("gap2"); break;
   default: return;
   }
-  lastPrint++;
+  lastPrint = now;
 }
 #else
 #define PRINT_STATE(state) // do nothing
 #endif
 
 Pattern::Pattern(uint8_t onDur, uint8_t offDur, uint8_t gap,
-          uint8_t dash, uint8_t group, uint8_t blend) :
+          uint8_t dash, uint8_t group, uint8_t blend, Helios &helios) :
+  m_helios(helios),
   m_args(onDur, offDur, gap, dash, group, blend),
   m_patternFlags(0),
   m_colorset(),
@@ -43,15 +48,12 @@ Pattern::Pattern(uint8_t onDur, uint8_t offDur, uint8_t gap,
   m_state(STATE_BLINK_ON),
   m_blinkTimer(),
   m_cur(),
-  m_next(),
-  m_localTick(0),
-  m_curColor(),
-  m_colorDirty(false)
+  m_next()
 {
 }
 
-Pattern::Pattern(const PatternArgs &args) :
-  Pattern(args.on_dur, args.off_dur, args.gap_dur,
+Pattern::Pattern(Helios &helios, const PatternArgs &args) :
+  Pattern(helios, args.on_dur, args.off_dur, args.gap_dur,
       args.dash_dur, args.group_size, args.blend_speed)
 {
 }
@@ -62,8 +64,6 @@ Pattern::~Pattern()
 
 void Pattern::init()
 {
-  m_curColor.clear();
-  m_colorDirty = false;
   m_colorset.resetIndex();
 
   // the default state to begin with
@@ -84,14 +84,6 @@ void Pattern::init()
     m_cur = m_colorset.getNext();
     m_next = m_colorset.getNext();
   }
-}
-
-void Pattern::restart()
-{
-  m_localTick = 0;
-  m_curColor.clear();
-  m_colorDirty = false;
-  init();
 }
 
 void Pattern::play()
@@ -154,7 +146,7 @@ replay:
     break;
   }
 
-  if (!m_blinkTimer.alarmAt(m_localTick)) {
+  if (!m_blinkTimer.alarm()) {
     // no alarm triggered just stay in current state, return and don't transition states
     PRINT_STATE(m_state);
     return;
@@ -193,34 +185,30 @@ void Pattern::onBlinkOn()
     blendBlinkOn();
     return;
   }
-  m_curColor = m_colorset.getNext();
-  m_colorDirty = true;
+  m_helios.led().set(m_colorset.getNext());
 }
 
 void Pattern::onBlinkOff()
 {
   PRINT_STATE(STATE_OFF);
-  m_curColor.clear();
-  m_colorDirty = true;
+  m_helios.led().clear();
 }
 
 void Pattern::beginGap()
 {
   PRINT_STATE(STATE_IN_GAP);
-  m_curColor.clear();
-  m_colorDirty = true;
+  m_helios.led().clear();
 }
 
 void Pattern::beginDash()
 {
   PRINT_STATE(STATE_IN_DASH);
-  m_curColor = m_colorset.getNext();
-  m_colorDirty = true;
+  m_helios.led().set(m_colorset.getNext());
 }
 
 void Pattern::nextState(uint8_t timing)
 {
-  m_blinkTimer.initAt(timing, m_localTick);
+  m_blinkTimer.init(timing);
   m_state = (PatternState)(m_state + 1);
 }
 
@@ -281,8 +269,7 @@ void Pattern::blendBlinkOn()
   interpolate(m_cur.green, m_next.green);
   interpolate(m_cur.blue, m_next.blue);
   // set the color
-  m_curColor = m_cur;
-  m_colorDirty = true;
+  m_helios.led().set(m_cur);
 }
 
 void Pattern::interpolate(uint8_t &current, const uint8_t next)
