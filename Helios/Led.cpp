@@ -78,8 +78,7 @@ void Led::setBrightness(uint8_t brightness)
 
 void Led::strobe(uint16_t on_time, uint16_t off_time, RGBColor off_col, RGBColor on_col)
 {
-  const uint32_t curtime = m_helios.time().getCurtime();
-  set(((curtime % (on_time + off_time)) > on_time) ? off_col : on_col);
+  set(((m_helios.time().getCurtime() % (on_time + off_time)) > on_time) ? off_col : on_col);
 }
 
 void Led::breath(uint8_t hue, uint32_t duration, uint8_t magnitude, uint8_t sat, uint8_t val)
@@ -89,8 +88,7 @@ void Led::breath(uint8_t hue, uint32_t duration, uint8_t magnitude, uint8_t sat,
     return;
   }
   // Determine the phase in the cycle
-  const uint32_t curtime = m_helios.time().getCurtime();
-  uint32_t phase = curtime % (2 * duration);
+  uint32_t phase = m_helios.time().getCurtime() % (2 * duration);
   // Calculate hue shift
   int32_t hueShift;
   if (phase < duration) {
