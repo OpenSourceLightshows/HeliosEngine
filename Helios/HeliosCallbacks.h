@@ -1,4 +1,5 @@
-#pragma once
+#ifndef HELIOS_CALLBACKS_H
+#define HELIOS_CALLBACKS_H
 
 #include <inttypes.h>
 
@@ -34,4 +35,6 @@ public:
     return false;
   }
 };
+#endif // HELIOS_CLI
+
 #endif
