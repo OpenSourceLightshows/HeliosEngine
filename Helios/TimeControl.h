@@ -11,12 +11,8 @@
 
 class Time
 {
-  // private unimplemented constructor
-  Time();
-
 public:
-  // opting for static class here because there should only ever be one
-  // Settings control object and I don't like singletons
+  // initialization and cleanup of time system
   static bool init();
   static void cleanup();
 
