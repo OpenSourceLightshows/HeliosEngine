@@ -3,6 +3,7 @@
 #include "Timer.h"
 
 #include "TimeControl.h"
+#include "Helios.h"
 
 Timer::Timer(Helios &helios) :
   m_helios(helios),

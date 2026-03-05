@@ -47,7 +47,7 @@ Helios::Helios() :
   selected_val(0),
   default_args(),
   default_colorsets(),
-  pat(),
+  pat(*this),
   m_storage(*this),
   m_led(*this),
   m_time(*this),
@@ -131,9 +131,6 @@ bool Helios::init_components()
 
 void Helios::tick()
 {
-  // advance pattern-local clock once per engine tick
-  pat.advanceTick();
-
   // sample the button and re-calculate all button globals
   // the button globals should not change anywhere else
   m_button.update();
@@ -218,7 +215,7 @@ void Helios::load_cur_mode()
     m_storage.write_pattern(cur_mode, pat);
   }
   // then re-initialize the pattern runtime
-  pat.restart();
+  pat.init();
 }
 
 void Helios::save_cur_mode()
@@ -347,9 +344,6 @@ void Helios::handle_state_modes()
   if (!has_flags(FLAG_LOCKED) && hasReleased) {
     // just play the current mode
     pat.play();
-    if (pat.consumeColorDirty()) {
-      m_led.set(pat.getCurColor());
-    }
   }
   // check how long the button is held
   uint32_t holdDur = m_button.holdDuration();
@@ -736,12 +730,9 @@ void Helios::handle_state_pat_select()
   if (m_button.onShortClick()) {
     Patterns::make_pattern((PatternID)menu_selection, pat);
     menu_selection = (menu_selection + 1) % PATTERN_COUNT;
-    pat.restart();
+    pat.init();
   }
   pat.play();
-  if (pat.consumeColorDirty()) {
-    m_led.set(pat.getCurColor());
-  }
   show_selection(RGB_MAGENTA_BRI_LOW);
 }
 
@@ -852,16 +843,13 @@ void Helios::handle_state_randomize()
     uint8_t randVal = ctx.next8();
     cur_set.randomizeColors(ctx, (randVal + 1) % NUM_COLOR_SLOTS, Colorset::COLOR_MODE_RANDOMLY_PICK);
     Patterns::make_pattern((PatternID)(randVal % PATTERN_COUNT), pat);
-    pat.restart();
+    pat.init();
   }
   if (m_button.onLongClick()) {
     save_cur_mode();
     cur_state = STATE_MODES;
   }
   pat.play();
-  if (pat.consumeColorDirty()) {
-    m_led.set(pat.getCurColor());
-  }
   show_selection(RGB_WHITE_BRI_LOW);
 }
 
