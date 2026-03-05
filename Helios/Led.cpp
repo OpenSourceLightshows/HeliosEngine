@@ -35,7 +35,9 @@ bool Led::init()
   // clear the led colors
   m_ledColor = RGB_OFF;
   m_realColor = RGB_OFF;
+#ifdef HELIOS_CLI
   m_helios.callbacks().ledsInit(m_ledColor, 1);
+#endif
 #ifdef HELIOS_EMBEDDED
 #ifdef HELIOS_ARDUINO
   pinMode(0, OUTPUT);
@@ -73,7 +75,9 @@ void Led::adjustBrightness(uint8_t fadeBy)
 void Led::setBrightness(uint8_t brightness)
 {
   m_brightness = brightness;
+#ifdef HELIOS_CLI
   m_helios.callbacks().ledsBrightness(brightness);
+#endif
 }
 
 void Led::strobe(uint16_t on_time, uint16_t off_time, RGBColor off_col, RGBColor on_col)
@@ -153,6 +157,8 @@ void Led::update()
   SREG = oldSREG;
 #endif
 #endif
+#ifdef HELIOS_CLI
   // notify host runtimes whenever a frame is shown
   m_helios.callbacks().ledsShow(m_ledColor, m_brightness);
+#endif
 }

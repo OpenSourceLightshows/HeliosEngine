@@ -4,6 +4,7 @@
 
 #include "Colortypes.h"
 
+#ifdef HELIOS_CLI
 class HeliosCallbacks
 {
 public:
@@ -33,3 +34,4 @@ public:
     return false;
   }
 };
+#endif

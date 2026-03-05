@@ -7,7 +7,10 @@
 #include "Led.h"
 #include "TimeControl.h"
 #include "Button.h"
+
+#ifdef HELIOS_CLI
 #include "HeliosCallbacks.h"
+#endif
 
 class Helios
 {
@@ -30,6 +33,9 @@ public:
   void set_mode_index(uint8_t mode_index);
 
 #ifdef HELIOS_CLI
+  void setCallbacks(HeliosCallbacks *callbacks);
+  HeliosCallbacks &callbacks() { return *m_callbacks; }
+  const HeliosCallbacks &callbacks() const { return *m_callbacks; }
   bool is_asleep() const { return sleeping; }
 #endif
   Pattern &cur_pattern() { return pat; }
@@ -41,9 +47,6 @@ public:
   const Time &time() const { return m_time; }
   Button &button() { return m_button; }
   const Button &button() const { return m_button; }
-  void setCallbacks(HeliosCallbacks *callbacks);
-  HeliosCallbacks &callbacks() { return *m_callbacks; }
-  const HeliosCallbacks &callbacks() const { return *m_callbacks; }
 
   enum Flags : uint8_t {
     // No flags are set
@@ -141,11 +144,11 @@ private:
   Led m_led;
   Time m_time;
   Button m_button;
-  HeliosCallbacks m_defaultCallbacks;
-  HeliosCallbacks *m_callbacks;
   bool keepgoing;
 
 #ifdef HELIOS_CLI
+  HeliosCallbacks m_defaultCallbacks;
+  HeliosCallbacks *m_callbacks;
   bool sleeping;
 #endif
 };
