@@ -38,15 +38,15 @@ static void printState(PatternState state, uint32_t now)
 #define PRINT_STATE(state) // do nothing
 #endif
 
-Pattern::Pattern(uint8_t onDur, uint8_t offDur, uint8_t gap,
-          uint8_t dash, uint8_t group, uint8_t blend, Helios &helios) :
+Pattern::Pattern(Helios &helios, uint8_t onDur, uint8_t offDur, uint8_t gap,
+                                 uint8_t dash, uint8_t group, uint8_t blend) :
   m_helios(helios),
   m_args(onDur, offDur, gap, dash, group, blend),
   m_patternFlags(0),
   m_colorset(),
   m_groupCounter(0),
   m_state(STATE_BLINK_ON),
-  m_blinkTimer(),
+  m_blinkTimer(helios),
   m_cur(),
   m_next()
 {

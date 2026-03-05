@@ -2,7 +2,10 @@
 
 #include "Timer.h"
 
-Timer::Timer() :
+#include "TimeControl.h"
+
+Timer::Timer(Helios &helios) :
+  m_helios(helios),
   m_alarm(0),
   m_startTime(0)
 {
@@ -14,25 +17,15 @@ Timer::~Timer()
 
 void Timer::init(uint8_t alarm)
 {
-  initAt(alarm, 0);
-}
-
-void Timer::initAt(uint8_t alarm, uint32_t now)
-{
   reset();
   m_alarm = alarm;
-  startAt(now);
+  start();
 }
 
 void Timer::start(uint32_t offset)
 {
-  startAt(0, offset);
-}
-
-void Timer::startAt(uint32_t now, uint32_t offset)
-{
   // reset the start time
-  m_startTime = now + offset;
+  m_startTime = m_helios.time().getCurtime() + offset;
 }
 
 void Timer::reset()
@@ -43,14 +36,10 @@ void Timer::reset()
 
 bool Timer::alarm()
 {
-  return alarmAt(0);
-}
-
-bool Timer::alarmAt(uint32_t now)
-{
   if (!m_alarm) {
     return false;
   }
+  uint32_t now = m_helios.time().getCurtime();
   // time since start (forward or backwards)
   int32_t timeDiff = (int32_t)(int64_t)(now - m_startTime);
   if (timeDiff < 0) {
