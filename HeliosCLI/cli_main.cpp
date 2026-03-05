@@ -78,9 +78,11 @@ static bool parse_csv_hex(const std::string& filename, std::vector<uint8_t>& mem
 static bool parse_bin_storage(const std::string& filename, std::vector<uint8_t>& memory);
 static void dump_eeprom(const std::string& filename);
 
+// global helios instance for the cli tool, won't need more than one
+Helios helios;
+
 int main(int argc, char *argv[])
 {
-  Helios helios;
   // parse command line options
   parse_options(argc, argv);
   // set the terminal to instantly receive key presses
@@ -718,7 +720,7 @@ static void dump_eeprom(const std::string& filename)
   for (size_t slot = 0; slot < NUM_MODE_SLOTS; ++slot) {
     size_t pos = slot * SLOT_SIZE;
 
-    Pattern pat;
+    Pattern pat(helios);
     memcpy((void*)&pat, &memory[pos], sizeof(Pattern));
 
     printf("Slot %zu:\n", slot);
