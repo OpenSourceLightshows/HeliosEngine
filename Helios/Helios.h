@@ -147,9 +147,9 @@ private:
   bool keepgoing;
 
 #ifdef HELIOS_CLI
+  bool sleeping;
   HeliosCallbacks m_defaultCallbacks;
   HeliosCallbacks *m_callbacks;
-  bool sleeping;
 #endif
 };
 

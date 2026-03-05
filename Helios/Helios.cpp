@@ -52,13 +52,11 @@ Helios::Helios() :
   m_led(*this),
   m_time(*this),
   m_button(*this),
-#ifdef HELIOS_CLI
-  m_defaultCallbacks(),
-  m_callbacks(&m_defaultCallbacks),
-#endif
   keepgoing(true)
 #ifdef HELIOS_CLI
-  , sleeping(false)
+  , sleeping(false),
+  m_defaultCallbacks(),
+  m_callbacks(&m_defaultCallbacks)
 #endif
 {
 }
