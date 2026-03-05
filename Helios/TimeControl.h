@@ -14,7 +14,8 @@ class Helios;
 class Time
 {
 public:
-  explicit Time(Helios &helios);
+  Time(Helios &helios);
+
   bool init();
   void cleanup();
 
@@ -40,6 +41,8 @@ public:
 #endif
 
 private:
+  // reference to helios
+  Helios &m_helios;
   // tick counter
   uint32_t m_curTick;
   // the last frame timestamp
@@ -49,7 +52,6 @@ private:
   // whether timestep is enabled
   bool m_enableTimestep;
 #endif
-  Helios &m_helios;
 };
 
 #endif

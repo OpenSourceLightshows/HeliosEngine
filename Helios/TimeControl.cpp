@@ -25,12 +25,12 @@ uint64_t start = 0;
 #endif
 
 Time::Time(Helios &helios) :
+  m_helios(helios),
   m_curTick(0),
   m_prevTime(0)
 #ifdef HELIOS_CLI
   , m_enableTimestep(true)
 #endif
-  , m_helios(helios)
 {
 }
 
