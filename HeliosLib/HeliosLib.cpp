@@ -227,6 +227,9 @@ HeliosLib::~HeliosLib()
 
 bool HeliosLib::init()
 {
+  // Disable real-time timestep for WASM: JS requestAnimationFrame controls timing,
+  // so the busy-wait loop in tickClock() would block the browser thread.
+  m_helios.time().enableTimestep(false);
   m_preview->init();
   return true;
 }
