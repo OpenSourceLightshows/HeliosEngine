@@ -4,12 +4,9 @@
 #endif
 
 #include "TimeControl.h"
-
-#include <math.h>
-
 #include "Timings.h"
 
-#include "Led.h"
+#include <math.h>
 
 #ifdef HELIOS_EMBEDDED
 #include <avr/sleep.h>

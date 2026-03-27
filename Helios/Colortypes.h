@@ -1,5 +1,5 @@
-#ifndef COLOR_H
-#define COLOR_H
+#ifndef COLORTYPES_H
+#define COLORTYPES_H
 
 #include <inttypes.h>
 
