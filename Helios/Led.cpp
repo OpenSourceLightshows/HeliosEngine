@@ -67,6 +67,11 @@ void Led::adjustBrightness(uint8_t fadeBy)
   m_ledColor.adjustBrightness(fadeBy);
 }
 
+void Led::setBrightness(uint8_t brightness)
+{
+  m_brightness = brightness;
+}
+
 void Led::strobe(uint16_t on_time, uint16_t off_time, RGBColor off_col, RGBColor on_col)
 {
   set(((Time::getCurtime() % (on_time + off_time)) > on_time) ? off_col : on_col);
