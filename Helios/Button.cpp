@@ -82,7 +82,6 @@ void Button::enableWake()
 ISR(PCINT0_vect) {
   PCMSK &= ~(1 << PCINT3);
   GIMSK &= ~(1 << PCIE);
-  helios.wakeup();
 }
 #endif
 
@@ -135,10 +134,11 @@ void Button::update()
       m_releaseCount++;
     }
   }
+  const uint32_t curtime = m_helios.time().getCurtime();
   if (m_isPressed) {
-    m_holdDuration = (m_helios.time().getCurtime() >= m_pressTime) ? (uint32_t)(m_helios.time().getCurtime() - m_pressTime) : 0;
+    m_holdDuration = (curtime >= m_pressTime) ? (uint32_t)(curtime - m_pressTime) : 0;
   } else {
-    m_releaseDuration = (m_helios.time().getCurtime() >= m_releaseTime) ? (uint32_t)(m_helios.time().getCurtime() - m_releaseTime) : 0;
+    m_releaseDuration = (curtime >= m_releaseTime) ? (uint32_t)(curtime - m_releaseTime) : 0;
   }
   m_shortClick = (m_newRelease && (m_holdDuration <= SHORT_CLICK_THRESHOLD));
   m_longClick = (m_newRelease && (m_holdDuration > SHORT_CLICK_THRESHOLD) && (m_holdDuration < HOLD_CLICK_START));
