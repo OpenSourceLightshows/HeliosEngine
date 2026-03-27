@@ -190,6 +190,26 @@ void Patterns::make_pattern(PatternID id, Pattern &pat)
     args.dash_dur = 24; // 23 for flashing pattern circles
     args.blend_speed = 10;
     break;
+
+  case PATTERN_FADE:
+    args.on_dur = 1;
+    args.off_dur = 15;
+    args.fade_dur = 25;
+    break;
+
+  case PATTERN_MORPH_FADE:
+    args.on_dur = 1;
+    args.off_dur = 15;
+    args.fade_dur = 15;
+    args.blend_speed = 2;
+    break;
+
+  case PATTERN_GLITCH_FADE:
+    args.on_dur = 1;
+    args.off_dur = 10;
+    args.gap_dur = 30;
+    args.fade_dur = 5;
+    break;
   }
 
   pat.setArgs(args);

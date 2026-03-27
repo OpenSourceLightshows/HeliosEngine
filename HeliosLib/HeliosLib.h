@@ -41,7 +41,7 @@ public:
 
 private:
   Helios m_helios;
-  Pattern m_preview;
+  Pattern *m_preview;
   HeliosCallbacks *m_callbacks;
 #ifdef WASM
   HeliosLibJsCallbacks *m_jsCallbacks;

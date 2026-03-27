@@ -32,12 +32,12 @@ public:
   void setLedsShowHook(val callback) { m_ledsShowHook = callback; }
   void setLedsBrightnessHook(val callback) { m_ledsBrightnessHook = callback; }
 
-  bool checkPinHook(uint32_t pin, bool defaultState) override
+  bool checkPinHook(bool defaultState) override
   {
     if (!isFunction(m_checkPinHook)) {
       return defaultState;
     }
-    return m_checkPinHook(pin, defaultState).as<bool>();
+    return m_checkPinHook(defaultState).as<bool>();
   }
 
   void ledsInit(const RGBColor &initialColor, int count) override
@@ -128,7 +128,11 @@ EMSCRIPTEN_BINDINGS(Vortex) {
     .value("PATTERN_DASH_DOPS", PatternID::PATTERN_DASH_DOPS)
     .value("PATTERN_DASH_DOT", PatternID::PATTERN_DASH_DOT)
     .value("PATTERN_WAVE_PARTICLE", PatternID::PATTERN_WAVE_PARTICLE)
-    .value("PATTERN_LIGHTSPEED", PatternID::PATTERN_LIGHTSPEED);
+    .value("PATTERN_LIGHTSPEED", PatternID::PATTERN_LIGHTSPEED)
+    // Fade
+    .value("PATTERN_FADE", PatternID::PATTERN_FADE)
+    .value("PATTERN_MORPH_FADE", PatternID::PATTERN_MORPH_FADE)
+    .value("PATTERN_GLITCH_FADE", PatternID::PATTERN_GLITCH_FADE);
 
   // colorset class
   class_<Colorset>("Colorset")
@@ -161,13 +165,14 @@ EMSCRIPTEN_BINDINGS(Vortex) {
   // pattern args class
   class_<PatternArgs>("PatternArgs")
     .constructor<>()
-    .constructor<uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t>()
+    .constructor<uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t>()
     .property("on_dur", &PatternArgs::on_dur)
     .property("off_dur", &PatternArgs::off_dur)
     .property("gap_dur", &PatternArgs::gap_dur)
     .property("dash_dur", &PatternArgs::dash_dur)
     .property("group_size", &PatternArgs::group_size)
-    .property("blend_speed", &PatternArgs::blend_speed);
+    .property("blend_speed", &PatternArgs::blend_speed)
+    .property("fade_dur", &PatternArgs::fade_dur);
 
   class_<HeliosLib>("HeliosLib")
     .constructor<>()
@@ -195,7 +200,7 @@ EMSCRIPTEN_BINDINGS(Vortex) {
 
 HeliosLib::HeliosLib() :
   m_helios(),
-  m_preview(),
+  m_preview(nullptr),
   m_callbacks(nullptr)
 #ifdef WASM
   , m_jsCallbacks(new HeliosLibJsCallbacks()),
@@ -204,6 +209,7 @@ HeliosLib::HeliosLib() :
     m_ledsBrightnessHook(val::undefined())
 #endif
 {
+  m_preview = new Pattern(m_helios);
 #ifdef WASM
   setCallbacks(m_jsCallbacks);
 #endif
@@ -211,6 +217,8 @@ HeliosLib::HeliosLib() :
 
 HeliosLib::~HeliosLib()
 {
+  delete m_preview;
+  m_preview = nullptr;
 #ifdef WASM
   delete m_jsCallbacks;
   m_jsCallbacks = nullptr;
@@ -219,7 +227,7 @@ HeliosLib::~HeliosLib()
 
 bool HeliosLib::init()
 {
-  m_preview.restart();
+  m_preview->init();
   return true;
 }
 
@@ -229,10 +237,11 @@ void HeliosLib::cleanup()
 
 void HeliosLib::tick()
 {
-  m_preview.tick();
+  m_helios.time().tickClock();
+  m_preview->play();
 #ifdef WASM
   if (isFunction(m_ledsShowHook)) {
-    RGBColor col = m_preview.getCurColor();
+    RGBColor col = m_helios.led().get();
     m_ledsShowHook(col.red, col.green, col.blue, 255);
   }
 #endif
@@ -240,29 +249,30 @@ void HeliosLib::tick()
 
 RGBColor HeliosLib::getCurColor()
 {
-  return m_preview.getCurColor();
+  return m_helios.led().get();
 }
 
 void HeliosLib::setColorset(Colorset &colorset)
 {
-  m_preview.setColorset(colorset);
+  m_preview->setColorset(colorset);
 }
 
 void HeliosLib::setArgs(PatternArgs &args)
 {
-  m_preview.setArgs(args);
+  m_preview->setArgs(args);
+  m_preview->init();
 }
 
 void HeliosLib::setMode(PatternArgs &args, Colorset &colorset)
 {
-  m_preview.setArgs(args);
-  m_preview.setColorset(colorset);
-  m_preview.restart();
+  m_preview->setArgs(args);
+  m_preview->setColorset(colorset);
+  m_preview->init();
 }
 
 int HeliosLib::randomizeSeeded(uint8_t maxColors)
 {
-  Random ctx(m_preview.crc32());
+  Random ctx(m_preview->crc32());
   uint8_t randVal = ctx.next8();
 
   uint8_t requestedMaxColors = maxColors > 0 ? maxColors : 1;
@@ -271,25 +281,25 @@ int HeliosLib::randomizeSeeded(uint8_t maxColors)
   }
   uint8_t requestedColors = (uint8_t)((randVal % requestedMaxColors) + 1);
 
-  m_preview.colorset().randomizeColors(ctx, requestedColors, Colorset::COLOR_MODE_RANDOMLY_PICK);
-  while (m_preview.colorset().numColors() > requestedColors) {
-    m_preview.colorset().removeColor((uint8_t)(m_preview.colorset().numColors() - 1));
+  m_preview->colorset().randomizeColors(ctx, requestedColors, Colorset::COLOR_MODE_RANDOMLY_PICK);
+  while (m_preview->colorset().numColors() > requestedColors) {
+    m_preview->colorset().removeColor((uint8_t)(m_preview->colorset().numColors() - 1));
   }
 
   int patternIndex = (int)(randVal % PATTERN_COUNT);
-  Patterns::make_pattern((PatternID)patternIndex, m_preview);
-  m_preview.restart();
+  Patterns::make_pattern((PatternID)patternIndex, *m_preview);
+  m_preview->init();
   return patternIndex;
 }
 
 PatternArgs HeliosLib::getArgs()
 {
-  return m_preview.getArgs();
+  return m_preview->getArgs();
 }
 
 int HeliosLib::getNumColors()
 {
-  return m_preview.colorset().numColors();
+  return m_preview->colorset().numColors();
 }
 
 RGBColor HeliosLib::getColorAt(int index)
@@ -297,7 +307,7 @@ RGBColor HeliosLib::getColorAt(int index)
   if (index < 0) {
     return RGBColor();
   }
-  return m_preview.colorset().get((uint8_t)index);
+  return m_preview->colorset().get((uint8_t)index);
 }
 
 void HeliosLib::setCallbacks(HeliosCallbacks *callbacks)
@@ -320,7 +330,7 @@ void HeliosLib::setLedsInitHook(emscripten::val callback)
 {
   m_ledsInitHook = callback;
   if (isFunction(m_ledsInitHook)) {
-    RGBColor col = m_preview.getCurColor();
+    RGBColor col = m_helios.led().get();
     m_ledsInitHook(col.red, col.green, col.blue, 1);
   }
   if (!m_jsCallbacks) {
