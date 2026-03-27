@@ -1,3 +1,6 @@
+#ifndef HELIOS_H
+#define HELIOS_H
+
 #include <stdint.h>
 
 #include "HeliosConfig.h"
@@ -156,3 +159,5 @@ private:
 #ifdef HELIOS_EMBEDDED
 extern Helios helios;
 #endif
+
+#endif // HELIOS_H
