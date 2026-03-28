@@ -332,6 +332,9 @@ extract_hex: helios_firmware.hex
 ####### CLEAN #######
 #####################
 
+# Cleans all build artifacts across all subdirectories so a single
+# `make clean` from any subfolder does a full repo clean.
+# Candidate to backport to master/aeos.
 clean:
 	rm -f $(OBJS) $(TARGET).elf $(TARGET).hex $(DFILES) $(TARGET).bin $(TARGET).eep $(TARGET).lst $(TARGET).map
 	rm -f ../Helios/*.o ../Helios/*.d ../Helios/*.avr.o ../Helios/*.avr.d

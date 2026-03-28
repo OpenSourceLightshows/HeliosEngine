@@ -39,8 +39,10 @@ INCLUDES=\
 
 ifdef WASM
 DEFINES += -D WASM
+# Override NUM_COLOR_SLOTS for the web editor: embedded hardware is limited to 6
+# colors per mode (ATtiny flash), but the WASM-based web editor can support up to
+# 80 colors per mode since it runs in the browser with no flash constraints.
 DEFINES += -D NUM_COLOR_SLOTS=80
-# this was used before but I think only the above is necessary
 LDFLAGS += --bind -s EXPORT_ES6=1 -s EXPORT_NAME='HeliosLib'
 endif
 
@@ -140,7 +142,9 @@ HeliosLib.js: compute_version $(DEPS)
 # Empty rule that forces %.a to run all the time
 FORCE:
 
-# generic clean target
+# generic clean target — cleans all build artifacts across all subdirectories
+# so a single `make clean` from any subfolder does a full repo clean.
+# Candidate to backport to master/aeos.
 clean:
 	@$(RM) $(DFILES) $(OBJS) $(TARGETS) $(TESTS) HeliosLib.js HeliosLib.wasm
 	@$(RM) ../Helios/*.o ../Helios/*.d ../Helios/*.avr.o ../Helios/*.avr.d

@@ -105,7 +105,9 @@ helios: compute_version $(DEPS)
 # Empty rule that forces %.a to run all the time
 FORCE:
 
-# generic clean target
+# generic clean target — cleans all build artifacts across all subdirectories
+# so a single `make clean` from any subfolder does a full repo clean.
+# Candidate to backport to master/aeos.
 clean:
 	@$(RM) $(DFILES) $(OBJS) $(TARGETS) $(TESTS)
 	@$(RM) ../Helios/*.o ../Helios/*.d ../Helios/*.avr.o ../Helios/*.avr.d
