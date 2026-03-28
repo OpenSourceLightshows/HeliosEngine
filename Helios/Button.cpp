@@ -85,7 +85,6 @@ void Button::enableWake()
 ISR(PCINT0_vect) {
   PCMSK &= ~(1 << PCINT3);
   GIMSK &= ~(1 << PCIE);
-  Helios::wakeup();
 }
 #endif
 
@@ -108,8 +107,8 @@ bool Button::check()
 // detect if the button is being held for a long hold (past long click)
 bool Button::holdPressing()
 {
-  uint16_t holDur = (uint16_t)(Button::holdDuration());
-  if (holDur > HOLD_CLICK_START && holDur <= HOLD_CLICK_END && Button::isPressed()) {
+  uint16_t holDur = (uint16_t)holdDuration();
+  if (holDur > HOLD_CLICK_START && holDur <= HOLD_CLICK_END && isPressed()) {
     return true;
   }
   return false;
@@ -138,10 +137,11 @@ void Button::update()
       m_releaseCount++;
     }
   }
+  const uint32_t curtime = Time::getCurtime();
   if (m_isPressed) {
-    m_holdDuration = (Time::getCurtime() >= m_pressTime) ? (uint32_t)(Time::getCurtime() - m_pressTime) : 0;
+    m_holdDuration = (curtime >= m_pressTime) ? (uint32_t)(curtime - m_pressTime) : 0;
   } else {
-    m_releaseDuration = (Time::getCurtime() >= m_releaseTime) ? (uint32_t)(Time::getCurtime() - m_releaseTime) : 0;
+    m_releaseDuration = (curtime >= m_releaseTime) ? (uint32_t)(curtime - m_releaseTime) : 0;
   }
   m_shortClick = (m_newRelease && (m_holdDuration <= SHORT_CLICK_THRESHOLD));
   m_longClick = (m_newRelease && (m_holdDuration > SHORT_CLICK_THRESHOLD) && (m_holdDuration < HOLD_CLICK_START));
@@ -171,13 +171,13 @@ bool Button::processPreInput()
   char command = m_inputQueue.front();
   switch (command) {
   case 'p': // press
-    Button::doPress();
+    doPress();
     break;
   case 'r': // release
-    Button::doRelease();
+    doRelease();
     break;
   case 't': // toggle
-    Button::doToggle();
+    doToggle();
     break;
   case 'q': // quit
     Helios::terminate();
@@ -205,10 +205,10 @@ bool Button::processPostInput()
   char command = m_inputQueue.front();
   switch (command) {
   case 'c': // click button
-    Button::doShortClick();
+    doShortClick();
     break;
   case 'l': // long click button
-    Button::doLongClick();
+    doLongClick();
     break;
   default:
     // should never happen

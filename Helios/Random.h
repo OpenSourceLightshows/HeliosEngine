@@ -1,4 +1,5 @@
-#pragma once
+#ifndef RANDOM_H
+#define RANDOM_H
 
 #include <stdint.h>
 
@@ -18,3 +19,4 @@ private:
   uint32_t m_seed;
 };
 
+#endif // RANDOM_H

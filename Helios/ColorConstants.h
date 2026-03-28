@@ -1,4 +1,5 @@
-#pragma once
+#ifndef COLOR_CONSTANTS_H
+#define COLOR_CONSTANTS_H
 
 #include <inttypes.h>
 
@@ -166,3 +167,5 @@
 #define RGB_PINK_SAT_LOWEST          (uint32_t)0xE87DFF // 232, 125, 255
 #define RGB_HOT_PINK_SAT_LOWEST      (uint32_t)0xFF7DD8 // 255, 125, 216
 #define RGB_MAGENTA_SAT_LOWEST       (uint32_t)0xFF7D9B // 255, 125, 155
+
+#endif // COLOR_CONSTANTS_H

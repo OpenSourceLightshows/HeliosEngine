@@ -1,6 +1,5 @@
 #include "Pattern.h"
 
-//#include "../Patterns/PatternBuilder.h"
 #include "TimeControl.h"
 #include "Colorset.h"
 

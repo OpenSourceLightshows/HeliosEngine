@@ -1,3 +1,6 @@
+#ifndef BUTTON_H
+#define BUTTON_H
+
 #include <stdint.h>
 
 #ifdef HELIOS_CLI
@@ -117,3 +120,5 @@ private:
   static bool m_enableWake;
 #endif
 };
+
+#endif // BUTTON_H
