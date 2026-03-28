@@ -42,7 +42,7 @@ DEFINES += -D WASM
 # Override NUM_COLOR_SLOTS for the web editor: embedded hardware is limited to 6
 # colors per mode (ATtiny flash), but the WASM-based web editor can support up to
 # 80 colors per mode since it runs in the browser with no flash constraints.
-DEFINES += -D NUM_COLOR_SLOTS=80
+DEFINES += -D NUM_COLOR_SLOTS=16
 LDFLAGS += --bind -s EXPORT_ES6=1 -s EXPORT_NAME='HeliosLib'
 endif
 
