@@ -37,10 +37,10 @@ jobs:
           name: helioscli-artifacts
           path: ./HeliosCLI
       - name: Set execute permissions for test script
-        run: chmod +x ./runtests.sh
+        run: chmod +x ./run_tests.sh
         working-directory: tests
       - name: Run general tests
-        run: ./runtests.sh
+        run: ./run_tests.sh
         working-directory: tests
 
   embedded:
