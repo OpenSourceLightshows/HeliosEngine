@@ -306,8 +306,14 @@ void Pattern::updateColor(uint8_t index, const RGBColor &col)
 uint32_t Pattern::crc32() const
 {
   uint32_t hash = 5381;
-  for (uint8_t i = 0; i < PATTERN_SIZE; ++i) {
-    hash = ((hash << 5) + hash) + ((uint8_t *)this)[i];
+  // hash only args and colorset — skip m_helios reference (non-deterministic pointer)
+  const uint8_t *args_data = (const uint8_t *)&m_args;
+  for (uint8_t i = 0; i < sizeof(m_args); ++i) {
+    hash = ((hash << 5) + hash) + args_data[i];
+  }
+  const uint8_t *colorset_data = (const uint8_t *)&m_colorset;
+  for (uint8_t i = 0; i < COLORSET_SIZE; ++i) {
+    hash = ((hash << 5) + hash) + colorset_data[i];
   }
   return hash;
 }

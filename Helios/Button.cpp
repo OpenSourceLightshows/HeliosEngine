@@ -82,6 +82,7 @@ void Button::enableWake()
 ISR(PCINT0_vect) {
   PCMSK &= ~(1 << PCINT3);
   GIMSK &= ~(1 << PCIE);
+  helios.wakeup();
 }
 #endif
 
