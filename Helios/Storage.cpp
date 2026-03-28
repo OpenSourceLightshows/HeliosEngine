@@ -2,6 +2,7 @@
 
 #include "Colorset.h"
 #include "Pattern.h"
+#include "Helios.h"
 
 #ifdef HELIOS_EMBEDDED
 #include <avr/io.h>
@@ -15,10 +16,13 @@
 #include <fcntl.h>
 #endif
 
+Storage::Storage(Helios &helios) :
 #ifdef HELIOS_CLI
-// whether storage is enabled, default enabled
-bool Storage::m_enableStorage = true;
+  m_enableStorage(true),
 #endif
+  m_helios(helios)
+{
+}
 
 bool Storage::init()
 {
@@ -139,6 +143,11 @@ void Storage::write_byte(uint8_t address, uint8_t data)
   if (!m_enableStorage) {
     return;
   }
+  // check the storage hook first
+  if (m_helios.callbacks().storageWrite(address, data)) {
+    // bypass fwrite if hook active
+    return;
+  }
   FILE *f = fopen(STORAGE_FILENAME, "r+b");
   if (!f) {
     perror("Error opening storage file");
@@ -179,6 +188,11 @@ uint8_t Storage::read_byte(uint8_t address)
     return 0;
   }
   uint8_t val = 0;
+  // check the storage hook first
+  if (m_helios.callbacks().storageRead(address, val)) {
+    // bypass fread if storage active
+    return val;
+  }
   if (access(STORAGE_FILENAME, O_RDONLY) != 0) {
     return val;
   }

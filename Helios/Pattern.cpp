@@ -4,6 +4,7 @@
 #include "Colorset.h"
 
 #include "HeliosConfig.h"
+#include "Helios.h"
 #include "Led.h"
 
 #include <string.h> // for memcpy
@@ -17,11 +18,11 @@
 #include "../../Time/TimeControl.h"
 #include <stdio.h>
 // print out the current state of the pattern
-#define PRINT_STATE(state) printState(state)
-static void printState(PatternState state)
+#define PRINT_STATE(state) printState(state, m_helios.time().getCurtime())
+static void printState(PatternState state, uint32_t now)
 {
   static uint64_t lastPrint = 0;
-  if (lastPrint == Time::getCurtime()) return;
+  if (lastPrint == now) return;
   switch (m_state) {
   case STATE_ON: printf("on  "); break;
   case STATE_OFF: printf("off "); break;
@@ -30,28 +31,31 @@ static void printState(PatternState state)
   case STATE_IN_GAP2: printf("gap2"); break;
   default: return;
   }
-  lastPrint = Time::getCurtime();
+  lastPrint = now;
 }
 #else
 #define PRINT_STATE(state) // do nothing
 #endif
 
-Pattern::Pattern(uint8_t onDur, uint8_t offDur, uint8_t gap,
-          uint8_t dash, uint8_t group, uint8_t blend) :
-  m_args(onDur, offDur, gap, dash, group, blend),
+Pattern::Pattern(Helios &helios, uint8_t onDur, uint8_t offDur, uint8_t gap,
+                                 uint8_t dash, uint8_t group, uint8_t blend, uint8_t fade) :
+  m_helios(helios),
+  m_args(onDur, offDur, gap, dash, group, blend, fade),
   m_patternFlags(0),
   m_colorset(),
   m_groupCounter(0),
   m_state(STATE_BLINK_ON),
-  m_blinkTimer(),
+  m_blinkTimer(helios),
   m_cur(),
-  m_next()
+  m_next(),
+  m_fadeValue(0),
+  m_fadeStartTime(0)
 {
 }
 
-Pattern::Pattern(const PatternArgs &args) :
-  Pattern(args.on_dur, args.off_dur, args.gap_dur,
-      args.dash_dur, args.group_size, args.blend_speed)
+Pattern::Pattern(Helios &helios, const PatternArgs &args) :
+  Pattern(helios, args.on_dur, args.off_dur, args.gap_dur,
+      args.dash_dur, args.group_size, args.blend_speed, args.fade_dur)
 {
 }
 
@@ -62,6 +66,9 @@ Pattern::~Pattern()
 void Pattern::init()
 {
   m_colorset.resetIndex();
+
+  // Reset the fade start time to the current time
+  m_fadeStartTime = m_helios.time().getCurtime();
 
   // the default state to begin with
   m_state = STATE_BLINK_ON;
@@ -80,11 +87,56 @@ void Pattern::init()
     // convert current/next colors to HSV but only if we are doing a blend
     m_cur = m_colorset.getNext();
     m_next = m_colorset.getNext();
+  } else if (m_args.fade_dur) {
+    // if there is a fade dur and no blend need to iterate colorset
+    m_colorset.getNext();
+  }
+
+  // Initialize the fluctuating fade value
+  m_fadeValue = 0;
+}
+
+void Pattern::tickFade()
+{
+  uint32_t now = m_helios.time().getCurtime();
+  // Calculate relative time since pattern was initialized
+  uint32_t relativeTime = now - m_fadeStartTime;
+  uint32_t duration = m_args.fade_dur * 10;
+
+  // only tick forward every fade_dur ticks
+  if (!relativeTime || (relativeTime % duration) != 0) {
+    return;
+  }
+
+  // count the number of steps based on relative time
+  uint32_t steps = relativeTime / duration;
+  uint32_t range = m_args.off_dur;
+
+  // make sure the range is non-zero
+  if (range == 0) {
+    m_fadeValue = 0;
+    return;
+  }
+
+  uint32_t double_range = range * 2;
+  uint32_t step = steps % double_range;
+
+  // Triangle wave: up from 0 to range, then down to 0
+  m_fadeValue = (step < range) ? step : (double_range - step - 1);
+
+  // iterate color when at lowest point
+  if (step == 0) {
+    m_colorset.getNext();
   }
 }
 
 void Pattern::play()
 {
+  // tick forward the fade logic each tick
+  if (isFade()) {
+    tickFade();
+  }
+
   // Sometimes the pattern needs to cycle multiple states in a single frame so
   // instead of using a loop or recursion I have just used a simple goto
 replay:
@@ -97,7 +149,8 @@ replay:
     if (m_args.on_dur > 0) {
       onBlinkOn();
       --m_groupCounter;
-      nextState(m_args.on_dur);
+      // When in ON state, use current fading on-time
+      nextState(m_args.on_dur + m_fadeValue);
       return;
     }
     m_state = STATE_BLINK_OFF;
@@ -107,7 +160,7 @@ replay:
     if (m_groupCounter > 0 || (!m_args.gap_dur && !m_args.dash_dur)) {
       if (m_args.off_dur > 0) {
         onBlinkOff();
-        nextState(m_args.off_dur);
+        nextState(m_args.off_dur - m_fadeValue);
         return;
       }
       if (m_groupCounter > 0 && m_args.on_dur > 0) {
@@ -182,25 +235,30 @@ void Pattern::onBlinkOn()
     blendBlinkOn();
     return;
   }
-  Led::set(m_colorset.getNext());
+  // Check if this is a fading duration pattern
+  if (isFade()) {
+    m_helios.led().set(m_colorset.cur());
+    return;
+  }
+  m_helios.led().set(m_colorset.getNext());
 }
 
 void Pattern::onBlinkOff()
 {
   PRINT_STATE(STATE_OFF);
-  Led::clear();
+  m_helios.led().clear();
 }
 
 void Pattern::beginGap()
 {
   PRINT_STATE(STATE_IN_GAP);
-  Led::clear();
+  m_helios.led().clear();
 }
 
 void Pattern::beginDash()
 {
   PRINT_STATE(STATE_IN_DASH);
-  Led::set(m_colorset.getNext());
+  m_helios.led().set(m_colorset.getNext());
 }
 
 void Pattern::nextState(uint8_t timing)
@@ -248,8 +306,14 @@ void Pattern::updateColor(uint8_t index, const RGBColor &col)
 uint32_t Pattern::crc32() const
 {
   uint32_t hash = 5381;
-  for (uint8_t i = 0; i < PATTERN_SIZE; ++i) {
-    hash = ((hash << 5) + hash) + ((uint8_t *)this)[i];
+  // hash only args and colorset — skip m_helios reference (non-deterministic pointer)
+  const uint8_t *args_data = (const uint8_t *)&m_args;
+  for (uint8_t i = 0; i < sizeof(m_args); ++i) {
+    hash = ((hash << 5) + hash) + args_data[i];
+  }
+  const uint8_t *colorset_data = (const uint8_t *)&m_colorset;
+  for (uint8_t i = 0; i < COLORSET_SIZE; ++i) {
+    hash = ((hash << 5) + hash) + colorset_data[i];
   }
   return hash;
 }
@@ -266,7 +330,7 @@ void Pattern::blendBlinkOn()
   interpolate(m_cur.green, m_next.green);
   interpolate(m_cur.blue, m_next.blue);
   // set the color
-  Led::set(m_cur);
+  m_helios.led().set(m_cur);
 }
 
 void Pattern::interpolate(uint8_t &current, const uint8_t next)

@@ -6,25 +6,28 @@
 #include "Timer.h"
 #include "Patterns.h"
 
+class Helios;
+
 // for specifying things like default args
 struct PatternArgs {
-  PatternArgs(uint8_t on = 0, uint8_t off = 0, uint8_t gap = 0, uint8_t dash = 0, uint8_t group = 0, uint8_t blend = 0) :
-    on_dur(on), off_dur(off), gap_dur(gap), dash_dur(dash), group_size(group), blend_speed(blend) {}
+  PatternArgs(uint8_t on = 0, uint8_t off = 0, uint8_t gap = 0, uint8_t dash = 0, uint8_t group = 0, uint8_t blend = 0, uint8_t fade = 0) :
+    on_dur(on), off_dur(off), gap_dur(gap), dash_dur(dash), group_size(group), blend_speed(blend), fade_dur(fade) {}
   uint8_t on_dur;
   uint8_t off_dur;
   uint8_t gap_dur;
   uint8_t dash_dur;
   uint8_t group_size;
   uint8_t blend_speed;
+  uint8_t fade_dur;
 };
 
 class Pattern
 {
 public:
   // try to not set on duration to 0
-  Pattern(uint8_t onDur = 1, uint8_t offDur = 0, uint8_t gap = 0,
-          uint8_t dash = 0, uint8_t group = 0, uint8_t blend = 0);
-  Pattern(const PatternArgs &args);
+  Pattern(Helios &helios, uint8_t onDur = 1, uint8_t offDur = 0, uint8_t gap = 0,
+          uint8_t dash = 0, uint8_t group = 0, uint8_t blend = 0, uint8_t fade = 0);
+  Pattern(Helios &helios, const PatternArgs &args);
   ~Pattern();
 
   // init the pattern to initial state
@@ -62,7 +65,13 @@ public:
   // whether blend speed is non 0
   bool isBlend() const { return m_args.blend_speed > 0; }
 
+  // whether fade dur is non 0
+  bool isFade() const { return m_args.fade_dur > 0; }
+
 protected:
+  // helios reference
+  Helios &m_helios;
+
   // ==================================
   //  Pattern Parameters
   PatternArgs m_args;
@@ -129,6 +138,18 @@ protected:
   // apis for blend
   void blendBlinkOn();
   void interpolate(uint8_t &current, const uint8_t next);
+
+  // ==================================
+  //  Fade Members
+
+  // shifting value to represent current fade level
+  uint8_t m_fadeValue;
+
+  // the time at which the pattern was initialized (for relative fade timing)
+  uint32_t m_fadeStartTime;
+
+  // tick forward the fade logic
+  void tickFade();
 };
 
 #endif

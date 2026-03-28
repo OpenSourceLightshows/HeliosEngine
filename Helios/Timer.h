@@ -3,10 +3,12 @@
 
 #include <inttypes.h>
 
+class Helios;
+
 class Timer
 {
 public:
-  Timer();
+  Timer(Helios &helios);
   ~Timer();
 
   // init a timer with a number of alarms and optionally start it
@@ -21,6 +23,8 @@ public:
   bool alarm();
 
 private:
+  // reference to Helios
+  Helios &m_helios;
   // the alarm
   uint32_t m_alarm;
   // start time in microseconds

@@ -332,8 +332,15 @@ extract_hex: helios_firmware.hex
 ####### CLEAN #######
 #####################
 
+# Cleans all build artifacts across all subdirectories so a single
+# `make clean` from any subfolder does a full repo clean.
+# Candidate to backport to master/aeos.
 clean:
 	rm -f $(OBJS) $(TARGET).elf $(TARGET).hex $(DFILES) $(TARGET).bin $(TARGET).eep $(TARGET).lst $(TARGET).map
+	rm -f ../Helios/*.o ../Helios/*.d ../Helios/*.avr.o ../Helios/*.avr.d
+	rm -f ../HeliosLib/*.o ../HeliosLib/*.d ../HeliosLib/helios.a ../HeliosLib/HeliosLib.js ../HeliosLib/HeliosLib.wasm
+	rm -f ../HeliosCLI/*.o ../HeliosCLI/*.d ../HeliosCLI/helios
+	rm -f ../HeliosEmbedded/*.o ../HeliosEmbedded/*.d ../HeliosEmbedded/*.avr.o ../HeliosEmbedded/*.avr.d
 
 compute_version:
 	$(eval LATEST_TAG ?= $(shell git fetch --depth=1 origin +refs/tags/*:refs/tags/* &> /dev/null && git tag --list | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$$' | sort -V | tail -n1))

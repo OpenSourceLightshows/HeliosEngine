@@ -28,23 +28,38 @@
 // the number of menus in quadrant selection
 #define NUM_MENUS_QUADRANT 7
 
-Helios::State Helios::cur_state;
-Helios::Flags Helios::global_flags;
-uint8_t Helios::menu_selection;
-uint8_t Helios::cur_mode;
-uint8_t Helios::selected_slot;
-uint8_t Helios::selected_base_quad;
-uint8_t Helios::selected_hue;
-uint8_t Helios::selected_sat;
-uint8_t Helios::selected_val;
-Pattern Helios::pat;
-bool Helios::keepgoing;
+volatile char helios_version[] = HELIOS_VERSION_STR;
 
-#ifdef HELIOS_CLI
-bool Helios::sleeping;
+#ifdef HELIOS_EMBEDDED
+// global instance for embedded
+Helios helios;
 #endif
 
-volatile char helios_version[] = HELIOS_VERSION_STR;
+Helios::Helios() :
+  cur_state(STATE_MODES),
+  global_flags(FLAG_NONE),
+  menu_selection(0),
+  cur_mode(0),
+  selected_slot(0),
+  selected_base_quad(0),
+  selected_hue(0),
+  selected_sat(0),
+  selected_val(0),
+  default_args(),
+  default_colorsets(),
+  pat(*this),
+  m_storage(*this),
+  m_led(*this),
+  m_time(*this),
+  m_button(*this),
+  keepgoing(true)
+#ifdef HELIOS_CLI
+  , sleeping(false),
+  m_defaultCallbacks(),
+  m_callbacks(&m_defaultCallbacks)
+#endif
+{
+}
 
 bool Helios::init()
 {
@@ -75,16 +90,16 @@ bool Helios::init()
 bool Helios::init_components()
 {
   // initialize various components of Helios
-  if (!Time::init()) {
+  if (!m_time.init()) {
     return false;
   }
-  if (!Led::init()) {
+  if (!m_led.init()) {
     return false;
   }
-  if (!Storage::init()) {
+  if (!m_storage.init()) {
     return false;
   }
-  if (!Button::init()) {
+  if (!m_button.init()) {
     return false;
   }
   // initialize global variables
@@ -112,7 +127,7 @@ void Helios::tick()
 {
   // sample the button and re-calculate all button globals
   // the button globals should not change anywhere else
-  Button::update();
+  m_button.update();
 
   // handle the current state of the system, ie whatever state
   // we're in we check for the appropriate input events for that
@@ -120,24 +135,24 @@ void Helios::tick()
   handle_state();
 
   // Update the Leds once per frame
-  Led::update();
+  m_led.update();
 
   // finally tick the clock forward and then sleep till the entire
   // tick duration has been consumed
-  Time::tickClock();
+  m_time.tickClock();
 }
 
 void Helios::enter_sleep()
 {
 #ifdef HELIOS_EMBEDDED
   // clear the led colors
-  Led::clear();
+  m_led.clear();
   // Set all pins to input
   DDRB = 0x00;
   // Disable pull-ups on all pins
   PORTB = 0x00;
   // Enable wake on interrupt for the button
-  Button::enableWake();
+  m_button.enableWake();
   // Set sleep mode to POWER DOWN mode
   set_sleep_mode(SLEEP_MODE_PWR_DOWN);
   // enter sleep
@@ -162,13 +177,13 @@ void Helios::wakeup()
 #else
   // if the button was held down then they are entering off-menus
   // but if we re-initialize the button it will clear this state
-  bool pressed = Button::isPressed();
+  bool pressed = m_button.isPressed();
   // re-initialize some stuff
-  Time::init();
-  Button::init();
+  m_time.init();
+  m_button.init();
   // so just re-press it
   if (pressed) {
-    Button::doPress();
+    m_button.doPress();
   }
   cur_state = STATE_MODES;
   // turn off the sleeping flag that only CLI has
@@ -187,36 +202,36 @@ void Helios::load_next_mode()
 void Helios::load_cur_mode()
 {
   // read pattern from storage at cur mode index
-  if (!Storage::read_pattern(cur_mode, pat)) {
+  if (!m_storage.read_pattern(cur_mode, pat)) {
     // and just initialize default if it cannot be read
     Patterns::make_default(cur_mode, pat);
     // try to write it out because storage was corrupt
-    Storage::write_pattern(cur_mode, pat);
+    m_storage.write_pattern(cur_mode, pat);
   }
-  // then re-initialize the pattern
+  // then re-initialize the pattern runtime
   pat.init();
 }
 
 void Helios::save_cur_mode()
 {
-  Storage::write_pattern(cur_mode, pat);
+  m_storage.write_pattern(cur_mode, pat);
 }
 
 void Helios::load_global_flags()
 {
   // read the global flags from index 0 config
-  global_flags = (Flags)Storage::read_global_flags();
+  global_flags = (Flags)m_storage.read_global_flags();
   if (has_flags(FLAG_CONJURE)) {
     // if conjure is enabled then load the current mode index from storage
-    cur_mode = Storage::read_current_mode();
+    cur_mode = m_storage.read_current_mode();
   }
   // read the global brightness from index 2 config
-  uint8_t saved_brightness = Storage::read_brightness();
+  uint8_t saved_brightness = m_storage.read_brightness();
   // Check if flags are valid (FLAGS_INVALID is inverse mask of valid flags)
   // and brightness is set in storage
   bool is_valid = !has_any_flags(FLAGS_INVALID) && saved_brightness > 0;
   if (is_valid) {
-    Led::setBrightness(saved_brightness);
+    m_led.setBrightness(saved_brightness);
   }
 
   if (!is_valid) {
@@ -228,8 +243,8 @@ void Helios::load_global_flags()
 
 void Helios::save_global_flags()
 {
-  Storage::write_global_flags(global_flags);
-  Storage::write_current_mode(cur_mode);
+  m_storage.write_global_flags(global_flags);
+  m_storage.write_current_mode(cur_mode);
 }
 
 void Helios::set_mode_index(uint8_t mode_index)
@@ -239,19 +254,26 @@ void Helios::set_mode_index(uint8_t mode_index)
   load_cur_mode();
 }
 
+#ifdef HELIOS_CLI
+void Helios::setCallbacks(HeliosCallbacks *callbacks)
+{
+  m_callbacks = callbacks ? callbacks : &m_defaultCallbacks;
+}
+#endif
+
 void Helios::handle_state()
 {
   // check for the force sleep button hold regardless of which state we're in
-  if (Button::holdDuration() > FORCE_SLEEP_TIME) {
+  if (m_button.holdDuration() > FORCE_SLEEP_TIME) {
     // when released the device will just sleep
-    if (Button::onRelease()) {
+    if (m_button.onRelease()) {
       enter_sleep();
       // ALWAYS RETURN AFTER SLEEP! WE WILL WAKE HERE!
       return;
     }
     // but as long as it's held past the sleep time it just turns off the led
-    if (Button::isPressed()) {
-      Led::clear();
+    if (m_button.isPressed()) {
+      m_led.clear();
       return;
     }
   }
@@ -291,7 +313,7 @@ void Helios::handle_state()
 #ifdef HELIOS_CLI
     case STATE_SLEEP:
       // simulate sleep in helios CLI
-      if (Button::onPress() || Button::onShortClick() || Button::onLongClick()) {
+      if (m_button.onPress() || m_button.onShortClick() || m_button.onLongClick()) {
         wakeup();
       }
       break;
@@ -302,9 +324,9 @@ void Helios::handle_state()
 void Helios::handle_state_modes()
 {
   // whether they have released the button since turning on
-  bool hasReleased = (Button::releaseCount() > 0);
+  bool hasReleased = (m_button.releaseCount() > 0);
 
-  if (Button::releaseCount() > 1 && Button::onShortClick()) {
+  if (m_button.releaseCount() > 1 && m_button.onShortClick()) {
     if (has_flags(FLAG_CONJURE)) {
       enter_sleep();
     } else {
@@ -314,7 +336,7 @@ void Helios::handle_state_modes()
   }
 
   // check for lock and go back to sleep
-  if (has_flags(FLAG_LOCKED) && hasReleased && !Button::onRelease()) {
+  if (has_flags(FLAG_LOCKED) && hasReleased && !m_button.onRelease()) {
     enter_sleep();
     // ALWAYS RETURN AFTER SLEEP! WE WILL WAKE HERE!
     return;
@@ -325,7 +347,7 @@ void Helios::handle_state_modes()
     pat.play();
   }
   // check how long the button is held
-  uint32_t holdDur = Button::holdDuration();
+  uint32_t holdDur = m_button.holdDuration();
   // calculate a magnitude which corresponds to how many times past the MENU_HOLD_TIME
   // the user has held the button, so 0 means haven't held fully past one yet, etc
   uint8_t magnitude = (uint8_t)(holdDur / MENU_HOLD_TIME);
@@ -334,44 +356,44 @@ void Helios::handle_state_modes()
 
   // flash red briefly when locked and short clicked
   if (has_flags(FLAG_LOCKED) && !heldPast) {
-    Led::set(RGB_RED_BRI_LOW);
+    m_led.set(RGB_RED_BRI_LOW);
   }
   // if the button is held for at least 1 second
-  if (Button::isPressed() && heldPast) {
+  if (m_button.isPressed() && heldPast) {
     // if the button has been released before then show the on menu
     if (hasReleased) {
       switch (magnitude) {
         default:
-        case 0: Led::clear(); break;                                     // Turn off
-        case 1: Led::set(0, 0x3c, 0x31); break;                          // Color Selection
-        case 2: Led::set(0x3c, 0, 0x0e); break;                          // Pattern Selection
-        case 3: Led::set(0x3c, 0x1c, 0); break;                          // Conjure Mode
-        case 4: Led::set(0x3c, 0x3c, 0x3c); break;                       // Shift Mode
-        case 5: Led::set(HSVColor(Time::getCurtime(), 255, 100)); break; // Randomizer
+        case 0: m_led.clear(); break;                                     // Turn off
+        case 1: m_led.set(0, 0x3c, 0x31); break;                          // Color Selection
+        case 2: m_led.set(0x3c, 0, 0x0e); break;                          // Pattern Selection
+        case 3: m_led.set(0x3c, 0x1c, 0); break;                          // Conjure Mode
+        case 4: m_led.set(0x3c, 0x3c, 0x3c); break;                       // Shift Mode
+        case 5: m_led.set(HSVColor(m_time.getCurtime(), 255, 100)); break; // Randomizer
       }
     } else {
       if (has_flags(FLAG_LOCKED)) {
         switch (magnitude) {
           default:
-          case 0: Led::clear(); break;
-          case TIME_TILL_GLOW_LOCK_UNLOCK: Led::set(0x3c, 0, 0); break; // Exit
+          case 0: m_led.clear(); break;
+          case TIME_TILL_GLOW_LOCK_UNLOCK: m_led.set(0x3c, 0, 0); break; // Exit
         }
       } else {
         switch (magnitude) {
           default:
-          case 0: Led::clear(); break;         // nothing
-          case 1: Led::set(0x3c, 0, 0); break; // Enter Glow Lock
-          case 2: Led::set(0, 0x3c, 0); break; // Global Brightness
-          case 3: Led::set(0, 0, 0x3c); break; // Master Reset
+          case 0: m_led.clear(); break;         // nothing
+          case 1: m_led.set(0x3c, 0, 0); break; // Enter Glow Lock
+          case 2: m_led.set(0, 0x3c, 0); break; // Global Brightness
+          case 3: m_led.set(0, 0, 0x3c); break; // Master Reset
         }
       }
     }
   }
   // if this isn't a release tick there's nothing more to do
-  if (Button::onRelease()) {
+  if (m_button.onRelease()) {
     // Resets the menu selection before entering new state
     menu_selection = 0;
-    if (heldPast && Button::releaseCount() == 1) {
+    if (heldPast && m_button.releaseCount() == 1) {
       handle_off_menu(magnitude, heldPast);
       return;
     }
@@ -401,7 +423,7 @@ void Helios::handle_off_menu(uint8_t mag, bool past)
   switch (mag) {
     case 1:  // red lock
       cur_state = STATE_TOGGLE_LOCK;
-      Led::clear();
+      m_led.clear();
       return; // RETURN HERE
     case 2:  // green global brightness
       cur_state = STATE_SET_GLOBAL_BRIGHTNESS;
@@ -444,7 +466,7 @@ void Helios::handle_on_menu(uint8_t mag, bool past)
       break;
     case 3:  // conjure mode
       cur_state = STATE_TOGGLE_CONJURE;
-      Led::clear();
+      m_led.clear();
       break;
     case 4:  // shift mode down
       cur_state = STATE_SHIFT_MODE;
@@ -478,7 +500,7 @@ void Helios::handle_state_col_select()
       break;
   }
   // get the current color
-  RGBColor cur = Led::get();
+  RGBColor cur = m_led.get();
   cur.red /= 2;
   cur.green /= 2;
   cur.blue /= 2;
@@ -496,7 +518,7 @@ void Helios::handle_state_col_select_slot(ColorSelectOption &out_option)
   Colorset &set = pat.colorset();
   uint8_t num_cols = set.numColors();
 
-  if (Button::onShortClick()) {
+  if (m_button.onShortClick()) {
     // the number of menus in slot selection = all colors + exit
     uint8_t num_menus = num_cols + 1;
     // except if the number of colors is less than total color slots
@@ -507,7 +529,7 @@ void Helios::handle_state_col_select_slot(ColorSelectOption &out_option)
     menu_selection = (menu_selection + 1) % num_menus;
   }
 
-  bool long_click = Button::onLongClick();
+  bool long_click = m_button.onLongClick();
 
   // Reset the color selection variables, these are the hue/sat/val that have been selected
   // in the following menus, this is a weird place to reset these but it ends up being the only
@@ -518,14 +540,14 @@ void Helios::handle_state_col_select_slot(ColorSelectOption &out_option)
   if (num_cols < NUM_COLOR_SLOTS && menu_selection == num_cols) {
     // add color
     out_option = SELECTED_ADD;
-    Led::strobe(100, 100, RGB_WHITE_BRI_LOW, RGB_OFF);
+    m_led.strobe(100, 100, RGB_WHITE_BRI_LOW, RGB_OFF);
     if (long_click) {
       selected_slot = menu_selection;
     }
   } else if (menu_selection == num_cols + 1 || (num_cols == NUM_COLOR_SLOTS && menu_selection == num_cols)) {
     // exit
     out_option = SELECTED_EXIT;
-    Led::strobe(60, 40, RGB_RED_BRI_LOW, RGB_OFF);
+    m_led.strobe(60, 40, RGB_RED_BRI_LOW, RGB_OFF);
     if (long_click) {
 #if ALTERNATIVE_HSV_RGB == 1
       // restore hsv to rgb algorithm type, done color selection
@@ -541,15 +563,15 @@ void Helios::handle_state_col_select_slot(ColorSelectOption &out_option)
     // render current selection
     RGBColor col = set.get(selected_slot);
     if (col.empty()) {
-      Led::strobe(1, 30, RGB_OFF, RGB_WHITE_BRI_LOW);
+      m_led.strobe(1, 30, RGB_OFF, RGB_WHITE_BRI_LOW);
     } else {
-      Led::strobe(3, 30, RGB_OFF, col);
+      m_led.strobe(3, 30, RGB_OFF, col);
     }
-    if (Button::holdPressing()) {
+    if (m_button.holdPressing()) {
       // flash red
-      Led::strobe(150, 150, RGB_RED_BRI_LOW, col);
+      m_led.strobe(150, 150, RGB_RED_BRI_LOW, col);
     }
-    if (Button::onHoldClick()){
+    if (m_button.onHoldClick()){
       set.removeColor(selected_slot);
       return;
     }
@@ -576,7 +598,7 @@ static const ColorsMenuData color_menu_data[4] = {
 
 void Helios::handle_state_col_select_quadrant()
 {
-  if (Button::onShortClick()) {
+  if (m_button.onShortClick()) {
     menu_selection = (menu_selection + 1) % NUM_MENUS_QUADRANT;
   }
 
@@ -585,7 +607,7 @@ void Helios::handle_state_col_select_quadrant()
     menu_selection = 0;
   }
 
-  if (Button::onLongClick()) {
+  if (m_button.onLongClick()) {
     // select hue/sat/val
     switch (menu_selection) {
       case 0:  // selected blank
@@ -633,19 +655,19 @@ void Helios::handle_state_col_select_quadrant()
       off_dur = 500;
       break;
   }
-  Led::strobe(on_dur, off_dur, col1, col2);
+  m_led.strobe(on_dur, off_dur, col1, col2);
   // show a white flash for the first two menus
   if (menu_selection <= 1) {
     show_selection(RGB_WHITE_BRI_LOW);
   } else {
     // dim the color for the quad menus
-    RGBColor cur = Led::get();
+    RGBColor cur = m_led.get();
     cur.red /= 2;
     cur.green /= 2;
     cur.blue /= 2;
     show_selection(RGB_WHITE_BRI_LOW);
   }
-  if (Button::onLongClick()) {
+  if (m_button.onLongClick()) {
     cur_state = (State)(cur_state + 1);
     // reset the menu selection
     menu_selection = 0;
@@ -655,13 +677,13 @@ void Helios::handle_state_col_select_quadrant()
 void Helios::handle_state_col_select_hue_sat_val()
 {
   // handle iterating to the next option
-  if (Button::onShortClick()) {
+  if (m_button.onShortClick()) {
     menu_selection = (menu_selection + 1) % NUM_MENUS_HUE_SAT_VAL;
   }
   // in the sat/val selection a longclick is next and hold is save but in
   // the final val selection a longclick is save and there's no next
-  bool gotoNextMenu = Button::onLongClick();
-  bool saveAndFinish = Button::onHoldClick();
+  bool gotoNextMenu = m_button.onLongClick();
+  bool saveAndFinish = m_button.onHoldClick();
   switch (cur_state) {
     default:
     case STATE_COLOR_SELECT_HUE:
@@ -679,10 +701,10 @@ void Helios::handle_state_col_select_hue_sat_val()
       break;
   }
   // render current selection
-  Led::set(HSVColor(selected_hue, selected_sat, selected_val));
+  m_led.set(HSVColor(selected_hue, selected_sat, selected_val));
   // show the long selection flash
-  if (Button::holdPressing()) {
-    Led::strobe(150, 150, RGB_CORAL_ORANGE_SAT_LOWEST, Led::get());
+  if (m_button.holdPressing()) {
+    m_led.strobe(150, 150, RGB_CORAL_ORANGE_SAT_LOWEST, m_led.get());
   }
   // check to see if we are holding to save and skip
   if (saveAndFinish) {
@@ -702,11 +724,11 @@ void Helios::handle_state_col_select_hue_sat_val()
 
 void Helios::handle_state_pat_select()
 {
-  if (Button::onLongClick()) {
+  if (m_button.onLongClick()) {
     save_cur_mode();
     cur_state = STATE_MODES;
   }
-  if (Button::onShortClick()) {
+  if (m_button.onShortClick()) {
     Patterns::make_pattern((PatternID)menu_selection, pat);
     menu_selection = (menu_selection + 1) % PATTERN_COUNT;
     pat.init();
@@ -727,17 +749,17 @@ void Helios::handle_state_toggle_flag(Flags flag)
 
 void Helios::handle_state_set_defaults()
 {
-  if (Button::onShortClick()) {
+  if (m_button.onShortClick()) {
     menu_selection = !menu_selection;
   }
   // show low white for exit or red for select
   if (menu_selection) {
-    Led::strobe(80, 20, RGB_RED_BRI_LOW, RGB_OFF);
+    m_led.strobe(80, 20, RGB_RED_BRI_LOW, RGB_OFF);
   } else {
-    Led::strobe(20, 10, RGB_WHITE_BRI_LOWEST, RGB_OFF);
+    m_led.strobe(20, 10, RGB_WHITE_BRI_LOWEST, RGB_OFF);
   }
   // when the user long clicks a selection
-  if (Button::onLongClick()) {
+  if (m_button.onLongClick()) {
     // if the user actually selected 'yes'
     if (menu_selection == 1) {
       factory_reset();
@@ -751,11 +773,11 @@ void Helios::factory_reset()
 {
   for (uint8_t i = 0; i < NUM_MODE_SLOTS; ++i) {
     Patterns::make_default(i, pat);
-    Storage::write_pattern(i, pat);
+    m_storage.write_pattern(i, pat);
   }
   // Reset global brightness to default
-  Led::setBrightness(DEFAULT_BRIGHTNESS);
-  Storage::write_brightness(DEFAULT_BRIGHTNESS);
+  m_led.setBrightness(DEFAULT_BRIGHTNESS);
+  m_storage.write_brightness(DEFAULT_BRIGHTNESS);
   // reset global flags
   global_flags = FLAG_NONE;
   cur_mode = 0;
@@ -767,7 +789,7 @@ void Helios::factory_reset()
 
 void Helios::handle_state_set_global_brightness()
 {
-  if (Button::onShortClick()) {
+  if (m_button.onShortClick()) {
     menu_selection = (menu_selection + 1) % NUM_BRIGHTNESS_OPTIONS;
   }
   // show different levels of green for each selection
@@ -791,12 +813,12 @@ void Helios::handle_state_set_global_brightness()
       brightness = BRIGHTNESS_LOWEST;
       break;
   }
-  Led::set(0, col, 0);
+  m_led.set(0, col, 0);
   // when the user long clicks a selection
-  if (Button::onLongClick()) {
+  if (m_button.onLongClick()) {
     // set the brightness based on the selection
-    Led::setBrightness(brightness);
-    Storage::write_brightness(brightness);
+    m_led.setBrightness(brightness);
+    m_storage.write_brightness(brightness);
     cur_state = STATE_MODES;
   }
   show_selection(RGB_WHITE_BRI_LOW);
@@ -806,7 +828,7 @@ void Helios::handle_state_shift_mode()
 {
   uint8_t new_mode = (cur_mode > 0) ? (uint8_t)(cur_mode - 1) : (uint8_t)(NUM_MODE_SLOTS - 1);
   // copy the storage from the new position into our current position
-  Storage::copy_slot(new_mode, cur_mode);
+  m_storage.copy_slot(new_mode, cur_mode);
   // point at the new position
   cur_mode = new_mode;
   // write out the current mode to the newly updated position
@@ -816,7 +838,7 @@ void Helios::handle_state_shift_mode()
 
 void Helios::handle_state_randomize()
 {
-  if (Button::onShortClick()) {
+  if (m_button.onShortClick()) {
     Colorset &cur_set = pat.colorset();
     Random ctx(pat.crc32());
     uint8_t randVal = ctx.next8();
@@ -824,7 +846,7 @@ void Helios::handle_state_randomize()
     Patterns::make_pattern((PatternID)(randVal % PATTERN_COUNT), pat);
     pat.init();
   }
-  if (Button::onLongClick()) {
+  if (m_button.onLongClick()) {
     save_cur_mode();
     cur_state = STATE_MODES;
   }
@@ -835,13 +857,13 @@ void Helios::handle_state_randomize()
 void Helios::show_selection(RGBColor color)
 {
   // only show selection while pressing the button
-  if (!Button::isPressed()) {
+  if (!m_button.isPressed()) {
     return;
   }
-  uint16_t holdDur = (uint16_t)Button::holdDuration();
+  uint16_t holdDur = (uint16_t)m_button.holdDuration();
   // if the hold duration is outside the flashing range do nothing
   if (holdDur < SHORT_CLICK_THRESHOLD || holdDur >= HOLD_CLICK_START) {
     return;
   }
-  Led::set(color);
+  m_led.set(color);
 }

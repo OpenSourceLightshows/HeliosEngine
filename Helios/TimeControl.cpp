@@ -20,15 +20,15 @@ uint64_t start = 0;
 #define NS_TO_US(ns) ((ns)/1000)
 #endif
 
-// static members
-uint32_t Time::m_curTick = 0;
-// the last frame timestamp
-uint32_t Time::m_prevTime = 0;
-
+Time::Time(Helios &helios) :
+  m_helios(helios),
+  m_curTick(0),
+  m_prevTime(0)
 #ifdef HELIOS_CLI
-// whether timestep is enabled, default enabled
-bool Time::m_enableTimestep = true;
+  , m_enableTimestep(true)
 #endif
+{
+}
 
 bool Time::init()
 {

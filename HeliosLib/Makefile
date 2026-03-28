@@ -39,7 +39,10 @@ INCLUDES=\
 
 ifdef WASM
 DEFINES += -D WASM
-# this was used before but I think only the above is necessary
+# Override NUM_COLOR_SLOTS for the web editor: embedded hardware is limited to 6
+# colors per mode (ATtiny flash), but the WASM-based web editor can support up to
+# 80 colors per mode since it runs in the browser with no flash constraints.
+DEFINES += -D NUM_COLOR_SLOTS=16
 LDFLAGS += --bind -s EXPORT_ES6=1 -s EXPORT_NAME='HeliosLib'
 endif
 
@@ -68,10 +71,25 @@ LIBS=\
 
 # source files
 # local source files first, other sources after
-ifeq ($(OS),Windows_NT)
-    SRC = $(shell find ../Helios/ -type f -name \\*.cpp) HeliosLib.cpp
+HELIOS_SRC_COMMON=\
+	../Helios/Colortypes.cpp \
+	../Helios/Colorset.cpp \
+	../Helios/Pattern.cpp \
+	../Helios/Patterns.cpp \
+	../Helios/Random.cpp \
+	../Helios/Timer.cpp
+
+HELIOS_SRC_LEGACY=\
+	../Helios/Button.cpp \
+	../Helios/Helios.cpp \
+	../Helios/Led.cpp \
+	../Helios/Storage.cpp \
+	../Helios/TimeControl.cpp
+
+ifdef WASM
+SRC = $(HELIOS_SRC_COMMON) $(HELIOS_SRC_LEGACY) HeliosLib.cpp
 else
-    SRC = $(shell find ../Helios/ -type f -name '*.cpp') HeliosLib.cpp
+SRC = $(HELIOS_SRC_COMMON) $(HELIOS_SRC_LEGACY) HeliosLib.cpp
 endif
 
 # object files are source files with .c replaced with .o
@@ -124,9 +142,16 @@ HeliosLib.js: compute_version $(DEPS)
 # Empty rule that forces %.a to run all the time
 FORCE:
 
-# generic clean target
+# generic clean target — cleans all build artifacts across all subdirectories
+# so a single `make clean` from any subfolder does a full repo clean.
+# Candidate to backport to master/aeos.
 clean:
 	@$(RM) $(DFILES) $(OBJS) $(TARGETS) $(TESTS) HeliosLib.js HeliosLib.wasm
+	@$(RM) ../Helios/*.o ../Helios/*.d ../Helios/*.avr.o ../Helios/*.avr.d
+	@$(RM) ../HeliosLib/*.o ../HeliosLib/*.d ../HeliosLib/helios.a ../HeliosLib/HeliosLib.js ../HeliosLib/HeliosLib.wasm
+	@$(RM) ../HeliosCLI/*.o ../HeliosCLI/*.d ../HeliosCLI/helios
+	@$(RM) ../HeliosEmbedded/*.o ../HeliosEmbedded/*.d ../HeliosEmbedded/*.avr.o ../HeliosEmbedded/*.avr.d
+	@$(RM) ../HeliosEmbedded/helios.elf ../HeliosEmbedded/helios.hex ../HeliosEmbedded/helios.bin ../HeliosEmbedded/helios.eep ../HeliosEmbedded/helios.lst ../HeliosEmbedded/helios.map
 
 compute_version:
 	$(eval LATEST_TAG ?= $(shell git fetch --depth=1 origin +refs/tags/*:refs/tags/* &> /dev/null && git tag --list | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$$' | sort -V | tail -n1))

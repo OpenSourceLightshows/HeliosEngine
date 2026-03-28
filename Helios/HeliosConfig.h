@@ -66,8 +66,11 @@
 
 // Max Color Slots
 //
-// The number of slots in a colorset
+// The number of slots in a colorset.
+// Firmware default remains 6, but WASM can override via compiler define.
+#ifndef NUM_COLOR_SLOTS
 #define NUM_COLOR_SLOTS 6
+#endif
 
 // Mode Slots
 //

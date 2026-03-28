@@ -1,31 +1,75 @@
 #include "HeliosLib.h"
-
-// Helios includes
-#include "Helios.h"
-#include "Led.h"
+#include "Patterns.h"
+#include "Random.h"
 
 #ifdef WASM
 #include <emscripten/bind.h>
-#include <emscripten/val.h>
+#include <string>
 
 using namespace emscripten;
 
-// just need a non class function to bind to wasm here
-static void init_helios() { HeliosLib::init(); }
-static void cleanup_helios() { HeliosLib::cleanup(); }
-
-// this is a spcial function that wraps tick then returns the current color of
-// the leds as a javascript object 'value'
-val tick_helios() {
-  // first run a tick
-  HeliosLib::tick();
-  // fetch led color
-  val color = val::object();
-  color.set("red", Led::get().red);
-  color.set("green", Led::get().green);
-  color.set("blue", Led::get().blue);
-  return color;
+static bool isFunction(const val &callback)
+{
+  if (callback.isNull() || callback.isUndefined()) {
+    return false;
+  }
+  return callback.typeOf().as<std::string>() == "function";
 }
+
+class HeliosLibJsCallbacks : public HeliosCallbacks
+{
+public:
+  HeliosLibJsCallbacks() :
+    m_checkPinHook(val::undefined()),
+    m_ledsInitHook(val::undefined()),
+    m_ledsShowHook(val::undefined()),
+    m_ledsBrightnessHook(val::undefined())
+  {
+  }
+
+  void setCheckPinHook(val callback) { m_checkPinHook = callback; }
+  void setLedsInitHook(val callback) { m_ledsInitHook = callback; }
+  void setLedsShowHook(val callback) { m_ledsShowHook = callback; }
+  void setLedsBrightnessHook(val callback) { m_ledsBrightnessHook = callback; }
+
+  bool checkPinHook(bool defaultState) override
+  {
+    if (!isFunction(m_checkPinHook)) {
+      return defaultState;
+    }
+    return m_checkPinHook(defaultState).as<bool>();
+  }
+
+  void ledsInit(const RGBColor &initialColor, int count) override
+  {
+    if (!isFunction(m_ledsInitHook)) {
+      return;
+    }
+    m_ledsInitHook(initialColor.red, initialColor.green, initialColor.blue, count);
+  }
+
+  void ledsShow(const RGBColor &color, uint8_t brightness) override
+  {
+    if (!isFunction(m_ledsShowHook)) {
+      return;
+    }
+    m_ledsShowHook(color.red, color.green, color.blue, brightness);
+  }
+
+  void ledsBrightness(uint8_t brightness) override
+  {
+    if (!isFunction(m_ledsBrightnessHook)) {
+      return;
+    }
+    m_ledsBrightnessHook(brightness);
+  }
+
+private:
+  val m_checkPinHook;
+  val m_ledsInitHook;
+  val m_ledsShowHook;
+  val m_ledsBrightnessHook;
+};
 
 // js is dumb and has issues doing this cast I guess
 PatternID intToPatternID(int val)
@@ -33,37 +77,7 @@ PatternID intToPatternID(int val)
   return (PatternID)val;
 }
 
-// Helper to set the colorset on the current pattern
-static void setCurrentColorset(Colorset &colorset)
-{
-  Helios::cur_pattern().setColorset(colorset);
-}
-
-// Helper to set pattern args on the current pattern
-static void setCurrentArgs(PatternArgs &args)
-{
-  Helios::cur_pattern().setArgs(args);
-}
-
-// Helper to fully configure and reinitialize the current pattern
-static void setCurrentMode(PatternArgs &args, Colorset &colorset)
-{
-  Helios::cur_pattern().setArgs(args);
-  Helios::cur_pattern().setColorset(colorset);
-  Helios::cur_pattern().init();
-}
-
 EMSCRIPTEN_BINDINGS(Vortex) {
-  // basic control functions
-  function("Init", &init_helios);
-  function("Cleanup", &cleanup_helios);
-  function("Tick", &tick_helios);
-
-  // helpers to configure the current mode
-  function("setCurrentColorset", &setCurrentColorset);
-  function("setCurrentArgs", &setCurrentArgs);
-  function("setCurrentMode", &setCurrentMode);
-
   // Bind the HSVColor class
   class_<HSVColor>("HSVColor")
     .constructor<>()
@@ -114,7 +128,11 @@ EMSCRIPTEN_BINDINGS(Vortex) {
     .value("PATTERN_DASH_DOPS", PatternID::PATTERN_DASH_DOPS)
     .value("PATTERN_DASH_DOT", PatternID::PATTERN_DASH_DOT)
     .value("PATTERN_WAVE_PARTICLE", PatternID::PATTERN_WAVE_PARTICLE)
-    .value("PATTERN_LIGHTSPEED", PatternID::PATTERN_LIGHTSPEED);
+    .value("PATTERN_LIGHTSPEED", PatternID::PATTERN_LIGHTSPEED)
+    // Fade
+    .value("PATTERN_FADE", PatternID::PATTERN_FADE)
+    .value("PATTERN_MORPH_FADE", PatternID::PATTERN_MORPH_FADE)
+    .value("PATTERN_GLITCH_FADE", PatternID::PATTERN_GLITCH_FADE);
 
   // colorset class
   class_<Colorset>("Colorset")
@@ -147,25 +165,32 @@ EMSCRIPTEN_BINDINGS(Vortex) {
   // pattern args class
   class_<PatternArgs>("PatternArgs")
     .constructor<>()
-    .constructor<uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t>()
+    .constructor<uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t>()
     .property("on_dur", &PatternArgs::on_dur)
     .property("off_dur", &PatternArgs::off_dur)
     .property("gap_dur", &PatternArgs::gap_dur)
     .property("dash_dur", &PatternArgs::dash_dur)
     .property("group_size", &PatternArgs::group_size)
-    .property("blend_speed", &PatternArgs::blend_speed);
+    .property("blend_speed", &PatternArgs::blend_speed)
+    .property("fade_dur", &PatternArgs::fade_dur);
 
-  // pattern class
-  class_<Pattern>("Pattern")
-    .function("init", &Pattern::init)
-    .function("setArgs", &Pattern::setArgs)
-    .function("getArgs", select_overload<PatternArgs()>(&Pattern::getArgs))
-    //.function("equals", &Pattern::equals, allow_raw_pointer<const Pattern *>())
-    .function("getColorset", select_overload<const Colorset() const>(&Pattern::getColorset))
-    .function("setColorset", &Pattern::setColorset)
-    .function("clearColorset", &Pattern::clearColorset)
-    .function("getFlags", &Pattern::getFlags)
-    .function("hasFlags", &Pattern::hasFlags);
+  class_<HeliosLib>("HeliosLib")
+    .constructor<>()
+    .function("init", &HeliosLib::init)
+    .function("tick", &HeliosLib::tick)
+    .function("cleanup", &HeliosLib::cleanup)
+    .function("getCurColor", &HeliosLib::getCurColor)
+    .function("setColorset", &HeliosLib::setColorset)
+    .function("setArgs", &HeliosLib::setArgs)
+    .function("setMode", &HeliosLib::setMode)
+    .function("randomizeSeeded", &HeliosLib::randomizeSeeded)
+    .function("getArgs", &HeliosLib::getArgs)
+    .function("getNumColors", &HeliosLib::getNumColors)
+    .function("getColorAt", &HeliosLib::getColorAt)
+    .function("setCheckPinHook", &HeliosLib::setCheckPinHook)
+    .function("setLedsInitHook", &HeliosLib::setLedsInitHook)
+    .function("setLedsShowHook", &HeliosLib::setLedsShowHook)
+    .function("setLedsBrightnessHook", &HeliosLib::setLedsBrightnessHook);
 
   // bind others as necessary
 }
@@ -173,21 +198,171 @@ EMSCRIPTEN_BINDINGS(Vortex) {
 
 // Helios Lib code
 
+HeliosLib::HeliosLib() :
+  m_helios(),
+  m_preview(nullptr),
+  m_callbacks(nullptr)
+#ifdef WASM
+  , m_jsCallbacks(new HeliosLibJsCallbacks()),
+    m_ledsInitHook(val::undefined()),
+    m_ledsShowHook(val::undefined()),
+    m_ledsBrightnessHook(val::undefined())
+#endif
+{
+  m_preview = new Pattern(m_helios);
+#ifdef WASM
+  setCallbacks(m_jsCallbacks);
+#endif
+}
+
+HeliosLib::~HeliosLib()
+{
+  delete m_preview;
+  m_preview = nullptr;
+#ifdef WASM
+  delete m_jsCallbacks;
+  m_jsCallbacks = nullptr;
+#endif
+}
+
 bool HeliosLib::init()
 {
-    if (!Helios::init()) {
-        return false;
-    }
-
-    return true;
+  // Disable real-time timestep for WASM: JS requestAnimationFrame controls timing,
+  // so the busy-wait loop in tickClock() would block the browser thread.
+  m_helios.time().enableTimestep(false);
+  m_preview->init();
+  return true;
 }
 
 void HeliosLib::cleanup()
 {
-
 }
 
 void HeliosLib::tick()
 {
-  Helios::tick();
+  m_helios.time().tickClock();
+  m_preview->play();
+#ifdef WASM
+  if (isFunction(m_ledsShowHook)) {
+    RGBColor col = m_helios.led().get();
+    m_ledsShowHook(col.red, col.green, col.blue, 255);
+  }
+#endif
 }
+
+RGBColor HeliosLib::getCurColor()
+{
+  return m_helios.led().get();
+}
+
+void HeliosLib::setColorset(Colorset &colorset)
+{
+  m_preview->setColorset(colorset);
+}
+
+void HeliosLib::setArgs(PatternArgs &args)
+{
+  m_preview->setArgs(args);
+  m_preview->init();
+}
+
+void HeliosLib::setMode(PatternArgs &args, Colorset &colorset)
+{
+  m_preview->setArgs(args);
+  m_preview->setColorset(colorset);
+  m_preview->init();
+}
+
+int HeliosLib::randomizeSeeded(uint8_t maxColors)
+{
+  Random ctx(m_preview->crc32());
+  uint8_t randVal = ctx.next8();
+
+  uint8_t requestedMaxColors = maxColors > 0 ? maxColors : 1;
+  if (requestedMaxColors > NUM_COLOR_SLOTS) {
+    requestedMaxColors = NUM_COLOR_SLOTS;
+  }
+  uint8_t requestedColors = (uint8_t)((randVal % requestedMaxColors) + 1);
+
+  m_preview->colorset().randomizeColors(ctx, requestedColors, Colorset::COLOR_MODE_RANDOMLY_PICK);
+  while (m_preview->colorset().numColors() > requestedColors) {
+    m_preview->colorset().removeColor((uint8_t)(m_preview->colorset().numColors() - 1));
+  }
+
+  int patternIndex = (int)(randVal % PATTERN_COUNT);
+  Patterns::make_pattern((PatternID)patternIndex, *m_preview);
+  m_preview->init();
+  return patternIndex;
+}
+
+PatternArgs HeliosLib::getArgs()
+{
+  return m_preview->getArgs();
+}
+
+int HeliosLib::getNumColors()
+{
+  return m_preview->colorset().numColors();
+}
+
+RGBColor HeliosLib::getColorAt(int index)
+{
+  if (index < 0) {
+    return RGBColor();
+  }
+  return m_preview->colorset().get((uint8_t)index);
+}
+
+void HeliosLib::setCallbacks(HeliosCallbacks *callbacks)
+{
+  m_callbacks = callbacks;
+  m_helios.setCallbacks(callbacks);
+}
+
+#ifdef WASM
+void HeliosLib::setCheckPinHook(emscripten::val callback)
+{
+  if (!m_jsCallbacks) {
+    return;
+  }
+  m_jsCallbacks->setCheckPinHook(callback);
+  setCallbacks(m_jsCallbacks);
+}
+
+void HeliosLib::setLedsInitHook(emscripten::val callback)
+{
+  m_ledsInitHook = callback;
+  if (isFunction(m_ledsInitHook)) {
+    RGBColor col = m_helios.led().get();
+    m_ledsInitHook(col.red, col.green, col.blue, 1);
+  }
+  if (!m_jsCallbacks) {
+    return;
+  }
+  m_jsCallbacks->setLedsInitHook(callback);
+  setCallbacks(m_jsCallbacks);
+}
+
+void HeliosLib::setLedsShowHook(emscripten::val callback)
+{
+  m_ledsShowHook = callback;
+  if (!m_jsCallbacks) {
+    return;
+  }
+  m_jsCallbacks->setLedsShowHook(callback);
+  setCallbacks(m_jsCallbacks);
+}
+
+void HeliosLib::setLedsBrightnessHook(emscripten::val callback)
+{
+  m_ledsBrightnessHook = callback;
+  if (isFunction(m_ledsBrightnessHook)) {
+    m_ledsBrightnessHook(255);
+  }
+  if (!m_jsCallbacks) {
+    return;
+  }
+  m_jsCallbacks->setLedsBrightnessHook(callback);
+  setCallbacks(m_jsCallbacks);
+}
+#endif

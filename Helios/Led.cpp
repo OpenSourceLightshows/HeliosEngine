@@ -22,17 +22,22 @@
 
 #define SCALE8(i, scale)  (((uint16_t)i * (uint16_t)(scale)) >> 8)
 
-// array of led color values
-RGBColor Led::m_ledColor = RGB_OFF;
-RGBColor Led::m_realColor = RGB_OFF;
-// global brightness
-uint8_t Led::m_brightness = DEFAULT_BRIGHTNESS;
+Led::Led(Helios &helios) :
+  m_brightness(DEFAULT_BRIGHTNESS),
+  m_ledColor(RGB_OFF),
+  m_realColor(RGB_OFF),
+  m_helios(helios)
+{
+}
 
 bool Led::init()
 {
   // clear the led colors
   m_ledColor = RGB_OFF;
   m_realColor = RGB_OFF;
+#ifdef HELIOS_CLI
+  m_helios.callbacks().ledsInit(m_ledColor, 1);
+#endif
 #ifdef HELIOS_EMBEDDED
 #ifdef HELIOS_ARDUINO
   pinMode(0, OUTPUT);
@@ -70,11 +75,14 @@ void Led::adjustBrightness(uint8_t fadeBy)
 void Led::setBrightness(uint8_t brightness)
 {
   m_brightness = brightness;
+#ifdef HELIOS_CLI
+  m_helios.callbacks().ledsBrightness(brightness);
+#endif
 }
 
 void Led::strobe(uint16_t on_time, uint16_t off_time, RGBColor off_col, RGBColor on_col)
 {
-  set(((Time::getCurtime() % (on_time + off_time)) > on_time) ? off_col : on_col);
+  set(((m_helios.time().getCurtime() % (on_time + off_time)) > on_time) ? off_col : on_col);
 }
 
 void Led::breath(uint8_t hue, uint32_t duration, uint8_t magnitude, uint8_t sat, uint8_t val)
@@ -84,7 +92,7 @@ void Led::breath(uint8_t hue, uint32_t duration, uint8_t magnitude, uint8_t sat,
     return;
   }
   // Determine the phase in the cycle
-  uint32_t phase = Time::getCurtime() % (2 * duration);
+  uint32_t phase = m_helios.time().getCurtime() % (2 * duration);
   // Calculate hue shift
   int32_t hueShift;
   if (phase < duration) {
@@ -104,7 +112,7 @@ void Led::hold(RGBColor col)
 {
   set(col);
   update();
-  Time::delayMilliseconds(250);
+  m_helios.time().delayMilliseconds(250);
 }
 
 void Led::setPWM(uint8_t pwmPin, uint8_t pwmValue, volatile uint8_t &controlRegister,
@@ -148,5 +156,9 @@ void Led::update()
   // turn interrupts back on
   SREG = oldSREG;
 #endif
+#endif
+#ifdef HELIOS_CLI
+  // notify host runtimes whenever a frame is shown
+  m_helios.callbacks().ledsShow(m_ledColor, m_brightness);
 #endif
 }
