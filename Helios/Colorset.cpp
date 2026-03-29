@@ -175,6 +175,12 @@ void Colorset::removeColor(uint8_t index)
   if (index >= m_numColors) {
     return;
   }
+  // Prevent removing the last color to avoid creating a disabled pattern
+  // A pattern with 0 colors will be disabled and show no light, making the
+  // device appear unresponsive
+  if (m_numColors <= 1) {
+    return;  // Don't allow empty colorset
+  }
   for (uint8_t i = index; i < (m_numColors - 1); ++i) {
     m_palette[i] = m_palette[i + 1];
   }

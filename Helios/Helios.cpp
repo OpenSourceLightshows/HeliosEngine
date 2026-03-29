@@ -193,6 +193,17 @@ void Helios::load_cur_mode()
     // try to write it out because storage was corrupt
     Storage::write_pattern(cur_mode, pat);
   }
+  // Validate pattern isn't disabled - this prevents invisible patterns that
+  // make the device appear unresponsive. A pattern is disabled if:
+  // 1. It has no colors (numColors == 0), OR
+  // 2. It has no on duration AND no dash duration (both are 0)
+  PatternArgs args = pat.getArgs();
+  if (pat.colorset().numColors() == 0 ||
+      (args.on_dur == 0 && args.dash_dur == 0)) {
+    // Pattern is disabled, restore defaults
+    Patterns::make_default(cur_mode, pat);
+    Storage::write_pattern(cur_mode, pat);
+  }
   // then re-initialize the pattern
   pat.init();
 }
@@ -296,6 +307,9 @@ void Helios::handle_state()
       }
       break;
 #endif
+    default:
+      // Fallthrough to STATE_MODES for any unexpected state value
+      break;
   }
 }
 
@@ -774,6 +788,7 @@ void Helios::handle_state_set_global_brightness()
   uint8_t col = 0;
   uint8_t brightness = 0;
   switch (menu_selection) {
+    default:
     case 0:
       col = 0xFF;
       brightness = BRIGHTNESS_HIGH;

@@ -127,6 +127,11 @@ void Led::setPWM(uint8_t pwmPin, uint8_t pwmValue, volatile uint8_t &controlRegi
 #endif
 }
 
+void Led::setBrightness(uint8_t brightness)
+{
+  m_brightness = brightness;
+}
+
 void Led::update()
 {
 #ifdef HELIOS_EMBEDDED
