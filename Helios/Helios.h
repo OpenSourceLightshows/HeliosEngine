@@ -32,33 +32,15 @@ public:
 #endif
 
   enum Flags : uint8_t {
-    // No flags are set
-    FLAG_NONE     = 0,
-
-    // The device is locked and must be unlocked to turn on
-    FLAG_LOCKED   = (1 << 0),
-    // Conjure mode is enabled, one click will toggle power
-    FLAG_CONJURE  = (1 << 1),
-    // Autoplay is enabled, modes will automatically cycle
-    FLAG_AUTOPLAY = (1 << 2),
-    // Lock on mode is enabled, device stays on and locked
-    FLAG_LOCK_ON  = (1 << 3),
-    // Add new flags here, max 8 flags
-
-    // ==============================================
-    // Auto increment to count the number of flags
-    INTERNAL_FLAGS_END,
-    // Calculate mask for invalid Flags based on the
-    // inverse of all flags listed above here
-    FLAGS_INVALID = (uint8_t)(~((1 << (INTERNAL_FLAGS_END - 1)) - 1))
+    FLAG_NONE = 0,
+    FLAG_LOCKED = (1 << 0),
   };
 
   // get/set global flags
-  static void set_flags(Flags flag) { global_flags = (Flags)(global_flags | flag); }
-  static bool has_flags(Flags flag) { return (global_flags & flag) == flag; }
-  static bool has_any_flags(Flags flag) { return (global_flags & flag) != FLAG_NONE; }
-  static void clear_flags(Flags flag) { global_flags = (Flags)(global_flags & ~flag); }
-  static void toggle_flags(Flags flag) { global_flags = (Flags)(global_flags ^ flag); }
+  static void set_flag(Flags flag) { global_flags = (Flags)(global_flags | flag); }
+  static bool has_flag(Flags flag) { return (global_flags & flag) == flag; }
+  static void clear_flag(Flags flag) { global_flags = (Flags)(global_flags & ~flag); }
+  static void toggle_flag(Flags flag) { global_flags = (Flags)(global_flags ^ flag); }
 
 private:
   // initialize the various components of helios
@@ -80,23 +62,19 @@ private:
   static void handle_on_menu(uint8_t mag, bool past);
   static void handle_state_color_selection();
   static void handle_state_color_group_selection();
-  static void handle_state_col_select_hue_val();
+  static void handle_state_color_variant_selection();
   static void handle_state_pat_select();
   static void handle_state_toggle_flag(Flags flag);
   static void handle_state_set_defaults();
   static void show_selection(RGBColor color);
   static void factory_reset();
 
-
   enum State : uint8_t {
     STATE_MODES,
     STATE_COLOR_GROUP_SELECTION,
-    STATE_COLOR_SELECT_HUE,
-    STATE_COLOR_SELECT_VAL,
+    STATE_COLOR_VARIANT_SELECTION,
     STATE_PATTERN_SELECT,
-    STATE_TOGGLE_CONJURE,
     STATE_TOGGLE_LOCK,
-    STATE_TOGGLE_LOCK_ON,
     STATE_SET_DEFAULTS,
 #ifdef HELIOS_CLI
     STATE_SLEEP,
@@ -109,10 +87,8 @@ private:
   static Flags global_flags;
   static uint8_t menu_selection;
   static uint8_t cur_mode;
+  // the group that was selected in color select
   static uint8_t selected_base_group;
-  static uint8_t selected_hue;
-  static uint8_t selected_val;
-  static uint8_t selected_sat;
   static uint8_t num_colors_selected;  // Track number of colors selected in current session
   static Pattern pat;
   static bool keepgoing;

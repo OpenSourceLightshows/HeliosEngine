@@ -6,9 +6,7 @@
 // define arrays of colors, you can reuse these if you have multiple
 // modes that use the same colorset -- these demonstrate the max amount
 // of colors in each set but you can absolutely list a lesser amount
-static const uint32_t color_codes0[] = {RGB_RED, RGB_TURQUOISE_BRI_MEDIUM, RGB_WHITE_BRI_LOW}; // Electric Storm
-static const uint32_t color_codes1[] = {RGB_MAGENTA_BRI_LOW, RGB_ICE_BLUE_BRI_LOW, RGB_GREEN_BRI_LOW}; // Cyber Pulse
-static const uint32_t color_codes2[] = {RGB_YELLOW_BRI_LOW, RGB_PURPLE}; // Sunset Eclipse
+static const uint32_t color_codes0[] = {RGB_RED, RGB_GREEN, RGB_BLUE}; // Rainbow Flow
 
 // Define Colorset configurations for each slot
 struct default_colorset {
@@ -20,8 +18,6 @@ struct default_colorset {
 // the number of colors in the array on the right
 static const default_colorset default_colorsets[] = {
   { 3, color_codes0 },  // 0 Rainbow Flow
-  { 3, color_codes1 },  // 1 Ghostly
-  { 2, color_codes2 },  // 2 Photo Copy
 };
 
 void Patterns::make_default(uint8_t index, Pattern &pat)
@@ -32,20 +28,8 @@ void Patterns::make_default(uint8_t index, Pattern &pat)
   PatternArgs args;
   switch (index) {
     case 0:  // Rainbow Flow
-      args.on_dur = 1;
-      args.off_dur = 9;
-      break;
-    case 1:  // Ghostly
       args.on_dur = 3;
       args.off_dur = 23;
-      args.blend_speed = 10;
-      break;
-    case 2:  // Photo Copy
-      args.on_dur = 1;
-      args.off_dur = 9;
-      args.gap_dur = 6;
-      args.dash_dur = 15;
-
       break;
   }
   // assign default args
@@ -63,11 +47,6 @@ void Patterns::make_pattern(PatternID id, Pattern &pat)
   {
   default:
 
-  case PATTERN_DOPS:
-    args.on_dur = 1;
-    args.off_dur = 9;
-    break;
-
   case PATTERN_STROBE:
     args.on_dur = 5;
     args.off_dur = 8;
@@ -83,15 +62,10 @@ void Patterns::make_pattern(PatternID id, Pattern &pat)
     args.off_dur = 23;
     break;
 
-  case PATTERN_FLARE:
-    args.on_dur = 2;
-    args.off_dur = 30;
-    break;
-
-  case PATTERN_MORPH_STROBIE:
+  case PATTERN_RAZOR:
     args.on_dur = 3;
-    args.off_dur = 23;
-    args.blend_speed = 10;
+    args.off_dur = 1;
+    args.gap_dur = 30; // 29 for flashing pattern circles
     break;
 
   case PATTERN_DASH_DOPS:
@@ -101,25 +75,6 @@ void Patterns::make_pattern(PatternID id, Pattern &pat)
     args.dash_dur = 15;
     break;
 
-  case PATTERN_FADE:
-    args.on_dur = 1;
-    args.off_dur = 15;
-    args.fade_dur = 25;
-    break;
-
-  case PATTERN_MORPH_FADE:
-    args.on_dur = 1;
-    args.off_dur = 15;
-    args.fade_dur = 15;
-    args.blend_speed = 2;
-    break;
-
-  case PATTERN_GLITCH_FADE:
-    args.on_dur = 1;
-    args.off_dur = 10;
-    args.gap_dur = 30;
-    args.fade_dur = 5;
-    break;
   }
 
   pat.setArgs(args);

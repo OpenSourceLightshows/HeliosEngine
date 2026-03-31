@@ -18,22 +18,13 @@ enum PatternID : int8_t {
   // =====================================
 
   // Strobe
-  PATTERN_DOPS = PATTERN_FIRST,
-  PATTERN_STROBE,
+  PATTERN_STROBE = PATTERN_FIRST,
   PATTERN_HYPNOSTROBE,
   PATTERN_STROBIE,
-  PATTERN_FLARE,
-
-  // Morph
-  PATTERN_MORPH_STROBIE,
-
-  // Dash
+  PATTERN_RAZOR,
   PATTERN_DASH_DOPS,
 
-  // Fade
-  PATTERN_FADE,
-  PATTERN_MORPH_FADE,
-  PATTERN_GLITCH_FADE,
+
 
   // Meta pattern constants
   INTERNAL_PATTERNS_END,

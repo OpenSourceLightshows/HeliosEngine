@@ -1,4 +1,4 @@
-name: Aeos Release
+name: Nyx Release
 
 on:
   workflow_dispatch: # manual trigger
@@ -50,7 +50,7 @@ jobs:
       - name: Checkout current repository
         uses: actions/checkout@v4
         with:
-          ref: aeos  # Explicitly checkout the aeos branch
+          ref: nyx  # Explicitly checkout the nyx branch
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -79,22 +79,22 @@ jobs:
       - name: Checkout current repository
         uses: actions/checkout@v4
         with:
-          ref: aeos  # Explicitly checkout the aeos branch
+          ref: nyx  # Explicitly checkout the nyx branch
           fetch-depth: 0 # Fetch all history for calculating version
 
       - name: Get the latest tag
         id: get_tag
         run: |
-          # Look for tags with the aeos- prefix
-          latest_tag=$(git tag --list "aeos-*" | sort -V | tail -n1 || echo "none")
+          # Look for tags with the nyx- prefix
+          latest_tag=$(git tag --list "nyx-*" | sort -V | tail -n1 || echo "none")
           echo "tag=$latest_tag" >> $GITHUB_ENV
 
       - name: Check for existing tags
         id: check_tag
         run: |
           if [ "${{ env.tag }}" == "none" ]; then
-            echo "No aeos tags found. Creating initial tag aeos-1.0.0."
-            echo "new_tag=aeos-1.0.0" >> $GITHUB_ENV
+            echo "No nyx tags found. Creating initial tag nyx-1.0.0."
+            echo "new_tag=nyx-1.0.0" >> $GITHUB_ENV
           fi
 
       - name: Calculate new version
@@ -104,17 +104,17 @@ jobs:
             latest_tag=${{ env.tag }}
             commits_since_tag=$(git rev-list $latest_tag..HEAD --count)
 
-            # Extract version number from the aeos tag
-            version_number=$(echo $latest_tag | sed "s/aeos-//g")
+            # Extract version number from the nyx tag
+            version_number=$(echo $latest_tag | sed "s/nyx-//g")
 
             IFS='.' read -ra ADDR <<< "$version_number"
             patch=$((ADDR[2] + commits_since_tag))
             new_version="${ADDR[0]}.${ADDR[1]}.$patch"
             echo "new_version=$new_version" >> $GITHUB_ENV
-            echo "new_tag=aeos-$new_version" >> $GITHUB_ENV
+            echo "new_tag=nyx-$new_version" >> $GITHUB_ENV
           else
             # Extract version number from the new tag
-            new_version=$(echo ${{ env.new_tag }} | sed "s/aeos-//g")
+            new_version=$(echo ${{ env.new_tag }} | sed "s/nyx-//g")
             echo "new_version=$new_version" >> $GITHUB_ENV
           fi
 
@@ -161,9 +161,9 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ env.new_tag }}
-          name: Aeos ${{ env.new_version }}
+          name: Nyx ${{ env.new_version }}
           body: |
-            Release of Aeos version ${{ env.new_version }}
+            Release of Nyx version ${{ env.new_version }}
           draft: false
           prerelease: false
         env:
@@ -174,7 +174,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./artifact/unzipped/embedded/helios.bin
-          asset_name: aeos.bin
+          asset_name: nyx.bin
           asset_content_type: application/octet-stream
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -184,7 +184,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./artifact/unzipped/embedded/helios.elf
-          asset_name: aeos.elf
+          asset_name: nyx.elf
           asset_content_type: application/octet-stream
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -194,7 +194,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./artifact/unzipped/embedded/helios.map
-          asset_name: aeos.map
+          asset_name: nyx.map
           asset_content_type: application/octet-stream
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -204,7 +204,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./artifact/unzipped/embedded/helios.hex
-          asset_name: aeos.hex
+          asset_name: nyx.hex
           asset_content_type: application/octet-stream
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -214,7 +214,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./artifact/unzipped/helioscli/helios
-          asset_name: aeos_cli
+          asset_name: nyx_cli
           asset_content_type: application/octet-stream
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

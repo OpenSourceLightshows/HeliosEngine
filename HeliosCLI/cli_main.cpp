@@ -112,8 +112,8 @@ int main(int argc, char *argv[])
     // parse the list of args into an array of ints
     std::vector<uint32_t> vals;
     std::istringstream ss(initial_pattern_args_str);
-    // push 7 args into the array (on_dur, off_dur, gap_dur, dash_dur, group_size, blend_speed, fade_dur)
-    while (vals.size() < 7) {
+    // push 6 args into the array
+    while (vals.size() < 6) {
       std::string arg;
       uint32_t val = 0;
       // try to parse out a number
@@ -124,7 +124,7 @@ int main(int argc, char *argv[])
       vals.push_back(val);
     }
     // construct pattern args from the array of values
-    PatternArgs args(vals[0], vals[1], vals[2], vals[3], vals[4], vals[5], vals[6]);
+    PatternArgs args(vals[0], vals[1], vals[2], vals[3], vals[4], vals[5]);
     // set the args of the current pattern
     Helios::cur_pattern().setArgs(args);
   }
@@ -738,12 +738,11 @@ static void dump_eeprom(const std::string& filename)
 
   uint8_t flags = (uint8_t)memory[CONFIG_START_INDEX - STORAGE_GLOBAL_FLAG_INDEX];
   bool locked = (flags & Helios::FLAG_LOCKED) != 0;
-  bool conjure = (flags & Helios::FLAG_CONJURE) != 0;
   uint8_t modeIdx = (uint8_t)memory[CONFIG_START_INDEX - STORAGE_CURRENT_MODE_INDEX];
   uint8_t brightness = (uint8_t)memory[CONFIG_START_INDEX - STORAGE_BRIGHTNESS_INDEX];
 
   printf("Brightness: %u\n", brightness);
   printf("Mode Index: %u\n", modeIdx);
-  printf("Flags: 0x%02X (locked=%u conjure=%u)\n", flags, locked, conjure);
+  printf("Flags: 0x%02X (locked=%u)\n", flags, locked);
 }
 
