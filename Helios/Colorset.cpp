@@ -147,7 +147,8 @@ void colorset_add_color_with_value_style(colorset_t *set, random_t *ctx, uint8_t
 
 void colorset_remove_color(colorset_t *set, uint8_t index)
 {
-  if (index >= set->m_numColors) {
+  // Prevent removing the last color (pattern would become disabled)
+  if (index >= set->m_numColors || set->m_numColors <= 1) {
     return;
   }
   uint8_t i;
@@ -164,8 +165,12 @@ void colorset_randomize_colors(colorset_t *set, random_t *ctx, uint8_t numColors
     mode = (enum colorset_color_mode)(random_next8(ctx, 0, 255) % COLOR_MODE_COUNT);
   }
   colorset_clear(set);
+  // Ensure at least 1 color (prevent disabled pattern)
   if (!numColors) {
     numColors = random_next8(ctx, mode == COLOR_MODE_MONOCHROMATIC ? 2 : 1, 9);
+  }
+  if (numColors == 0) {
+    numColors = 1;
   }
   uint8_t randomizedHue = random_next8(ctx, 0, 255);
   uint8_t colorGap = 0;

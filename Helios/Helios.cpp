@@ -222,6 +222,12 @@ void helios_load_cur_mode(void)
     // try to write it out because storage was corrupt
     storage_write_pattern(g_cur_mode, &g_pat);
   }
+  // Validate pattern won't be disabled (no colors or no on/dash duration)
+  if (colorset_num_colors(&g_pat.m_colorset) == 0 ||
+      (g_pat.m_args.on_dur == 0 && g_pat.m_args.dash_dur == 0)) {
+    patterns_make_default(g_cur_mode, &g_pat);
+    storage_write_pattern(g_cur_mode, &g_pat);
+  }
   // then re-initialize the pattern
   pattern_init_state(&g_pat);
 }
@@ -238,6 +244,10 @@ void helios_load_global_flags(void)
   if (helios_has_flags(FLAG_CONJURE)) {
     // if conjure is enabled then load the current mode index from storage
     g_cur_mode = storage_read_current_mode();
+    // Validate mode index is in bounds
+    if (g_cur_mode >= NUM_MODE_SLOTS) {
+      g_cur_mode = 0;
+    }
   }
   // read the global brightness from index 2 config
   uint8_t saved_brightness = storage_read_brightness();
@@ -246,9 +256,7 @@ void helios_load_global_flags(void)
   uint8_t is_valid = !helios_has_any_flags(FLAGS_INVALID) && saved_brightness > 0;
   if (is_valid) {
     led_set_brightness(saved_brightness);
-  }
-
-  if (!is_valid) {
+  } else {
     // if the brightness was 0 and the flags are invalid then the storage was likely
     // uninitialized or corrupt so write out the defaults
     helios_factory_reset();
@@ -263,7 +271,11 @@ void helios_save_global_flags(void)
 
 void helios_set_mode_index(uint8_t mode_index)
 {
-  g_cur_mode = (uint8_t)mode_index % NUM_MODE_SLOTS;
+  // Bounds check the mode index
+  if (mode_index >= NUM_MODE_SLOTS) {
+    mode_index = 0;
+  }
+  g_cur_mode = mode_index;
   // now load current mode again
   helios_load_cur_mode();
 }
@@ -325,6 +337,9 @@ static void helios_handle_state(void)
       }
       break;
 #endif
+    default:
+      // Fallthrough to STATE_MODES for any unexpected state value
+      break;
   }
 }
 
@@ -905,7 +920,10 @@ static void helios_handle_state_randomize(void)
     random_t ctx;
     random_init_seed(&ctx, pattern_crc32(&g_pat));
     uint8_t randVal = random_next8(&ctx, 0, 255);
-    colorset_randomize_colors(cur_set, &ctx, (randVal + 1) % NUM_COLOR_SLOTS, COLOR_MODE_RANDOMLY_PICK);
+    // Ensure at least 1 color (prevent 0 colors which disables pattern)
+    uint8_t numColors = ((randVal + 1) % NUM_COLOR_SLOTS);
+    if (numColors == 0) numColors = 1;
+    colorset_randomize_colors(cur_set, &ctx, numColors, COLOR_MODE_RANDOMLY_PICK);
     patterns_make_pattern((enum pattern_id)(randVal % PATTERN_COUNT), &g_pat);
     pattern_init_state(&g_pat);
   }
