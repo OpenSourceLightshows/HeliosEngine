@@ -5,8 +5,12 @@
 #ifdef HELIOS_EMBEDDED
 #ifdef HELIOS_STM8
 // STM8 specific includes handled in stm8_init.h
-#define BUTTON_PIN 5
+#ifndef BUTTON_PIN
+#define BUTTON_PIN 6
+#endif
+#ifndef BUTTON_PORT_D
 #define BUTTON_PORT_D
+#endif
 #else
 #include <avr/interrupt.h>
 #include <avr/io.h>
@@ -117,8 +121,8 @@ void button_enable_wake(void)
 
 #ifdef HELIOS_EMBEDDED
 #ifdef HELIOS_STM8
-// STM8 External interrupt handler for button
-void button_exti_isr(void) __interrupt(3) {
+// STM8 External interrupt handler for button (PD6 -> Port D EXTI = IRQ6)
+void button_exti_isr(void) __interrupt(6) {
   helios_wakeup();
 }
 #else
@@ -138,7 +142,7 @@ uint8_t button_check(void)
 #ifdef HELIOS_ARDUINO
   return digitalRead(3) == HIGH;
 #elif defined(HELIOS_STM8)
-  // STM8 - read button state from PD5
+  // STM8 - read button state from PD6 (active HIGH)
   #define PD_IDR (*(volatile uint8_t *)0x5010)
   return (PD_IDR & (1 << BUTTON_PIN)) != 0;
 #else

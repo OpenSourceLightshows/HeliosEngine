@@ -7,6 +7,7 @@ extern "C" {
 
 // STM8 hardware initialization functions
 void stm8_init_clock(void);
+void stm8_check_programming_mode(void);
 void stm8_init_gpio(void);
 void stm8_init_timers(void);
 void stm8_init_interrupts(void);

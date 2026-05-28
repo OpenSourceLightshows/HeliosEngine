@@ -7,12 +7,14 @@ enum hsv_to_rgb_algorithm g_hsv_rgb_alg = HSV_TO_RGB_GENERIC;
 
 // ========== HSVColor functions ==========
 
+#ifndef HELIOS_STM8
 void hsv_init(hsv_color_t *hsv)
 {
   hsv->hue = 0;
   hsv->sat = 0;
   hsv->val = 0;
 }
+#endif
 
 void hsv_init3(hsv_color_t *hsv, uint8_t hue, uint8_t sat, uint8_t val)
 {
@@ -21,23 +23,29 @@ void hsv_init3(hsv_color_t *hsv, uint8_t hue, uint8_t sat, uint8_t val)
   hsv->val = val;
 }
 
+#ifndef HELIOS_STM8
 void hsv_init_from_raw(hsv_color_t *hsv, uint32_t dwVal)
 {
   hsv_init(hsv);
   hsv_assign_from_raw(hsv, dwVal);
 }
+#endif
 
+#ifndef HELIOS_STM8
 void hsv_init_from_rgb(hsv_color_t *hsv, const rgb_color_t *rgb)
 {
   hsv_assign_from_rgb(hsv, rgb);
 }
+#endif
 
+#ifndef HELIOS_STM8
 void hsv_copy(hsv_color_t *dest, const hsv_color_t *src)
 {
   dest->hue = src->hue;
   dest->sat = src->sat;
   dest->val = src->val;
 }
+#endif
 
 void hsv_assign_from_raw(hsv_color_t *hsv, uint32_t rhs)
 {
@@ -46,34 +54,44 @@ void hsv_assign_from_raw(hsv_color_t *hsv, uint32_t rhs)
   hsv->val = (rhs & 0xFF);
 }
 
+#ifndef HELIOS_STM8
 void hsv_assign_from_rgb(hsv_color_t *hsv, const rgb_color_t *rhs)
 {
   // always use generic
   hsv_color_t temp = rgb_to_hsv_generic(rhs);
   hsv_copy(hsv, &temp);
 }
+#endif
 
+#ifndef HELIOS_STM8
 uint8_t hsv_equals(const hsv_color_t *a, const hsv_color_t *b)
 {
   return (hsv_raw(b) == hsv_raw(a));
 }
+#endif
 
+#ifndef HELIOS_STM8
 uint8_t hsv_empty(const hsv_color_t *hsv)
 {
   return !hsv->hue && !hsv->sat && !hsv->val;
 }
+#endif
 
+#ifndef HELIOS_STM8
 void hsv_clear(hsv_color_t *hsv)
 {
   hsv->hue = 0;
   hsv->sat = 0;
   hsv->val = 0;
 }
+#endif
 
+#ifndef HELIOS_STM8
 uint32_t hsv_raw(const hsv_color_t *hsv)
 {
   return ((uint32_t)hsv->hue << 16) | ((uint32_t)hsv->sat << 8) | (uint32_t)hsv->val;
 }
+#endif
 
 // ========== RGBColor functions ==========
 
@@ -140,17 +158,21 @@ uint8_t rgb_equals(const rgb_color_t *a, const rgb_color_t *b)
   return (rgb_raw(b) == rgb_raw(a));
 }
 
+#ifndef HELIOS_STM8
 uint8_t rgb_empty(const rgb_color_t *rgb)
 {
   return !rgb->red && !rgb->green && !rgb->blue;
 }
+#endif
 
+#ifndef HELIOS_STM8
 void rgb_clear(rgb_color_t *rgb)
 {
   rgb->red = 0;
   rgb->green = 0;
   rgb->blue = 0;
 }
+#endif
 
 // scale down the brightness of a color by some fade amount
 void rgb_adjust_brightness(rgb_color_t *rgb, uint8_t fadeBy)
@@ -420,6 +442,7 @@ rgb_color_t hsv_to_rgb_generic(const hsv_color_t *rhs)
   return col;
 }
 
+#ifndef HELIOS_STM8
 // Convert rgb to hsv with generic fast method
 hsv_color_t rgb_to_hsv_generic(const rgb_color_t *rhs)
 {
@@ -450,4 +473,5 @@ hsv_color_t rgb_to_hsv_generic(const rgb_color_t *rhs)
   }
   return hsv;
 }
+#endif
 

@@ -126,11 +126,17 @@ uint8_t pattern_equals(const pattern_t *pat, const pattern_t *other);
 void pattern_update_color(pattern_t *pat, uint8_t index, const rgb_color_t *col);
 
 // calculate crc of the colorset + pattern
+#ifndef HELIOS_STM8
 uint32_t pattern_crc32(const pattern_t *pat);
+#endif
 
 // get the pattern flags
+#ifndef HELIOS_STM8
 uint32_t pattern_get_flags(const pattern_t *pat);
+#endif
+#ifndef HELIOS_STM8
 uint8_t pattern_has_flags(const pattern_t *pat, uint32_t flags);
+#endif
 
 // whether blend speed is non 0
 uint8_t pattern_is_blend(const pattern_t *pat);

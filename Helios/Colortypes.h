@@ -45,10 +45,14 @@ struct rgb_color_t
 void hsv_init(hsv_color_t *hsv);
 void hsv_init3(hsv_color_t *hsv, uint8_t hue, uint8_t sat, uint8_t val);
 void hsv_init_from_raw(hsv_color_t *hsv, uint32_t dwVal);
+#ifndef HELIOS_STM8
 void hsv_init_from_rgb(hsv_color_t *hsv, const rgb_color_t *rgb);
+#endif
 void hsv_copy(hsv_color_t *dest, const hsv_color_t *src);
 void hsv_assign_from_raw(hsv_color_t *hsv, uint32_t rhs);
+#ifndef HELIOS_STM8
 void hsv_assign_from_rgb(hsv_color_t *hsv, const rgb_color_t *rhs);
+#endif
 uint8_t hsv_equals(const hsv_color_t *a, const hsv_color_t *b);
 uint8_t hsv_empty(const hsv_color_t *hsv);
 void hsv_clear(hsv_color_t *hsv);
@@ -85,7 +89,9 @@ rgb_color_t hsv_to_rgb_rainbow(const hsv_color_t *rhs);
 // Generic hsv to rgb conversion nothing special
 rgb_color_t hsv_to_rgb_generic(const hsv_color_t *rhs);
 // Convert rgb to hsv with generic fast method
+#ifndef HELIOS_STM8
 hsv_color_t rgb_to_hsv_generic(const rgb_color_t *rhs);
+#endif
 
 #ifdef __cplusplus
 }

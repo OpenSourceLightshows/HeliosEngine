@@ -80,7 +80,9 @@ uint8_t colorset_equals(const colorset_t *a, const colorset_t *b);
 void colorset_clear(colorset_t *set);
 
 // CRC the colorset
+#ifndef HELIOS_STM8
 uint32_t colorset_crc32(const colorset_t *set);
+#endif
 
 // Index operator to access color index
 rgb_color_t colorset_get_at_index(const colorset_t *set, int index);
@@ -88,12 +90,18 @@ rgb_color_t colorset_get_at_index(const colorset_t *set, int index);
 // Add a single color
 uint8_t colorset_add_color(colorset_t *set, rgb_color_t col);
 uint8_t colorset_add_color_hsv(colorset_t *set, uint8_t hue, uint8_t sat, uint8_t val);
+#ifndef HELIOS_STM8
 void colorset_add_color_with_value_style(colorset_t *set, random_t *ctx, uint8_t hue, uint8_t sat,
     enum colorset_value_style valStyle, uint8_t numColors, uint8_t colorPos);
+#endif
+#ifndef HELIOS_STM8
 void colorset_remove_color(colorset_t *set, uint8_t index);
+#endif
 
 // Function to randomize the colors with various different modes of randomization
+#ifndef HELIOS_STM8
 void colorset_randomize_colors(colorset_t *set, random_t *ctx, uint8_t numColors, enum colorset_color_mode color_mode);
+#endif
 
 // Fade all of the colors in the set
 void colorset_adjust_brightness(colorset_t *set, uint8_t fadeby);
@@ -106,7 +114,9 @@ rgb_color_t colorset_get(const colorset_t *set, uint8_t index);
 void colorset_set(colorset_t *set, uint8_t index, rgb_color_t col);
 
 // Skip some amount of colors
+#ifndef HELIOS_STM8
 void colorset_skip(colorset_t *set, int32_t amount);
+#endif
 
 // Get current color in cycle
 rgb_color_t colorset_cur(const colorset_t *set);
@@ -140,7 +150,9 @@ uint8_t colorset_num_colors(const colorset_t *set);
 
 // Whether the colorset is currently on the first color or last color
 uint8_t colorset_on_start(const colorset_t *set);
+#ifndef HELIOS_STM8
 uint8_t colorset_on_end(const colorset_t *set);
+#endif
 
 #ifdef __cplusplus
 }

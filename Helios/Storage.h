@@ -29,7 +29,9 @@ uint8_t storage_init(void);
 uint8_t storage_read_pattern(uint8_t slot, pattern_t *pat);
 void storage_write_pattern(uint8_t slot, const pattern_t *pat);
 
+#ifndef HELIOS_STM8
 void storage_copy_slot(uint8_t srcSlot, uint8_t dstSlot);
+#endif
 
 uint8_t storage_read_config(uint8_t index);
 void storage_write_config(uint8_t index, uint8_t val);
@@ -42,8 +44,6 @@ void storage_write_current_mode(uint8_t current_mode);
 
 uint8_t storage_read_brightness(void);
 void storage_write_brightness(uint8_t brightness);
-
-uint8_t storage_crc8(uint8_t pos, uint8_t size);
 
 #ifdef HELIOS_CLI
 // toggle storage on/off

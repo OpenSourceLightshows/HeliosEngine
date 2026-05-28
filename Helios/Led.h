@@ -30,10 +30,14 @@ void led_strobe(uint16_t on_time, uint16_t off_time, const rgb_color_t *col1, co
 
 // breath the hue on an index
 // warning: these use hsv to rgb in realtime!
+#ifndef HELIOS_STM8
 void led_breath(uint8_t hue, uint32_t duration, uint8_t magnitude, uint8_t sat, uint8_t val);
+#endif
 
 // a very specialized api to hold all leds on a color for 250ms
+#ifndef HELIOS_STM8
 void led_hold(const rgb_color_t *col);
+#endif
 
 // get the RGBColor of an Led index
 rgb_color_t led_get(void);

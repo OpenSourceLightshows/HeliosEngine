@@ -16,6 +16,7 @@ void colorset_init(colorset_t *set)
   set->m_curIndex = INDEX_INVALID;
 }
 
+#ifndef HELIOS_STM8
 void colorset_init_multi(colorset_t *set, rgb_color_t c1, rgb_color_t c2, rgb_color_t c3,
     rgb_color_t c4, rgb_color_t c5, rgb_color_t c6, rgb_color_t c7, rgb_color_t c8)
 {
@@ -30,6 +31,7 @@ void colorset_init_multi(colorset_t *set, rgb_color_t c1, rgb_color_t c2, rgb_co
   if (!rgb_empty(&c7)) colorset_add_color(set, c7);
   if (!rgb_empty(&c8)) colorset_add_color(set, c8);
 }
+#endif
 
 void colorset_init_array(colorset_t *set, uint8_t numCols, const uint32_t *cols)
 {
@@ -66,6 +68,7 @@ void colorset_clear(colorset_t *set)
   colorset_reset_index(set);
 }
 
+#ifndef HELIOS_STM8
 uint32_t colorset_crc32(const colorset_t *set)
 {
   uint32_t hash = 5381;
@@ -75,6 +78,7 @@ uint32_t colorset_crc32(const colorset_t *set)
   }
   return hash;
 }
+#endif
 
 #ifndef HELIOS_STM8
 rgb_color_t colorset_get_at_index(const colorset_t *set, int index)
@@ -103,6 +107,7 @@ uint8_t colorset_add_color_hsv(colorset_t *set, uint8_t hue, uint8_t sat, uint8_
   return colorset_add_color(set, rgb);
 }
 
+#ifndef HELIOS_STM8
 void colorset_add_color_with_value_style(colorset_t *set, random_t *ctx, uint8_t hue, uint8_t sat,
     enum colorset_value_style valStyle, uint8_t numColors, uint8_t colorPos)
 {
@@ -146,7 +151,9 @@ void colorset_add_color_with_value_style(colorset_t *set, random_t *ctx, uint8_t
     colorset_add_color_hsv(set, hue, sat, 255);
   }
 }
+#endif
 
+#ifndef HELIOS_STM8
 void colorset_remove_color(colorset_t *set, uint8_t index)
 {
   if (index >= set->m_numColors) {
@@ -158,7 +165,9 @@ void colorset_remove_color(colorset_t *set, uint8_t index)
   }
   rgb_clear(&set->m_palette[--set->m_numColors]);
 }
+#endif
 
+#ifndef HELIOS_STM8
 void colorset_randomize_colors(colorset_t *set, random_t *ctx, uint8_t numColors, enum colorset_color_mode mode)
 {
   // if they specify randomly pick the color mode then roll it
@@ -202,7 +211,9 @@ void colorset_randomize_colors(colorset_t *set, random_t *ctx, uint8_t numColors
     }
   }
 }
+#endif
 
+#ifndef HELIOS_STM8
 void colorset_adjust_brightness(colorset_t *set, uint8_t fadeby)
 {
   uint8_t i;
@@ -210,6 +221,7 @@ void colorset_adjust_brightness(colorset_t *set, uint8_t fadeby)
     rgb_adjust_brightness(&set->m_palette[i], fadeby);
   }
 }
+#endif
 
 // get a color from the colorset
 #ifndef HELIOS_STM8
@@ -224,6 +236,7 @@ rgb_color_t colorset_get(const colorset_t *set, uint8_t index)
 }
 #endif
 
+#ifndef HELIOS_STM8
 void colorset_set(colorset_t *set, uint8_t index, rgb_color_t col)
 {
   // special case for 'setting' a color at the edge of the palette,
@@ -236,7 +249,9 @@ void colorset_set(colorset_t *set, uint8_t index, rgb_color_t col)
   }
   set->m_palette[index] = col;
 }
+#endif
 
+#ifndef HELIOS_STM8
 void colorset_skip(colorset_t *set, int32_t amount)
 {
   if (!set->m_numColors) {
@@ -259,6 +274,7 @@ void colorset_skip(colorset_t *set, int32_t amount)
     set->m_curIndex += set->m_numColors;
   }
 }
+#endif
 
 #ifndef HELIOS_STM8
 rgb_color_t colorset_cur(const colorset_t *set)
@@ -272,6 +288,7 @@ rgb_color_t colorset_cur(const colorset_t *set)
 }
 #endif
 
+#ifndef HELIOS_STM8
 void colorset_set_cur_index(colorset_t *set, uint8_t index)
 {
   if (!set->m_numColors) {
@@ -282,16 +299,19 @@ void colorset_set_cur_index(colorset_t *set, uint8_t index)
   }
   set->m_curIndex = index;
 }
+#endif
 
 void colorset_reset_index(colorset_t *set)
 {
   set->m_curIndex = INDEX_INVALID;
 }
 
+#ifndef HELIOS_STM8
 uint8_t colorset_cur_index(const colorset_t *set)
 {
   return set->m_curIndex;
 }
+#endif
 
 #ifndef HELIOS_STM8
 rgb_color_t colorset_get_prev(colorset_t *set)
@@ -367,6 +387,7 @@ uint8_t colorset_on_start(const colorset_t *set)
   return (set->m_curIndex == 0);
 }
 
+#ifndef HELIOS_STM8
 uint8_t colorset_on_end(const colorset_t *set)
 {
   if (!set->m_numColors) {
@@ -374,4 +395,5 @@ uint8_t colorset_on_end(const colorset_t *set)
   }
   return (set->m_curIndex == set->m_numColors - 1);
 }
+#endif
 

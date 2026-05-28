@@ -8,6 +8,7 @@ int main(void)
 {
   // Initialize STM8 hardware
   stm8_init_clock();
+  stm8_check_programming_mode();
   stm8_init_gpio();
   stm8_init_timers();
   stm8_init_interrupts();

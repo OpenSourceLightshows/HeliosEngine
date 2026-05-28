@@ -68,11 +68,13 @@ void pattern_init(pattern_t *pat, uint8_t onDur, uint8_t offDur, uint8_t gap,
   pat->m_fadeStartTime = 0;
 }
 
+#ifndef HELIOS_STM8
 void pattern_init_with_args(pattern_t *pat, const pattern_args_t *args)
 {
   pattern_init(pat, args->on_dur, args->off_dur, args->gap_dur,
               args->dash_dur, args->group_size, args->blend_speed, args->fade_dur);
 }
+#endif
 
 void pattern_init_state(pattern_t *pat)
 {
@@ -362,12 +364,15 @@ uint8_t pattern_equals(const pattern_t *pat, const pattern_t *other)
   return 1;
 }
 
+#ifndef HELIOS_STM8
 void pattern_update_color(pattern_t *pat, uint8_t index, const rgb_color_t *col)
 {
   colorset_set(&pat->m_colorset, index, *col);
   pattern_init_state(pat);
 }
+#endif
 
+#ifndef HELIOS_STM8
 uint32_t pattern_crc32(const pattern_t *pat)
 {
   uint32_t hash = 5381;
@@ -377,16 +382,21 @@ uint32_t pattern_crc32(const pattern_t *pat)
   }
   return hash;
 }
+#endif
 
+#ifndef HELIOS_STM8
 uint32_t pattern_get_flags(const pattern_t *pat)
 {
   return pat->m_patternFlags;
 }
+#endif
 
+#ifndef HELIOS_STM8
 uint8_t pattern_has_flags(const pattern_t *pat, uint32_t flags)
 {
   return (pat->m_patternFlags & flags) != 0;
 }
+#endif
 
 uint8_t pattern_is_blend(const pattern_t *pat)
 {

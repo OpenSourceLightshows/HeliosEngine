@@ -11,7 +11,7 @@
 #include <arduino.h>
 #elif defined(HELIOS_STM8)
 // STM8 hardware registers for PWM
-// Timer 1 for Red/Green, Timer 2 for Blue
+// TIM2 drives RED (CH2/PD3) + BLUE (CH3/PA3); TIM1 drives GREEN (CH3/PC3)
 #else
 #include <avr/sleep.h>
 #include <avr/io.h>
@@ -67,12 +67,14 @@ void led_set_rgb(const rgb_color_t *col)
   m_realColor.blue = SCALE8(m_ledColor.blue, m_brightness);
 }
 
+#ifndef HELIOS_STM8
 void led_set_rgb3(uint8_t r, uint8_t g, uint8_t b)
 {
   rgb_color_t col;
   rgb_init3(&col, r, g, b);
   led_set_rgb(&col);
 }
+#endif
 
 void led_clear(void)
 {
@@ -81,10 +83,12 @@ void led_clear(void)
   led_set_rgb(&off);
 }
 
+#ifndef HELIOS_STM8
 void led_adjust_brightness(uint8_t fadeBy)
 {
   rgb_adjust_brightness(&m_ledColor, fadeBy);
 }
+#endif
 
 void led_strobe(uint16_t on_time, uint16_t off_time, const rgb_color_t *off_col, const rgb_color_t *on_col)
 {
@@ -95,6 +99,7 @@ void led_strobe(uint16_t on_time, uint16_t off_time, const rgb_color_t *off_col,
   }
 }
 
+#ifndef HELIOS_STM8
 void led_breath(uint8_t hue, uint32_t duration, uint8_t magnitude, uint8_t sat, uint8_t val)
 {
   if (!duration) {
@@ -122,13 +127,16 @@ void led_breath(uint8_t hue, uint32_t duration, uint8_t magnitude, uint8_t sat, 
   rgb_init_from_hsv(&on, &hsv);
   led_strobe(2, 13, &off, &on);
 }
+#endif
 
+#ifndef HELIOS_STM8
 void led_hold(const rgb_color_t *col)
 {
   led_set_rgb(col);
   led_update();
   time_delay_milliseconds(250);
 }
+#endif
 
 #ifndef HELIOS_STM8
 static void led_set_pwm(uint8_t pwmPin, uint8_t pwmValue, volatile uint8_t *controlRegister,
@@ -182,13 +190,14 @@ void led_update(void)
   analogWrite(PWM_PIN_G, m_realColor.green);
   analogWrite(PWM_PIN_B, m_realColor.blue);
 #elif defined(HELIOS_STM8)
-  // STM8 - Write PWM values directly to timer compare registers
-  // Red on PD3 (Timer 1 Channel 1)
-  *(volatile uint8_t *)0x5265 = m_realColor.red;   // TIM1_CCR1L
-  // Green on PD6 (Timer 1 Channel 2)
-  *(volatile uint8_t *)0x5267 = m_realColor.green; // TIM1_CCR2L
-  // Blue on PB5 (Timer 2 Channel 1)
-  *(volatile uint8_t *)0x530C = m_realColor.blue;  // TIM2_CCR1L
+  // STM8 - write 8-bit PWM duty to the LOW byte of each compare register
+  // (ARRH=0/ARRL=255, so the high compare bytes stay 0)
+  // RED   = PD3 / TIM2_CH2
+  *(volatile uint8_t *)0x5314 = m_realColor.red;   // TIM2_CCR2L
+  // GREEN = PC3 / TIM1_CH3
+  *(volatile uint8_t *)0x526A = m_realColor.green; // TIM1_CCR3L
+  // BLUE  = PA3 / TIM2_CH3
+  *(volatile uint8_t *)0x5316 = m_realColor.blue;  // TIM2_CCR3L
 #else
   // AVR - backup SREG and turn off interrupts
   uint8_t oldSREG = SREG;

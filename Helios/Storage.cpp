@@ -86,6 +86,7 @@ void storage_write_pattern(uint8_t slot, const pattern_t *pat)
   storage_write_crc(pos);
 }
 
+#ifndef HELIOS_STM8
 void storage_copy_slot(uint8_t srcSlot, uint8_t dstSlot)
 {
   uint8_t src = srcSlot * SLOT_SIZE;
@@ -95,6 +96,7 @@ void storage_copy_slot(uint8_t srcSlot, uint8_t dstSlot)
     storage_write_byte(dst + i, storage_read_byte(src + i));
   }
 }
+#endif
 
 uint8_t storage_read_config(uint8_t index)
 {
@@ -136,7 +138,7 @@ void storage_write_brightness(uint8_t brightness)
   storage_write_config(STORAGE_BRIGHTNESS_INDEX, brightness);
 }
 
-uint8_t storage_crc8(uint8_t pos, uint8_t size)
+static uint8_t storage_crc8(uint8_t pos, uint8_t size)
 {
   uint8_t hash = 33;  // A non-zero initial value
   uint8_t i;
@@ -173,6 +175,10 @@ static void storage_write_crc(uint8_t pos)
 static void storage_write_byte(uint8_t address, uint8_t data)
 {
 #ifdef HELIOS_EMBEDDED
+#ifdef HELIOS_STM8
+  // STM8 EEPROM is reliable - write directly without read-verify loop
+  storage_internal_write(address, data);
+#else
   // reads out the byte of the eeprom first to see if it's different
   // before writing out the byte -- this is faster than always writing
   if (storage_read_byte(address) == data) {
@@ -185,6 +191,7 @@ static void storage_write_byte(uint8_t address, uint8_t data)
     storage_internal_write(address, data);
     // god forbid it doesn't write again
   }
+#endif
 #else // HELIOS_CLI
   if (!m_enableStorage) {
     return;
@@ -211,6 +218,10 @@ static void storage_write_byte(uint8_t address, uint8_t data)
 static uint8_t storage_read_byte(uint8_t address)
 {
 #ifdef HELIOS_EMBEDDED
+#ifdef HELIOS_STM8
+  // STM8 EEPROM is reliable - single read is sufficient
+  return storage_internal_read(address);
+#else
   // do a three way read because the attiny85 eeprom basically doesn't work
   uint8_t b1 = storage_internal_read(address);
   uint8_t b2 = storage_internal_read(address);
@@ -225,6 +236,7 @@ static uint8_t storage_read_byte(uint8_t address)
     return b2;
   }
   return 0;
+#endif
 #else
   if (!m_enableStorage) {
     return 0;

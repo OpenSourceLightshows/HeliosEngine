@@ -1,5 +1,7 @@
 #include "Random.h"
 
+#ifndef HELIOS_STM8
+
 void random_init(random_t *rng)
 {
   rng->m_seed = 0;
@@ -41,3 +43,5 @@ uint8_t random_next8(random_t *rng, uint8_t minValue, uint8_t maxValue)
   return (uint8_t)result;
 }
 
+
+#endif // HELIOS_STM8
