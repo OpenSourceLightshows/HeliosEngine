@@ -48,12 +48,27 @@ bool Timer::alarm()
   if (timeDiff == 0) {
     return true;
   }
-  // if the current alarm duration is not a multiple of the current tick
-  if (m_alarm && (timeDiff % m_alarm) != 0) {
-    // then the alarm was not hit
-    return false;
+  // Recurring alarm: returns true once per m_alarm ticks.
+  //
+  // Small-slip branch (timeDiff in [m_alarm, 2*m_alarm)): re-anchor to now
+  // so consecutive beats stay evenly spaced -- a 1-tick slip that would
+  // produce a long-then-short pair instead advances the anchor to the actual
+  // fire time, spreading the slip smoothly across future beats.
+  // (This is the behavior Kurt confirmed "looks perfect" on hardware.)
+  //
+  // Big-gap branch (timeDiff >= 2*m_alarm): the timer was suspended for a
+  // long menu hold or similar; realign to the period grid so post-menu
+  // cadence matches the original schedule and menu-test timing stays intact.
+  //
+  // No 32-bit divide/modulo in the per-tick hot path (expensive on AVR).
+  if (timeDiff < (int32_t)m_alarm) { return false; }
+  if (timeDiff < (int32_t)(2 * m_alarm)) {
+    m_startTime = now;
+    return true;
   }
-  // update the start time of the timer
+  int32_t rem = timeDiff;
+  while (rem >= (int32_t)m_alarm) { rem -= (int32_t)m_alarm; }
+  if (rem != 0) { return false; }
   m_startTime = now;
   return true;
 }

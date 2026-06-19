@@ -328,14 +328,7 @@ void Helios::handle_state_modes()
   uint32_t holdDur = Button::holdDuration();
   // calculate a magnitude which corresponds to how many times past the MENU_HOLD_TIME
   // the user has held the button, so 0 means haven't held fully past one yet, etc
-  // At 1MHz, 32-bit division is a ~240-cycle software routine called every tick.
-  // Unrolling into threshold comparisons eliminates the divide entirely.
-  uint8_t magnitude =
-    (holdDur >= (uint32_t)(MENU_HOLD_TIME * 5)) ? 5 :
-    (holdDur >= (uint32_t)(MENU_HOLD_TIME * 4)) ? 4 :
-    (holdDur >= (uint32_t)(MENU_HOLD_TIME * 3)) ? 3 :
-    (holdDur >= (uint32_t)(MENU_HOLD_TIME * 2)) ? 2 :
-    (holdDur >= (uint32_t)(MENU_HOLD_TIME * 1)) ? 1 : 0;
+  uint8_t magnitude = (uint8_t)(holdDur / MENU_HOLD_TIME);
   // whether the user has held the button longer than a short click
   bool heldPast = (holdDur > SHORT_CLICK_THRESHOLD);
 
@@ -724,6 +717,12 @@ void Helios::handle_state_pat_select()
 
 void Helios::handle_state_toggle_flag(Flags flag)
 {
+  // Play the pattern for this one-tick toggle state so the blink timer does
+  // not drop a tick across the transition. This handler runs for a single
+  // tick and otherwise never calls pat.play(), so the next poll would see
+  // timeDiff = m_alarm + 1 -- a phantom one-tick cadence gap. (Visible with
+  // the catch-up alarm; harmless to always run.)
+  pat.play();
   // toggle the conjure flag
   toggle_flags(flag);
   // write out the new global flags and the current mode
