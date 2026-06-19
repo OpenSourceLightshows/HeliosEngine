@@ -328,6 +328,8 @@ void Helios::handle_state_modes()
   uint32_t holdDur = Button::holdDuration();
   // calculate a magnitude which corresponds to how many times past the MENU_HOLD_TIME
   // the user has held the button, so 0 means haven't held fully past one yet, etc
+  // At 1MHz, 32-bit division is a ~240-cycle software routine called every tick.
+  // Unrolling into threshold comparisons eliminates the divide entirely.
   uint8_t magnitude =
     (holdDur >= (uint32_t)(MENU_HOLD_TIME * 5)) ? 5 :
     (holdDur >= (uint32_t)(MENU_HOLD_TIME * 4)) ? 4 :

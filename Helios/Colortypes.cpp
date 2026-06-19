@@ -369,6 +369,9 @@ RGBColor hsv_to_rgb_generic(const HSVColor &rhs)
     return col;
   }
 
+  // At 1MHz the AVR has ~8x fewer cycles per tick. The original division
+  // (hue / 43) compiles to a ~200-cycle software divide on AVR. Replacing it
+  // with a branchless compare tree + a LUT subtraction cuts this to ~10 cycles.
   static const uint8_t region_base[6] = { 0, 43, 86, 129, 172, 215 };
   region = (rhs.hue < 86)  ? ((rhs.hue < 43)  ? 0 : 1)
          : (rhs.hue < 172) ? ((rhs.hue < 129) ? 2 : 3)
