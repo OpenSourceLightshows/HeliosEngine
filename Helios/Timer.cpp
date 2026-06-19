@@ -48,12 +48,9 @@ bool Timer::alarm()
   if (timeDiff == 0) {
     return true;
   }
-  // The alarm fires on exact multiples of m_alarm (e.g. ticks 5, 10, 15 for m_alarm=5).
-  // After firing, m_startTime resets to `now`, but timeDiff can land anywhere in the
-  // next interval — the modulo ensures we only fire on a clean boundary, not just
-  // whenever timeDiff >= m_alarm. This prevents the alarm from firing early when
-  // alarm() is called mid-interval.
+  // if the current alarm duration is not a multiple of the current tick
   if (m_alarm && (timeDiff % m_alarm) != 0) {
+    // then the alarm was not hit
     return false;
   }
   // update the start time of the timer

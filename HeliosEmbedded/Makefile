@@ -98,9 +98,10 @@ AVRDUDE_FLAGS = $(AVRDUDE_CONFIG_FLAG) \
 ### COMPILER FLAGS ####
 #######################
 
-CPU_SPEED = 1000000L  # 1MHz internal oscillator. Drops power draw significantly vs 8MHz.
-                      # Requires fuse H:0xDF L:0x62 (CKDIV8 enabled, SUT_CKSEL=internal 8MHz / 8).
-                      # Run `make set_fuses` after changing this value.
+# 1MHz internal oscillator. Drops power draw significantly vs 8MHz.
+# Requires fuse H:0xDF L:0x62 (CKDIV8 enabled, SUT_CKSEL=internal 8MHz / 8).
+# Run `make set_fuses` after changing this value.
+CPU_SPEED = 1000000L
 
 # the port for serial upload
 SERIAL_PORT = COM11
