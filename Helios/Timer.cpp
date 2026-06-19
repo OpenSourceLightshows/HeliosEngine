@@ -48,9 +48,10 @@ bool Timer::alarm()
   if (timeDiff == 0) {
     return true;
   }
-  // if the current alarm duration is not a multiple of the current tick
-  if (m_alarm && (timeDiff % m_alarm) != 0) {
-    // then the alarm was not hit
+  // start() always resets m_startTime to now when the alarm fires, so timeDiff
+  // grows 0..m_alarm before the next reset; (timeDiff % m_alarm == 0) == (timeDiff >= m_alarm).
+  // Replaces a 32-bit software divide (~240 AVR cycles) with a comparison.
+  if (timeDiff < (int32_t)m_alarm) {
     return false;
   }
   // update the start time of the timer

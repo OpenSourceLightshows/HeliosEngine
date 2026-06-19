@@ -369,8 +369,11 @@ RGBColor hsv_to_rgb_generic(const HSVColor &rhs)
     return col;
   }
 
-  region = rhs.hue / 43;
-  remainder = ((rhs.hue - (region * 43)) * 6);
+  static const uint8_t region_base[6] = { 0, 43, 86, 129, 172, 215 };
+  region = (rhs.hue < 86)  ? ((rhs.hue < 43)  ? 0 : 1)
+         : (rhs.hue < 172) ? ((rhs.hue < 129) ? 2 : 3)
+         :                    ((rhs.hue < 215)  ? 4 : 5);
+  remainder = ((rhs.hue - region_base[region]) * 6);
 
   // extraneous casts to uint16_t are to prevent overflow
   p = (uint8_t)(((uint16_t)(rhs.val) * (255 - rhs.sat)) >> 8);

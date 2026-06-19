@@ -328,7 +328,12 @@ void Helios::handle_state_modes()
   uint32_t holdDur = Button::holdDuration();
   // calculate a magnitude which corresponds to how many times past the MENU_HOLD_TIME
   // the user has held the button, so 0 means haven't held fully past one yet, etc
-  uint8_t magnitude = (uint8_t)(holdDur / MENU_HOLD_TIME);
+  uint8_t magnitude =
+    (holdDur >= (uint32_t)(MENU_HOLD_TIME * 5)) ? 5 :
+    (holdDur >= (uint32_t)(MENU_HOLD_TIME * 4)) ? 4 :
+    (holdDur >= (uint32_t)(MENU_HOLD_TIME * 3)) ? 3 :
+    (holdDur >= (uint32_t)(MENU_HOLD_TIME * 2)) ? 2 :
+    (holdDur >= (uint32_t)(MENU_HOLD_TIME * 1)) ? 1 : 0;
   // whether the user has held the button longer than a short click
   bool heldPast = (holdDur > SHORT_CLICK_THRESHOLD);
 
