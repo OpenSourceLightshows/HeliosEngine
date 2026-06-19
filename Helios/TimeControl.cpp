@@ -103,10 +103,10 @@ uint32_t Time::microseconds()
   // should always just rely on the current tick to perform operations
   uint8_t oldSREG = SREG;
   cli();
-  // multiply by 8 early to avoid floating point math or division
-  uint32_t micros = (timer0_overflow_count * (256 * 8)) + (TCNT0 * 8);
+  // (64000000UL/F_CPU) = 8 @ 8MHz (no-op), 64 @ 1MHz, 4 @ 16MHz — clock-derived. Timer0 prescaler = F_CPU/1.
+  uint32_t micros = (timer0_overflow_count * (256 * (64000000UL / F_CPU))) + (TCNT0 * (64000000UL / F_CPU));
   SREG = oldSREG;
-  // then shift right to counteract the multiplication by 8
+  // then shift right to counteract the multiplication
   return micros >> 6;
 #endif
 #endif

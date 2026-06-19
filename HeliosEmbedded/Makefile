@@ -84,7 +84,7 @@ AVRDUDE_FLAGS = $(AVRDUDE_CONFIG_FLAG) \
 		-P$(AVRDUDE_PORT) \
 		-b$(AVRDUDE_BAUDRATE) \
 		-v \
-		-B1
+		-B10
 
 # -v -- Verbose output - display detailed progress
 # -B1 -- Bit clock period (in microseconds) - sets programming speed
@@ -96,7 +96,7 @@ AVRDUDE_FLAGS = $(AVRDUDE_CONFIG_FLAG) \
 ### COMPILER FLAGS ####
 #######################
 
-CPU_SPEED = 8000000L
+CPU_SPEED = 1000000L
 
 # the port for serial upload
 SERIAL_PORT = COM11
