@@ -48,9 +48,13 @@ bool Timer::alarm()
   if (timeDiff == 0) {
     return true;
   }
-  // if the current alarm duration is not a multiple of the current tick
-  if (m_alarm && (timeDiff % m_alarm) != 0) {
-    // then the alarm was not hit
+  // At 1MHz a 32-bit software modulo costs ~240 AVR cycles — called every tick,
+  // that's a significant fraction of budget. The original (timeDiff % m_alarm == 0)
+  // was checking if the alarm interval divided evenly, but because start() always
+  // resets m_startTime the moment the alarm fires, timeDiff simply counts up from
+  // 0 to m_alarm and then resets. So "has the alarm fired?" is just (timeDiff >= m_alarm),
+  // no division needed.
+  if (timeDiff < (int32_t)m_alarm) {
     return false;
   }
   // update the start time of the timer

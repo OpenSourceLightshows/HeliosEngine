@@ -103,8 +103,13 @@ uint32_t Time::microseconds()
   // should always just rely on the current tick to perform operations
   uint8_t oldSREG = SREG;
   cli();
-  // multiply by 8 early to avoid floating point math or division
-  uint32_t micros = (timer0_overflow_count * (256 * 8)) + (TCNT0 * 8);
+  // Scale overflow count and timer ticks by the number of microseconds each Timer0
+  // tick represents at the configured CPU speed. Timer0 runs at F_CPU/1 (no prescaler),
+  // so each tick = (1/F_CPU) seconds = (1000000/F_CPU) microseconds.
+  // The factor (64000000UL/F_CPU) bakes that in as an integer: 8 @ 8MHz, 64 @ 1MHz,
+  // 4 @ 16MHz. Using F_CPU here means this formula automatically adapts when
+  // CPU_SPEED is changed in the Makefile — no manual constant updates needed.
+  uint32_t micros = (timer0_overflow_count * (256 * (64000000UL / F_CPU))) + (TCNT0 * (64000000UL / F_CPU));
   SREG = oldSREG;
   // then shift right to counteract the multiplication by 8
   return micros >> 6;

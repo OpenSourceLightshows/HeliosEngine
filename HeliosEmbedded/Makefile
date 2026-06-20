@@ -84,7 +84,9 @@ AVRDUDE_FLAGS = $(AVRDUDE_CONFIG_FLAG) \
 		-P$(AVRDUDE_PORT) \
 		-b$(AVRDUDE_BAUDRATE) \
 		-v \
-		-B1
+		-B10  # ISP bit-clock period in microseconds. Was -B1 (1µs = 1MHz ISP clock).
+              # At 1MHz CPU the target can only accept an ISP clock up to F_CPU/4 = 250kHz,
+              # so -B1 overclocked the ISP bus and caused upload failures. -B10 = 100kHz ISP.
 
 # -v -- Verbose output - display detailed progress
 # -B1 -- Bit clock period (in microseconds) - sets programming speed
@@ -96,7 +98,9 @@ AVRDUDE_FLAGS = $(AVRDUDE_CONFIG_FLAG) \
 ### COMPILER FLAGS ####
 #######################
 
-CPU_SPEED = 8000000L
+CPU_SPEED = 1000000L  # 1MHz internal oscillator. Drops power draw significantly vs 8MHz.
+                      # Requires fuse H:0xDF L:0x62 (CKDIV8 enabled, SUT_CKSEL=internal 8MHz / 8).
+                      # Run `make set_fuses` after changing this value.
 
 # the port for serial upload
 SERIAL_PORT = COM11
