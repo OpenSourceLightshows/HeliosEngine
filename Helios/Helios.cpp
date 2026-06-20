@@ -717,12 +717,6 @@ void Helios::handle_state_pat_select()
 
 void Helios::handle_state_toggle_flag(Flags flag)
 {
-  // Play the pattern for this one-tick toggle state so the blink timer does
-  // not drop a tick across the transition. This handler runs for a single
-  // tick and otherwise never calls pat.play(), so the next poll would see
-  // timeDiff = m_alarm + 1 -- a phantom one-tick cadence gap. (Visible with
-  // the catch-up alarm; harmless to always run.)
-  pat.play();
   // toggle the conjure flag
   toggle_flags(flag);
   // write out the new global flags and the current mode
